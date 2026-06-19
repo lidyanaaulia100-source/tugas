@@ -82,6 +82,87 @@
     .nav-icon-btn:hover { background: rgba(255,255,255,.1); }
     .nav-icon-btn svg { display: block; flex-shrink: 0; }
 
+    /* ── NAV HAMBURGER (mobile) ── */
+    .nav-hamburger {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      width: 38px; height: 38px;
+      align-items: center; justify-content: center;
+      border-radius: 8px;
+      transition: background .18s;
+      flex-shrink: 0;
+    }
+    .nav-hamburger:hover { background: rgba(255,255,255,.1); }
+    .nav-hamburger span {
+      display: block;
+      width: 20px; height: 2px;
+      background: var(--white);
+      border-radius: 2px;
+      position: relative;
+      transition: transform .25s ease, opacity .2s ease;
+    }
+    .nav-hamburger span::before,
+    .nav-hamburger span::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 20px; height: 2px;
+      background: var(--white);
+      border-radius: 2px;
+      transition: transform .25s ease, top .25s ease;
+    }
+    .nav-hamburger span::before { top: -6px; }
+    .nav-hamburger span::after  { top: 6px; }
+    .nav-hamburger.active span { background: transparent; }
+    .nav-hamburger.active span::before { top: 0; transform: rotate(45deg); }
+    .nav-hamburger.active span::after  { top: 0; transform: rotate(-45deg); }
+
+    /* ── MOBILE NAV DRAWER ── */
+    .mobile-nav-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,.5);
+      z-index: 997;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .mobile-nav-overlay.active { opacity: 1; pointer-events: all; }
+    .mobile-nav-drawer {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100%;
+      width: 78%;
+      max-width: 300px;
+      background: var(--brown-dark);
+      z-index: 998;
+      padding: 20px;
+      transform: translateX(-100%);
+      transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mobile-nav-overlay.active .mobile-nav-drawer { transform: translateX(0); }
+    .mobile-nav-drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .mobile-nav-drawer a {
+      display: block;
+      color: #d4b896;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 13px 10px;
+      border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .mobile-nav-drawer a:hover,
+    .mobile-nav-drawer a:active { background: rgba(255,255,255,.08); color: var(--amber); }
+
     /* ── SEARCH OVERLAY ── */
     .search-overlay {
       position: fixed;
@@ -724,19 +805,38 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
-      nav { padding: 12px 20px; }
+      nav { padding: 12px 16px; gap: 8px; }
+      .nav-hamburger { display: flex; }
       .nav-links { display: none; }
+      .nav-logo span { font-size: 16px; }
       .hero { grid-template-columns: 1fr; }
-      .hero-image-wrap { height: 220px; }
-      .hero-text { padding: 40px 24px; }
-      .section { padding: 40px 20px; }
-      .menu-grid { grid-template-columns: repeat(2, 1fr); }
-      .welcome-banner { margin: 0 20px 40px; }
-      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+      .hero-image-wrap { height: 220px; order: -1; }
+      .hero-text { padding: 32px 20px; }
+      .section { padding: 36px 20px; }
+      .section-title { font-size: 22px; margin-bottom: 20px; }
+      .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .welcome-banner { margin: 0 20px 36px; min-height: 200px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 28px; }
       footer { padding: 36px 20px 20px; }
+      .footer-bottom { flex-direction: column; gap: 14px; text-align: center; }
     }
     @media (max-width: 480px) {
-      .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      nav { padding: 10px 12px; }
+      .nav-logo span { display: none; }
+      .nav-actions { gap: 0; }
+      .hero-text h1 { margin-bottom: 12px; }
+      .hero-text p { max-width: 100%; }
+      .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .menu-card-name { font-size: 12px; }
+      .price-badge { font-size: 10px; padding: 2px 8px; }
+      .welcome-banner { margin: 0 12px 28px; border-radius: 12px; min-height: 170px; }
+      .welcome-content { padding: 28px 16px; }
+      .section { padding: 28px 12px; }
+      footer { padding: 28px 12px 16px; }
+    }
+    @media (max-width: 360px) {
+      .menu-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .hero-text { padding: 24px 14px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .modal-sheet { transition: none; }
@@ -1308,6 +1408,16 @@
     }
     .notif-dropdown.open { display: block; }
 
+    @media (max-width: 480px) {
+      .notif-dropdown {
+        position: fixed;
+        top: 62px;
+        right: 8px;
+        left: 8px;
+        width: auto;
+      }
+    }
+
     .notif-dd-header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 18px 12px;
@@ -1610,6 +1720,9 @@
 
 <!-- NAV -->
 <nav>
+  <button class="nav-hamburger" id="navHamburger" title="Menu" onclick="toggleMobileNav()" aria-label="Buka menu navigasi">
+    <span></span>
+  </button>
   <a href="#" class="nav-logo">
     <div class="nav-logo-icon">🍱</div>
     <span>NusantaraFood</span>
@@ -1667,6 +1780,23 @@
     </button>
   </div>
 </nav>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="handleMobileNavOverlay(event)">
+  <div class="mobile-nav-drawer" id="mobileNavDrawer">
+    <div class="mobile-nav-drawer-header">
+      <div class="nav-logo" style="display:flex;align-items:center;gap:10px;">
+        <div class="nav-logo-icon">🍱</div>
+        <span style="font-family:'Playfair Display', serif; font-size:16px; color:var(--white);">NusantaraFood</span>
+      </div>
+      <button class="account-panel-close" onclick="toggleMobileNav()" aria-label="Tutup menu">✕</button>
+    </div>
+    <a href="#" onclick="toggleMobileNav()">Menu</a>
+    <a href="#" onclick="toggleMobileNav()">About Us</a>
+    <a href="#" onclick="toggleMobileNav()">Contact</a>
+    <a href="#" onclick="toggleMobileNav()">Promo</a>
+  </div>
+</div>
 
 <!-- SEARCH OVERLAY -->
 <div class="search-overlay" id="searchOverlay" onclick="handleSearchOverlay(event)">
@@ -2034,8 +2164,110 @@
   }
 
   let currentMinOrder = 5;
+  let currentUnitPrice = 0;
   let currentItem = null;
   let cart = [];
+
+  /* ══════════════════════════════════════════════
+     CART — SUPABASE SYNC
+     Keranjang disimpan di tabel `keranjang` di
+     Supabase (1 baris per user_id).
+  ══════════════════════════════════════════════ */
+  const CART_DEBOUNCE_MS = 800;
+  let _cartSaveTimer = null;
+
+  /** Muat keranjang dari Supabase — fallback ke localStorage jika gagal */
+  async function loadCartFromServer() {
+    const session = getSession();
+    if (!session) return;
+    try {
+      const res = await fetch(
+        API_BASE + '/keranjang?user_id=eq.' + session.id + '&select=items',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows && rows[0] && Array.isArray(rows[0].items) && rows[0].items.length > 0) {
+          cart = rows[0].items;
+          // Sinkronkan ke localStorage juga
+          localStorage.setItem('nf_cart', JSON.stringify(cart));
+          updateCartUI();
+          return;
+        }
+      }
+    } catch (_) { /* lanjut ke fallback */ }
+
+    // Fallback: coba dari localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
+      if (Array.isArray(local) && local.length > 0) {
+        cart = local;
+        // Sinkronkan balik ke Supabase
+        await saveCartToServer();
+      } else {
+        cart = [];
+      }
+    } catch (_) {
+      cart = [];
+    }
+    updateCartUI();
+  }
+
+  /** Simpan keranjang ke Supabase — cek dulu apakah baris sudah ada,
+   *  lalu PATCH atau POST. Juga simpan ke localStorage sebagai backup. */
+  async function saveCartToServer() {
+    const session = getSession();
+    if (!session) return;
+
+    // Selalu simpan ke localStorage sebagai cadangan
+    localStorage.setItem('nf_cart', JSON.stringify(cart));
+
+    try {
+      // Cek apakah baris sudah ada
+      const checkRes = await fetch(
+        API_BASE + '/keranjang?user_id=eq.' + session.id + '&select=user_id',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const rows = checkRes.ok ? await checkRes.json() : [];
+      const exists = Array.isArray(rows) && rows.length > 0;
+
+      if (exists) {
+        // Update baris yang sudah ada
+        await fetch(API_BASE + '/keranjang?user_id=eq.' + session.id, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ items: cart, updated_at: new Date().toISOString() })
+        });
+      } else {
+        // Buat baris baru
+        await fetch(API_BASE + '/keranjang', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_id:    session.id,
+            items:      cart,
+            updated_at: new Date().toISOString()
+          })
+        });
+      }
+    } catch (_) { /* abaikan error jaringan, localStorage sudah jadi backup */ }
+  }
+
+  /** Jadwalkan auto-save (debounce agar tidak terlalu sering request) */
+  function scheduleCartSave() {
+    clearTimeout(_cartSaveTimer);
+    _cartSaveTimer = setTimeout(saveCartToServer, CART_DEBOUNCE_MS);
+  }
 
   /* ── MODAL ── */
   function openModal(data) {
@@ -2054,12 +2286,15 @@
       mImage.textContent = data.emoji;
     }
 
-    document.getElementById('mPrice').textContent  = data.price;
+    // Hitung harga per box: priceRaw (harga total minimum) / minOrder
+    currentUnitPrice = Math.round(data.priceRaw / currentMinOrder);
+
     document.getElementById('mName').textContent   = data.name;
     document.getElementById('mWeight').textContent = data.weight;
     document.getElementById('mDesc').textContent   = data.desc;
-    document.getElementById('mMinNote').textContent = 'Minimum order ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' box');
+    document.getElementById('mMinNote').textContent = 'Minimum order ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' box') + ' · Rp' + currentUnitPrice.toLocaleString('id-ID') + '/box';
     document.getElementById('qtyInput').value = currentMinOrder;
+    updateModalPrice(currentMinOrder);
 
     // Availability
     const avEl = document.getElementById('mAvailability');
@@ -2106,11 +2341,17 @@
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   }
 
+  function updateModalPrice(qty) {
+    const total = currentUnitPrice * qty;
+    document.getElementById('mPrice').textContent = 'Rp' + total.toLocaleString('id-ID');
+  }
+
   function changeQty(delta) {
     const input = document.getElementById('qtyInput');
     let val = parseInt(input.value) + delta;
     if (val < currentMinOrder) val = currentMinOrder;
     input.value = val;
+    updateModalPrice(val);
   }
 
   document.addEventListener('keydown', e => {
@@ -2125,7 +2366,7 @@
       return;
     }
     const qty = parseInt(document.getElementById('qtyInput').value);
-    const priceNum = currentItem.priceRaw || parseInt((currentItem.price || '').replace(/[^0-9]/g, ''));
+    const priceNum = currentUnitPrice; // harga per box
 
     const existing = cart.find(c => c.name === currentItem.name);
     if (existing) {
@@ -2136,13 +2377,14 @@
         emoji: currentItem.emoji,
         bg: currentItem.bg,
         image_url: currentItem.image_url || null,
-        price: priceNum,
-        priceLabel: currentItem.price,
+        price: priceNum,           // harga per box
+        priceLabel: 'Rp' + priceNum.toLocaleString('id-ID'),
         qty: qty,
         minOrder: currentMinOrder,
       });
     }
     updateCartUI();
+    scheduleCartSave();
     closeModal();
     showToast('✅ ' + currentItem.name + ' ditambahkan ke keranjang!');
   }
@@ -2193,16 +2435,19 @@
     cart[idx].qty += delta;
     if (cart[idx].qty < cart[idx].minOrder) cart[idx].qty = cart[idx].minOrder;
     updateCartUI();
+    scheduleCartSave();
   }
 
   function removeFromCart(idx) {
     cart.splice(idx, 1);
     updateCartUI();
+    scheduleCartSave();
   }
 
   function clearCart() {
     cart = [];
     updateCartUI();
+    scheduleCartSave();
   }
 
   function toggleCart() {
@@ -2233,6 +2478,26 @@
 
   function handleCartOverlay(e) {
     if (e.target === document.getElementById('cartOverlay')) closeCart();
+  }
+
+  /* ── MOBILE NAV DRAWER ── */
+  function toggleMobileNav() {
+    const overlay = document.getElementById('mobileNavOverlay');
+    const btn = document.getElementById('navHamburger');
+    const isOpen = overlay.classList.contains('active');
+    if (isOpen) {
+      overlay.classList.remove('active');
+      btn.classList.remove('active');
+      document.body.style.overflow = '';
+    } else {
+      overlay.classList.add('active');
+      btn.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function handleMobileNavOverlay(e) {
+    if (e.target === document.getElementById('mobileNavOverlay')) toggleMobileNav();
   }
 
   /* ── SEARCH ── */
@@ -2347,6 +2612,7 @@
     } else {
       initAccountUI(session);
       refreshProfileFromServer(session);
+      loadCartFromServer(); // Muat keranjang dari Supabase
     }
   })();
 
@@ -2618,9 +2884,13 @@
       showToast('Keranjang masih kosong!');
       return;
     }
-    // Simpan cart ke localStorage agar terbaca di pembayaran.html
+    // Simpan ke localStorage sebagai jaminan (instant, tidak async)
     localStorage.setItem('nf_cart', JSON.stringify(cart));
-    window.location.href = 'pembayaran.html';
+    // Simpan ke Supabase juga, lalu pindah halaman
+    clearTimeout(_cartSaveTimer);
+    saveCartToServer().finally(() => {
+      window.location.href = 'pembayaran.html';
+    });
   }
 
   loadMenus();
