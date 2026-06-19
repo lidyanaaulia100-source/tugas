@@ -675,9 +675,46 @@ let currentStep = 1;
 let selectedPayment = null;
 
 /* ══════════════════════════════════════
+   CART — SUPABASE HELPERS
+══════════════════════════════════════ */
+async function loadCartFromServer() {
+  // 1) Coba dari Supabase
+  try {
+    const res = await fetch(
+      API_BASE + '/keranjang?user_id=eq.' + session.id + '&select=items',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows[0] && Array.isArray(rows[0].items) && rows[0].items.length > 0) {
+        return rows[0].items;
+      }
+    }
+  } catch (_) { /* fallback ke localStorage */ }
+
+  // 2) Fallback: baca dari localStorage
+  try {
+    const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
+    if (Array.isArray(local) && local.length > 0) return local;
+  } catch (_) {}
+
+  return [];
+}
+
+async function deleteCartFromServer() {
+  try {
+    await fetch(API_BASE + '/keranjang?user_id=eq.' + session.id, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+  } catch (_) { /* abaikan */ }
+  localStorage.removeItem('nf_cart');
+}
+
+/* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   // Load session
   try { session = JSON.parse(localStorage.getItem('nf_session')); } catch {}
   if (!session) {
@@ -685,9 +722,14 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Load cart
-  try { cart = JSON.parse(localStorage.getItem('nf_cart')) || []; } catch {}
+  // Tampilkan loading agar tidak flash kosong
+  document.querySelector('main').style.opacity = '0';
+
+  // Load cart — Supabase dengan fallback localStorage
+  cart = await loadCartFromServer();
+
   if (!cart.length) {
+    // Keranjang benar-benar kosong → kembali ke menu
     window.location.href = 'catering.html';
     return;
   }
@@ -697,15 +739,20 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('resAddress').value = session.address || '';
   document.getElementById('resPhone').value   = session.phone  || '';
 
-  // Set minimum date (3 days from now)
+  // Set minimum date (3 hari dari sekarang)
   const minDate = new Date();
   minDate.setDate(minDate.getDate() + 3);
-  const minStr = minDate.toISOString().split('T')[0];
+  const pad = n => String(n).padStart(2, '0');
+  const minStr = minDate.getFullYear() + '-' + pad(minDate.getMonth() + 1) + '-' + pad(minDate.getDate());
   document.getElementById('deliveryDate').min   = minStr;
   document.getElementById('deliveryDate').value = minStr;
 
   renderSummary();
   updateStepper(1);
+
+  // Fade in konten
+  document.querySelector('main').style.transition = 'opacity .3s';
+  document.querySelector('main').style.opacity = '1';
 });
 
 /* ══════════════════════════════════════
@@ -937,7 +984,8 @@ async function submitOrder() {
     const inserted = await res.json();
     const orderId  = Array.isArray(inserted) ? inserted[0]?.id : inserted?.id;
 
-    // Clear cart
+    // Hapus keranjang dari Supabase setelah pesanan berhasil
+    await deleteCartFromServer();
     localStorage.removeItem('nf_cart');
 
     // Show success
