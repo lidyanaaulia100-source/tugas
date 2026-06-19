@@ -1456,6 +1456,23 @@ function statusMeta(status) {
   return { cls: 'waiting', icon: '⏳', label: 'Menunggu Konfirmasi' };
 }
 function formatRupiah(n) { return 'Rp ' + (Number(n)||0).toLocaleString('id-ID'); }
+function paymentMethodLabel(method) {
+  const map = {
+    cod: '💵 Bayar di Tempat (COD)',
+    cash: '💵 Tunai',
+    transfer: '🏦 Transfer Bank',
+    bank_transfer: '🏦 Transfer Bank',
+    qris: '📱 QRIS',
+    ewallet: '📱 E-Wallet',
+    gopay: '📱 GoPay',
+    ovo: '📱 OVO',
+    dana: '📱 DANA',
+    shopeepay: '📱 ShopeePay'
+  };
+  if (!method) return '—';
+  const key = String(method).toLowerCase().trim();
+  return map[key] || esc(method);
+}
 function formatDateLong(dateStr, withTime) {
   if (!dateStr) return '—';
   const d = new Date(dateStr.includes('T')||withTime===false ? dateStr : dateStr + 'T00:00:00');
@@ -1557,6 +1574,7 @@ function renderOrderDetail(order) {
       <div class="order-info-row"><div class="ico">🙍</div><div class="label">Nama</div><div class="value">${esc(order.customer_name||'—')}</div></div>
       <div class="order-info-row"><div class="ico">📞</div><div class="label">No. HP</div><div class="value">${esc(order.customer_phone||'—')}</div></div>
       <div class="order-info-row"><div class="ico">📍</div><div class="label">Alamat</div><div class="value">${esc(order.delivery_address||order.customer_address||'—')}</div></div>
+      <div class="order-info-row"><div class="ico">💳</div><div class="label">Bayar</div><div class="value">${paymentMethodLabel(order.payment_method)}</div></div>
       <div class="order-info-row"><div class="ico">🗓️</div><div class="label">Dipesan</div><div class="value">${formatDateLong(order.created_at, true)}</div></div>
       ${order.notes ? `<div class="order-info-row"><div class="ico">📝</div><div class="label">Catatan</div><div class="value">${esc(order.notes)}</div></div>` : ''}
     </div>
