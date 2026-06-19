@@ -2427,7 +2427,9 @@
   let _cartSaveTimer = null;
   let _cartSaveFadeTimer = null;
 
-  /** Muat keranjang dari Supabase — fallback ke localStorage jika gagal */
+  /** Muat keranjang dari Supabase — Supabase adalah sumber kebenaran utama.
+   *  localStorage hanya dipakai sebagai fallback jika request ke server gagal
+   *  total (mis. offline), BUKAN untuk menimpa keranjang kosong di server. */
   async function loadCartFromServer() {
     const session = getSession();
     if (!session) return;
@@ -2438,26 +2440,33 @@
       );
       if (res.ok) {
         const rows = await res.json();
-        if (rows && rows[0] && Array.isArray(rows[0].items) && rows[0].items.length > 0) {
+        if (rows && rows[0] && Array.isArray(rows[0].items)) {
+          // Baris ada di server (baik isi maupun kosong) → ini sumber kebenaran.
           cart = rows[0].items;
-          // Sinkronkan ke localStorage juga
           localStorage.setItem('nf_cart', JSON.stringify(cart));
           updateCartUI();
           return;
         }
+        if (Array.isArray(rows) && rows.length === 0) {
+          // Belum pernah ada baris keranjang untuk user ini di server.
+          // Coba migrasi dari localStorage (mis. cart lama sebelum fitur sync ada).
+          try {
+            const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
+            cart = Array.isArray(local) ? local : [];
+          } catch (_) { cart = []; }
+          updateCartUI();
+          if (cart.length > 0) await saveCartToServer();
+          return;
+        }
       }
-    } catch (_) { /* lanjut ke fallback */ }
+    } catch (_) { /* request gagal (mis. offline) → lanjut ke fallback di bawah */ }
 
-    // Fallback: coba dari localStorage
+    // Fallback murni offline: tampilkan apa yang ada di localStorage,
+    // tapi JANGAN langsung push ke server (supaya tidak menimpa data server
+    // begitu koneksi kembali — sinkronisasi normal lewat scheduleCartSave saat ada perubahan).
     try {
       const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
-      if (Array.isArray(local) && local.length > 0) {
-        cart = local;
-        // Sinkronkan balik ke Supabase
-        await saveCartToServer();
-      } else {
-        cart = [];
-      }
+      cart = Array.isArray(local) ? local : [];
     } catch (_) {
       cart = [];
     }
@@ -2735,6 +2744,9 @@
       void header.offsetWidth;
       header.classList.add('shimmer');
       setTimeout(() => header.classList.remove('shimmer'), 800);
+      // Tarik ulang keranjang terbaru dari Supabase setiap kali panel dibuka,
+      // supaya perubahan yang dilakukan dari perangkat lain langsung terlihat.
+      loadCartFromServer();
     }
   }
 
