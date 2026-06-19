@@ -1713,7 +1713,7 @@
   <div class="guard-emoji">🍱</div>
   <h2>Silakan Masuk Terlebih Dahulu</h2>
   <p>Untuk melihat menu dan melakukan pemesanan, Anda perlu login ke akun NusantaraFood.</p>
-  <a href="login.html?redirect=catering.html">Masuk / Daftar</a>
+  <a href="index.html?redirect=catering.html">Masuk / Daftar</a>
 </div>
 
 <!-- ACCOUNT PANEL -->
@@ -2410,7 +2410,7 @@
   function toggleAccountPanel() {
     const session = getSession();
     if (!session) {
-      window.location.href = 'login.html?redirect=catering.html';
+      window.location.href = 'index.html?redirect=catering.html';
       return;
     }
     const overlay = document.getElementById('accountOverlay');
@@ -2605,13 +2605,13 @@
   ══════════════════════════════════════════════ */
   function doLogout() {
     clearSession();
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
   }
 
   function goToCheckout() {
     const session = getSession();
     if (!session) {
-      window.location.href = 'login.html?redirect=pembayaran.html';
+      window.location.href = 'index.html?redirect=pembayaran.html';
       return;
     }
     if (!cart.length) {
