@@ -671,6 +671,24 @@
   .btn-confirm:hover { background: #3A6147; }
   .btn-cancel-order { background: var(--rose-light); color: var(--rose); flex: 1; justify-content: center; }
   .btn-cancel-order:hover { background: var(--rose); color: #fff; }
+  /* ── PAYMENT ── */
+  .pay-status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: .78rem; font-weight: 700;
+  }
+  .pay-lunas   { background: var(--leaf-light); color: var(--leaf); }
+  .pay-pending { background: #FFF3D6; color: #A36B00; }
+  .pay-ditolak { background: var(--rose-light); color: var(--rose); }
+
+  .pay-proof-link { display: block; }
+  .pay-proof-thumb {
+    width: 100%; max-width: 260px; max-height: 160px;
+    object-fit: cover; border-radius: 10px;
+    border: 1.5px solid var(--border); margin-top: 4px;
+    cursor: zoom-in; transition: opacity .2s;
+  }
+  .pay-proof-thumb:hover { opacity: .85; }
+
   .cancelled-note {
     background: var(--rose-light); color: var(--rose);
     border-radius: 10px; padding: 12px 14px; font-size: .85rem; font-weight: 600;
@@ -1596,6 +1614,76 @@ function closeOrderDetail() {
   currentOrderId = null;
 }
 
+function renderPaymentMethod(order) {
+  const method = order.payment_method || order.metode_pembayaran || null;
+  const status = order.payment_status || order.status_pembayaran || null;
+  const proof  = order.payment_proof  || order.bukti_pembayaran  || null;
+
+  // Map nama metode ke icon + label yang rapi
+  const methodMap = {
+    transfer_bca:    { icon: '🏦', label: 'Transfer BCA' },
+    transfer_bni:    { icon: '🏦', label: 'Transfer BNI' },
+    transfer_bri:    { icon: '🏦', label: 'Transfer BRI' },
+    transfer_mandiri:{ icon: '🏦', label: 'Transfer Mandiri' },
+    transfer:        { icon: '🏦', label: 'Transfer Bank' },
+    qris:            { icon: '📱', label: 'QRIS' },
+    gopay:           { icon: '💚', label: 'GoPay' },
+    ovo:             { icon: '💜', label: 'OVO' },
+    dana:            { icon: '💙', label: 'DANA' },
+    shopeepay:       { icon: '🧡', label: 'ShopeePay' },
+    cod:             { icon: '💵', label: 'Bayar di Tempat (COD)' },
+    tunai:           { icon: '💵', label: 'Tunai' },
+  };
+
+  const statusMap = {
+    lunas:    { cls: 'pay-lunas',   icon: '✅', label: 'Lunas' },
+    paid:     { cls: 'pay-lunas',   icon: '✅', label: 'Lunas' },
+    pending:  { cls: 'pay-pending', icon: '⏳', label: 'Menunggu Pembayaran' },
+    belum_bayar: { cls: 'pay-pending', icon: '⏳', label: 'Belum Bayar' },
+    unpaid:   { cls: 'pay-pending', icon: '⏳', label: 'Belum Bayar' },
+    ditolak:  { cls: 'pay-ditolak', icon: '❌', label: 'Pembayaran Ditolak' },
+    rejected: { cls: 'pay-ditolak', icon: '❌', label: 'Pembayaran Ditolak' },
+  };
+
+  const methodKey   = method ? method.toLowerCase().replace(/\s+/g, '_') : null;
+  const methodInfo  = methodKey && methodMap[methodKey] ? methodMap[methodKey] : (method ? { icon: '💳', label: method } : null);
+  const statusKey   = status ? status.toLowerCase().replace(/\s+/g, '_') : null;
+  const statusInfo  = statusKey && statusMap[statusKey] ? statusMap[statusKey] : (status ? { cls: 'pay-pending', icon: '❓', label: status } : null);
+
+  if (!methodInfo && !statusInfo && !proof) {
+    return '<div class="order-info-row"><div class="ico">❓</div><div class="label">Metode</div><div class="value" style="color:var(--ink-soft);font-weight:400">Tidak ada data pembayaran</div></div>';
+  }
+
+  let html = '';
+  if (methodInfo) {
+    html += `<div class="order-info-row">
+      <div class="ico">${methodInfo.icon}</div>
+      <div class="label">Metode</div>
+      <div class="value">${esc(methodInfo.label)}</div>
+    </div>`;
+  }
+  if (statusInfo) {
+    html += `<div class="order-info-row">
+      <div class="ico">${statusInfo.icon}</div>
+      <div class="label">Status</div>
+      <div class="value"><span class="pay-status-badge ${statusInfo.cls}">${statusInfo.icon} ${statusInfo.label}</span></div>
+    </div>`;
+  }
+  if (proof) {
+    html += `<div class="order-info-row">
+      <div class="ico">🖼️</div>
+      <div class="label">Bukti</div>
+      <div class="value">
+        <a href="${esc(proof)}" target="_blank" rel="noopener" class="pay-proof-link">
+          <img src="${esc(proof)}" alt="Bukti Pembayaran" class="pay-proof-thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+          <span style="display:none">🔗 Lihat Bukti</span>
+        </a>
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
 function renderOrderDetail(order) {
   const body = document.getElementById('orderDetailBody');
   const meta = statusMeta(order.status);
@@ -1690,6 +1778,11 @@ function renderOrderDetail(order) {
         ${itemsHtml}
         <div class="order-total-row"><div>Total</div><div class="amount">${formatRupiah(order.total_amount || order.total_price)}</div></div>
       </div>
+    </div>
+
+    <div class="order-section">
+      <h4>💳 Metode Pembayaran</h4>
+      ${renderPaymentMethod(order)}
     </div>
 
     ${order.status !== 'menunggu_konfirmasi' && order.delivery_confirmed_date ? `
