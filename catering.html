@@ -338,6 +338,96 @@
       opacity: .6;
     }
 
+    /* ── HERO SLIDER ── */
+    .hero-slider {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .hero-slider-track {
+      display: flex;
+      height: 100%;
+      transition: transform .45s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+      cursor: grab;
+      user-select: none;
+    }
+    .hero-slider-track.is-dragging {
+      transition: none;
+      cursor: grabbing;
+    }
+    .hero-slide {
+      min-width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      display: block;
+    }
+    .hero-slide-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 32px 16px 12px;
+      background: linear-gradient(to top, rgba(20,8,0,.7) 0%, transparent 100%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      text-align: center;
+    }
+    /* Dots */
+    .hero-slider-dots {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      z-index: 3;
+    }
+    .hero-slider-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.45);
+      border: none; cursor: pointer;
+      padding: 0;
+      transition: background .2s, transform .2s;
+    }
+    .hero-slider-dot.active {
+      background: var(--amber);
+      transform: scale(1.3);
+    }
+    /* Arrows */
+    .hero-slider-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(20,8,0,.45);
+      border: none;
+      color: #fff;
+      font-size: 26px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 4;
+      transition: background .18s;
+      line-height: 1;
+      padding: 0;
+    }
+    .hero-slider-arrow:hover { background: rgba(20,8,0,.7); }
+    .hero-slider-prev { left: 10px; }
+    .hero-slider-next { right: 10px; }
+
     /* ── SECTIONS ── */
     .section { padding: 52px 48px; }
     .section-title {
@@ -1905,7 +1995,20 @@
     <p>Diracik dengan perhatian, disajikan untuk setiap momen yang tak tergantikan.</p>
   </div>
   <div class="hero-image-wrap">
-    <div style="width:100%;height:100%;background:linear-gradient(135deg,#6b3510,#a05820,#4a2008);display:flex;align-items:center;justify-content:center;font-size:80px;">🍛</div>
+    <!-- HERO FOOD SLIDER -->
+    <div class="hero-slider" id="heroSlider">
+      <div class="hero-slider-track" id="heroSliderTrack">
+        <!-- slides injected by JS -->
+        <div class="hero-slide hero-slide-placeholder">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#6b3510,#a05820,#4a2008);display:flex;align-items:center;justify-content:center;font-size:80px;">🍛</div>
+        </div>
+      </div>
+      <!-- Dots -->
+      <div class="hero-slider-dots" id="heroSliderDots"></div>
+      <!-- Arrows -->
+      <button class="hero-slider-arrow hero-slider-prev" id="heroSliderPrev" onclick="heroSliderMove(-1)">&#8249;</button>
+      <button class="hero-slider-arrow hero-slider-next" id="heroSliderNext" onclick="heroSliderMove(1)">&#8250;</button>
+    </div>
     <div class="dots-pattern">
       <span></span><span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span><span></span>
@@ -2067,6 +2170,129 @@
   const API_BASE      = SUPABASE_URL + '/rest/v1';
 
   /* ══════════════════════════════════════════════
+     HERO SLIDER — Foto dari Supabase (menus dengan image_url)
+  ══════════════════════════════════════════════ */
+  let _heroSlides   = [];
+  let _heroIdx      = 0;
+  let _heroTimer    = null;
+  let _heroDragStartX = null;
+  let _heroDragging   = false;
+  let _heroDragDelta  = 0;
+
+  function buildHeroSlider(menus) {
+    // Ambil maksimal 5 menu yang punya image_url
+    const withImg = menus.filter(m => m.image_url);
+    _heroSlides = withImg.slice(0, 5);
+
+    if (_heroSlides.length === 0) return; // biarkan placeholder emoji
+
+    const track = document.getElementById('heroSliderTrack');
+    const dotsEl = document.getElementById('heroSliderDots');
+
+    track.innerHTML = '';
+    dotsEl.innerHTML = '';
+
+    _heroSlides.forEach((m, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'hero-slide';
+      // klik → scroll ke menu
+      const sectionId = m.category === 'Menu Nasi Tumpeng' ? 'sectionTumpeng' : 'sectionNasiBox';
+      slide.style.cursor = 'pointer';
+      slide.addEventListener('click', () => {
+        if (_heroDragging) return;
+        const el = document.getElementById(sectionId) || document.getElementById('sectionNasiBox');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      const img = document.createElement('img');
+      img.src = m.image_url;
+      img.alt = m.name;
+      slide.appendChild(img);
+
+      const label = document.createElement('div');
+      label.className = 'hero-slide-label';
+      label.textContent = m.name;
+      slide.appendChild(label);
+
+      track.appendChild(slide);
+
+      // dot
+      const dot = document.createElement('button');
+      dot.className = 'hero-slider-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+      dot.addEventListener('click', () => heroSliderGoTo(i));
+      dotsEl.appendChild(dot);
+    });
+
+    heroSliderGoTo(0);
+    heroSliderStartAuto();
+
+    // Touch / drag support
+    track.addEventListener('mousedown',  heroSliderDragStart);
+    track.addEventListener('touchstart', heroSliderDragStart, { passive: true });
+    track.addEventListener('mousemove',  heroSliderDragMove);
+    track.addEventListener('touchmove',  heroSliderDragMove, { passive: true });
+    track.addEventListener('mouseup',    heroSliderDragEnd);
+    track.addEventListener('touchend',   heroSliderDragEnd);
+    track.addEventListener('mouseleave', heroSliderDragEnd);
+  }
+
+  function heroSliderGoTo(idx) {
+    _heroIdx = (idx + _heroSlides.length) % _heroSlides.length;
+    const track = document.getElementById('heroSliderTrack');
+    if (track) track.style.transform = `translateX(-${_heroIdx * 100}%)`;
+    document.querySelectorAll('.hero-slider-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === _heroIdx);
+    });
+  }
+
+  function heroSliderMove(dir) {
+    heroSliderGoTo(_heroIdx + dir);
+    heroSliderStartAuto();
+  }
+
+  function heroSliderStartAuto() {
+    clearInterval(_heroTimer);
+    if (_heroSlides.length > 1) {
+      _heroTimer = setInterval(() => heroSliderGoTo(_heroIdx + 1), 4000);
+    }
+  }
+
+  // Drag helpers
+  function heroSliderDragStart(e) {
+    _heroDragStartX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    _heroDragging   = false;
+    _heroDragDelta  = 0;
+    const track = document.getElementById('heroSliderTrack');
+    if (track) track.classList.add('is-dragging');
+    clearInterval(_heroTimer);
+  }
+
+  function heroSliderDragMove(e) {
+    if (_heroDragStartX === null) return;
+    const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    _heroDragDelta = x - _heroDragStartX;
+    if (Math.abs(_heroDragDelta) > 5) _heroDragging = true;
+    const track = document.getElementById('heroSliderTrack');
+    if (track) track.style.transform = `translateX(calc(-${_heroIdx * 100}% + ${_heroDragDelta}px))`;
+  }
+
+  function heroSliderDragEnd() {
+    if (_heroDragStartX === null) return;
+    const track = document.getElementById('heroSliderTrack');
+    if (track) track.classList.remove('is-dragging');
+    if (Math.abs(_heroDragDelta) > 60) {
+      heroSliderGoTo(_heroIdx + (_heroDragDelta < 0 ? 1 : -1));
+    } else {
+      heroSliderGoTo(_heroIdx);
+    }
+    _heroDragStartX = null;
+    _heroDragDelta  = 0;
+    setTimeout(() => { _heroDragging = false; }, 50);
+    heroSliderStartAuto();
+  }
+
+  /* ══════════════════════════════════════════════
      LOAD MENUS FROM SUPABASE
   ══════════════════════════════════════════════ */
   let allMenus = [];
@@ -2080,6 +2306,7 @@
       const data = await res.json();
       allMenus = data;
       renderMenus(data);
+      buildHeroSlider(data);
     } catch (err) {
       console.error(err);
       document.getElementById('gridNasiBox').innerHTML   = '<div style="color:#e05050;font-size:13px;padding:20px 0;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
