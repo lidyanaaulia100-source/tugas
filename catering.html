@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catering Nusantara</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brown-dark: #3d1f0a;
+      --brown-mid:  #5c2d0e;
+      --brown-hero: #4a2008;
+      --amber:      #e8a020;
+      --amber-dark: #c8880e;
+      --cream:      #fdf6ee;
+      --white:      #ffffff;
+      --text-main:  #2a1200;
+      --text-muted: #7a5c3a;
+      --radius:     10px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text-main);
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 48px;
+      background: var(--brown-dark);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--amber);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-logo span {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--white);
+      letter-spacing: .5px;
+    }
+    .nav-links {
+      display: flex; gap: 32px; list-style: none;
+    }
+    .nav-links a {
+      color: #d4b896;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--amber); }
+    .nav-actions {
+      display: flex; gap: 4px; align-items: center;
+    }
+    .nav-icon-btn {
+      background: none; border: none; cursor: pointer;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      position: relative;
+      transition: background .18s;
+    }
+    .nav-icon-btn:hover { background: rgba(255,255,255,.1); }
+    .nav-icon-btn svg { display: block; flex-shrink: 0; }
+
+    /* ── SEARCH OVERLAY ── */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,.5);
+      z-index: 998;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 70px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+      backdrop-filter: blur(3px);
+    }
+    .search-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .search-box {
+      background: var(--white);
+      width: 100%;
+      max-width: 560px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.25);
+      transform: translateY(-10px);
+      transition: transform .22s;
+    }
+    .search-overlay.active .search-box { transform: translateY(0); }
+    .search-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0ece8;
+    }
+    .search-input-wrap input {
+      flex: 1;
+      border: none; outline: none;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background: transparent;
+    }
+    .search-input-wrap input::placeholder { color: #bbb; }
+    .search-clear {
+      background: none; border: none; cursor: pointer;
+      color: #bbb; font-size: 14px;
+      padding: 2px 6px;
+      transition: color .15s;
+    }
+    .search-clear:hover { color: #888; }
+    .search-results {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .search-hint {
+      text-align: center;
+      color: #bbb;
+      font-size: 13px;
+      padding: 28px 16px;
+    }
+    .search-no-result {
+      text-align: center;
+      color: #bbb;
+      font-size: 13px;
+      padding: 28px 16px;
+    }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background .15s;
+      border-bottom: 1px solid #faf6f2;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: #fdf6ee; }
+    .search-result-icon {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .search-result-info { flex: 1; min-width: 0; }
+    .search-result-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+    .search-result-name mark {
+      background: rgba(232,160,32,.25);
+      color: var(--brown-dark);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .search-result-price {
+      font-size: 12px;
+      color: var(--amber);
+      font-weight: 700;
+    }
+    .search-result-category {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 1px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--brown-hero);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      min-height: 400px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: -60px;
+      width: 220px; height: 220px;
+      border: 3px solid rgba(232,160,32,.18);
+      border-radius: 50%;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: 120px;
+      width: 160px; height: 160px;
+      border: 2px solid rgba(232,160,32,.12);
+      border-radius: 50%;
+    }
+    .hero-text {
+      padding: 60px 48px 60px 56px;
+      position: relative; z-index: 1;
+    }
+    .hero-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 3.5vw, 48px);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .hero-text p {
+      color: #c4a07a;
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 320px;
+    }
+    .hero-image-wrap {
+      position: relative;
+      height: 400px;
+      overflow: hidden;
+    }
+    .dots-pattern {
+      position: absolute;
+      bottom: 20px; left: -30px;
+      display: grid;
+      grid-template-columns: repeat(5,8px);
+      gap: 8px;
+      z-index: 2;
+    }
+    .dots-pattern span {
+      width: 6px; height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      opacity: .6;
+    }
+
+    /* ── SECTIONS ── */
+    .section { padding: 52px 48px; }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 28px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 48px; height: 3px;
+      background: var(--amber);
+      border-radius: 2px;
+    }
+
+    /* ── MENU GRID ── */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .menu-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(60,20,0,.08);
+      transition: transform .2s, box-shadow .2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .menu-card.is-out-of-stock .img-placeholder { filter: grayscale(.6); opacity: .6; }
+    .menu-card.is-out-of-stock .price-badge { background: #9a9a9a; }
+    .card-stock-ribbon {
+      position: absolute; top: 10px; right: 10px;
+      background: #C0392B; color: #fff;
+      font-size: 10.5px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+      letter-spacing: .3px;
+      z-index: 2;
+    }
+    .card-stock-ribbon.limited { background: #A36B00; }
+    .menu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(60,20,0,.18);
+    }
+    .img-placeholder {
+      width: 100%; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      background: linear-gradient(135deg, #c8a87a 0%, #a0784a 100%);
+    }
+    .menu-card-body { padding: 12px 14px 14px; }
+    .price-badge {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      letter-spacing: .3px;
+    }
+    .menu-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    /* ── WELCOME BANNER ── */
+    .welcome-banner {
+      position: relative;
+      margin: 0 48px 52px;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .welcome-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #3d1f0a 0%, #6b3510 50%, #2a1200 100%);
+    }
+    .welcome-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(232,160,32,.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(232,160,32,.1) 0%, transparent 40%);
+    }
+    .welcome-content {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .welcome-label {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(20px, 4vw, 36px);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .welcome-sub {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(14px, 2vw, 22px);
+      font-weight: 700;
+      color: var(--amber);
+      line-height: 1.4;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--brown-dark);
+      color: #c4a07a;
+      padding: 48px 48px 28px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-bottom: 36px;
+    }
+    .footer-col h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col li { font-size: 13px; margin-bottom: 8px; color: #b09070; }
+    .footer-col li a { color: inherit; text-decoration: none; transition: color .2s; }
+    .footer-col li a:hover { color: var(--amber); }
+    .footer-col li span { margin-right: 8px; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-bottom p { font-size: 12px; color: #7a5c3a; }
+    .footer-social { display: flex; gap: 14px; }
+    .footer-social a {
+      width: 32px; height: 32px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #b09070; text-decoration: none; font-size: 13px;
+      transition: border-color .2s, color .2s;
+    }
+    .footer-social a:hover { border-color: var(--amber); color: var(--amber); }
+    .section.bg-white { background: var(--white); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 8, 0, 0.55);
+      z-index: 999;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      backdrop-filter: blur(3px);
+      padding: 0;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-sheet {
+      background: var(--white);
+      width: 100%;
+      max-width: 100%;
+      border-radius: 0;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(110%);
+      transition: transform .38s cubic-bezier(0.32, 0.72, 0, 1);
+      position: relative;
+      padding-bottom: 8px;
+    }
+    .modal-overlay.active .modal-sheet {
+      transform: translateY(0);
+    }
+    .modal-overlay.active .modal-sheet {
+      transform: translateY(0);
+    }
+
+    /* inner content constrained for readability on wide screens */
+    .modal-inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* two-column layout on wider screens */
+    @media (min-width: 680px) {
+      .modal-body-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 40px;
+        padding: 0 32px;
+      }
+      .modal-col-left {}
+      .modal-col-right {}
+      .modal-image {
+        width: 100% !important;
+        margin: 14px 0 0 !important;
+        border-radius: 16px;
+      }
+      .modal-info-row {
+        padding: 20px 0 0 !important;
+      }
+      .modal-divider { margin: 16px 0 !important; }
+      .modal-meta { padding: 0 !important; }
+      .modal-qty-section { padding: 16px 0 0 !important; }
+      .modal-order-btn {
+        width: 100% !important;
+        margin: 20px 0 !important;
+      }
+      .modal-desc-section { padding: 0 32px 8px !important; }
+      .modal-ask { padding: 0 32px 28px !important; }
+      .modal-breadcrumb { padding: 8px 32px 0 !important; }
+    }
+
+    /* drag handle */
+    .modal-handle {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 4px;
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 2;
+    }
+    .modal-handle::before {
+      content: '';
+      width: 40px; height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      width: 32px; height: 32px;
+      border: none; background: #f0ece8;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: #888;
+      transition: background .2s, color .2s;
+      z-index: 3;
+    }
+    .modal-close:hover { background: #e0dbd5; color: #333; }
+
+    /* breadcrumb */
+    .modal-breadcrumb {
+      font-size: 12px;
+      color: #999;
+      padding: 8px 24px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-breadcrumb span { color: #444; font-weight: 500; }
+    .modal-breadcrumb::before { content: '←'; font-size: 13px; color: #bbb; }
+
+    /* image */
+    .modal-image {
+      width: calc(100% - 48px);
+      margin: 14px 24px 0;
+      border-radius: 12px;
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #c8a87a 0%, #a0784a 100%);
+    }
+
+    /* info row */
+    .modal-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px 24px 0;
+      gap: 16px;
+    }
+    .modal-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .modal-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background: #f0ece8;
+      margin: 16px 24px;
+    }
+
+    .modal-meta {
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .modal-meta-row {
+      font-size: 13px;
+      color: #555;
+      display: flex;
+      gap: 6px;
+    }
+    .modal-meta-row .label { color: #888; }
+    .modal-meta-row .stock-badge {
+      color: #2a9660;
+      font-weight: 600;
+    }
+    .modal-meta-row .stock-badge.out-of-stock {
+      color: #e05050;
+    }
+    .modal-meta-row .stock-badge.limited {
+      color: #c87800;
+    }
+
+    /* quantity */
+    .modal-qty-section {
+      padding: 16px 24px 0;
+    }
+    .modal-qty-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+    .modal-qty-control {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .qty-btn {
+      width: 36px; height: 36px;
+      border: 1.5px solid #ddd;
+      background: var(--white);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      color: #555;
+      transition: border-color .15s, color .15s;
+      user-select: none;
+    }
+    .qty-btn:hover { border-color: var(--amber); color: var(--amber); }
+    .qty-value {
+      width: 48px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      border: none; outline: none;
+      background: transparent;
+    }
+    .qty-min-note {
+      font-size: 12px;
+      color: var(--amber);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    /* order btn */
+    .modal-order-btn {
+      display: block;
+      width: calc(100% - 48px);
+      margin: 20px 24px;
+      padding: 14px;
+      background: var(--brown-dark);
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background .2s, transform .1s;
+    }
+    .modal-order-btn:hover { background: var(--brown-mid); }
+    .modal-order-btn:active { transform: scale(.98); }
+
+    /* description */
+    .modal-desc-section {
+      padding: 0 24px 8px;
+    }
+    .modal-section-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+    .modal-desc-text {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .modal-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 14px;
+    }
+    .modal-list li {
+      font-size: 13px;
+      color: #555;
+      padding: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .modal-list li::before {
+      content: '·';
+      color: var(--amber);
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .modal-ask {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--amber);
+      font-weight: 600;
+      padding: 0 24px 28px;
+      cursor: pointer;
+    }
+    .modal-ask:hover { text-decoration: underline; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 12px 20px; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-image-wrap { height: 220px; }
+      .hero-text { padding: 40px 24px; }
+      .section { padding: 40px 20px; }
+      .menu-grid { grid-template-columns: repeat(2, 1fr); }
+      .welcome-banner { margin: 0 20px 40px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+      footer { padding: 36px 20px 20px; }
+    }
+    @media (max-width: 480px) {
+      .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .modal-sheet { transition: none; }
+      .modal-overlay { transition: none; }
+    }
+
+    /* ── CART BUTTON ── */
+    .cart-btn {
+      position: relative;
+    }
+    .cart-badge {
+      position: absolute;
+      top: -6px; right: -8px;
+      background: var(--amber);
+      color: var(--white);
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px; height: 18px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px;
+      pointer-events: none;
+    }
+
+    /* ── CART PANEL ── */
+    .cart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,0);
+      z-index: 1000;
+      display: flex;
+      justify-content: flex-end;
+      backdrop-filter: blur(0px);
+      pointer-events: none;
+      transition: background .35s ease, backdrop-filter .35s ease;
+    }
+    .cart-overlay.active {
+      background: rgba(20,8,0,.45);
+      backdrop-filter: blur(2px);
+      pointer-events: all;
+    }
+
+    .cart-panel {
+      background: var(--white);
+      width: 100%;
+      max-width: 420px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(110%);
+      transition: transform .42s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: -8px 0 40px rgba(0,0,0,.18);
+      will-change: transform;
+    }
+    .cart-overlay.active .cart-panel {
+      transform: translateX(0);
+    }
+
+    /* Cart item enter animation — disabled */
+
+    /* Cart header bounce icon */
+    @keyframes cartBounce {
+      0%   { transform: scale(1) rotate(0deg); }
+      25%  { transform: scale(1.25) rotate(-12deg); }
+      50%  { transform: scale(1.15) rotate(8deg); }
+      75%  { transform: scale(1.08) rotate(-4deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .cart-title-icon.bounce {
+      display: inline-block;
+      animation: cartBounce .55s ease forwards;
+    }
+
+    /* Cart panel header shimmer on open */
+    @keyframes cartHeaderShimmer {
+      from { background-position: -200% 0; }
+      to   { background-position: 200% 0; }
+    }
+    .cart-header.shimmer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(232,160,32,.12) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: cartHeaderShimmer .7s ease forwards;
+      pointer-events: none;
+    }
+    .cart-header { position: relative; overflow: hidden; }
+
+    .cart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #f0ece8;
+      position: sticky; top: 0;
+      background: var(--white);
+      z-index: 1;
+    }
+    .cart-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .cart-close {
+      width: 32px; height: 32px;
+      border: none; background: #f0ece8;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: #888;
+      transition: background .2s;
+    }
+    .cart-close:hover { background: #e0dbd5; }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+    .cart-empty {
+      text-align: center;
+      color: #bbb;
+      font-size: 14px;
+      margin-top: 60px;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f5f0eb;
+    }
+    .cart-item-icon {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cart-item-price {
+      font-size: 13px;
+      color: var(--amber);
+      font-weight: 700;
+    }
+    .cart-item-qty {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .cart-item-qty button {
+      width: 26px; height: 26px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      background: var(--white);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: #555;
+      transition: border-color .15s, color .15s;
+    }
+    .cart-item-qty button:hover { border-color: var(--amber); color: var(--amber); }
+    .cart-item-qty span {
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+    .cart-item-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #ccc;
+      padding: 4px;
+      transition: color .2s;
+      flex-shrink: 0;
+    }
+    .cart-item-delete:hover { color: #e05050; }
+
+    .cart-footer {
+      padding: 16px 20px 24px;
+      border-top: 1px solid #f0ece8;
+      background: var(--white);
+    }
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .cart-total-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--brown-dark);
+    }
+    .cart-checkout-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--brown-dark);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      transition: background .2s;
+    }
+    .cart-checkout-btn:hover { background: var(--brown-mid); }
+    .cart-clear-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: none;
+      color: #bbb;
+      font-size: 12px;
+      border: none;
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .cart-clear-btn:hover { color: #e05050; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--brown-dark);
+      color: var(--white);
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes searchBoxIn {
+      from { opacity: 0; transform: translateY(-18px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .search-overlay.active .search-box {
+      transform: translateY(0);
+      animation: searchBoxIn .26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @media (max-width: 480px) {
+      .cart-panel { max-width: 100%; }
+    }
+
+    /* ── ACCOUNT BUTTON AVATAR ── */
+    .account-avatar-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--amber);
+      display: block;
+    }
+
+    /* ── ACCOUNT PANEL OVERLAY ── */
+    .account-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,0);
+      z-index: 1001;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: none;
+      transition: background .35s ease, backdrop-filter .35s ease;
+      backdrop-filter: blur(0px);
+    }
+    .account-overlay.active {
+      background: rgba(20,8,0,.45);
+      backdrop-filter: blur(2px);
+      pointer-events: all;
+    }
+
+    .account-panel {
+      background: var(--white);
+      width: 100%;
+      max-width: 360px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(110%);
+      transition: transform .42s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: -8px 0 40px rgba(0,0,0,.18);
+      overflow-y: auto;
+    }
+    .account-overlay.active .account-panel {
+      transform: translateX(0);
+    }
+
+    .account-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #f0ece8;
+      position: sticky; top: 0;
+      background: var(--white);
+      z-index: 1;
+    }
+    .account-panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .account-panel-close {
+      width: 32px; height: 32px;
+      border: none; background: #f0ece8;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: #888;
+      transition: background .2s;
+    }
+    .account-panel-close:hover { background: #e0dbd5; }
+
+    .account-avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid #f5f0eb;
+    }
+    .account-avatar-wrap {
+      position: relative;
+      cursor: pointer;
+      width: 88px; height: 88px;
+      margin-bottom: 14px;
+    }
+    .account-avatar-wrap:hover .avatar-overlay { opacity: 1; }
+    .account-avatar-img {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--amber);
+      background: linear-gradient(135deg,#c8a87a,#a0784a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      overflow: hidden;
+    }
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .avatar-overlay svg { display: block; }
+    #avatarUploadInput { display: none; }
+    .avatar-remove-btn {
+      background: none;
+      border: none;
+      color: #e05050;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+      padding: 2px 8px;
+      transition: opacity .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .avatar-remove-btn:hover { opacity: .7; }
+    .account-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .account-email {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .account-info-section {
+      padding: 20px 24px;
+      border-bottom: 1px solid #f5f0eb;
+      flex: 1;
+    }
+    .account-field-group {
+      margin-bottom: 18px;
+    }
+    .account-field-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .account-field-value {
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.5;
+      background: #fdf6ee;
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .account-field-value:hover { border-color: var(--amber); }
+    .account-field-input {
+      width: 100%;
+      font-size: 14px;
+      color: var(--text-main);
+      background: var(--white);
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid var(--amber);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      display: none;
+    }
+    .account-field-input.textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
+    .account-save-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--brown-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .5px;
+      margin-top: 14px;
+      transition: background .2s;
+      display: none;
+    }
+    .account-save-btn:hover { background: var(--brown-mid); }
+
+    .account-panel-footer {
+      padding: 16px 24px 28px;
+    }
+    .account-logout-btn {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      color: #e05050;
+      border: 1.5px solid #fdd;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .account-logout-btn:hover { background: #fff0f0; border-color: #e05050; }
+
+    /* ── AUTH GUARD OVERLAY ── */
+    #authGuard {
+      position: fixed;
+      inset: 0;
+      background: rgba(61,31,10,.97);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+      padding: 24px;
+    }
+    #authGuard .guard-emoji { font-size: 52px; }
+    #authGuard h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: var(--white);
+    }
+    #authGuard p { font-size: 14px; color: #c4a07a; max-width: 320px; }
+    #authGuard a {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 13px 36px;
+      background: var(--amber);
+      color: var(--brown-dark);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      transition: background .2s;
+    }
+    #authGuard a:hover { background: var(--amber-dark); }
+
+    @media (max-width: 480px) {
+      .account-panel { max-width: 100%; }
+    }
+
+    /* ── NOTIFICATION BELL ── */
+    .notif-btn {
+      position: relative;
+    }
+    .notif-badge-dot {
+      position: absolute;
+      top: -4px; right: -6px;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 17px; height: 17px;
+      border-radius: 9px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      pointer-events: none;
+      border: 2px solid var(--brown-dark);
+      font-family: 'Inter', sans-serif;
+    }
+    .notif-badge-dot.show { display: flex; }
+
+    .notif-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 14px);
+      right: 0;
+      width: 360px;
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,.22);
+      border: 1.5px solid #f0ece8;
+      z-index: 1200;
+      overflow: hidden;
+      animation: notifIn .2s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes notifIn {
+      from { opacity:0; transform: translateY(-8px) scale(.97); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+    .notif-dropdown.open { display: block; }
+
+    .notif-dd-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 12px;
+      background: linear-gradient(135deg, var(--brown-dark) 0%, var(--brown-mid) 100%);
+    }
+    .notif-dd-title {
+      font-family: 'Playfair Display', serif;
+      color: #fff; font-size: .95rem;
+    }
+    .notif-dd-clear {
+      font-size: 11px; color: var(--amber);
+      background: none; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      padding: 0; transition: color .2s;
+    }
+    .notif-dd-clear:hover { color: #fff; }
+
+    .notif-dd-list {
+      max-height: 380px;
+      overflow-y: auto;
+    }
+    .notif-dd-empty {
+      padding: 32px 18px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .85rem;
+    }
+    .notif-dd-empty .ico { font-size: 2rem; margin-bottom: 8px; }
+
+    .notif-dd-item {
+      padding: 12px 18px;
+      border-bottom: 1px solid #faf6f2;
+      transition: background .15s;
+    }
+    .notif-dd-item:last-child { border-bottom: none; }
+    .notif-dd-item.unread { background: #fffbf4; }
+    .notif-dd-item:hover { background: #fdf6ee; }
+
+    .notif-dd-row {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .notif-dd-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      background: #fff3e0;
+    }
+    .notif-dd-icon.confirmed { background: #e8f5e9; }
+    .notif-dd-body { flex: 1; }
+    .notif-dd-name {
+      font-size: .82rem; font-weight: 700; color: var(--text-main);
+      line-height: 1.3; margin-bottom: 2px;
+    }
+    .notif-dd-status {
+      font-size: .76rem; color: var(--text-muted); margin-bottom: 3px;
+    }
+    .notif-dd-delivery {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #e8f5e9; color: #2e7d32;
+      border-radius: 6px; padding: 3px 8px;
+      font-size: .72rem; font-weight: 700; margin-top: 3px;
+    }
+    .notif-dd-time {
+      font-size: .7rem; color: #bbb;
+      white-space: nowrap; padding-top: 1px;
+    }
+    .notif-dd-unread-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--amber); flex-shrink: 0; margin-top: 7px;
+    }
+
+    .notif-dd-footer {
+      padding: 10px 18px;
+      border-top: 1px solid #f0ece8;
+      text-align: center;
+    }
+    .notif-dd-refresh {
+      font-size: .78rem; color: var(--text-muted);
+      background: none; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      transition: color .2s;
+    }
+    .notif-dd-refresh:hover { color: var(--amber); }
+
+    /* wrapper notif-wrap needs position:relative */
+    .notif-wrap { position: relative; }
+
+    /* ── NOTIF ITEM CLICKABLE ── */
+    .notif-dd-item {
+      cursor: pointer;
+    }
+    .notif-dd-item:hover {
+      background: #fdf6ee !important;
+    }
+
+    /* ── ORDER DETAIL MODAL ── */
+    .order-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,.6);
+      z-index: 1500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+      backdrop-filter: blur(4px);
+    }
+    .order-modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .order-modal-box {
+      background: var(--white);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.35);
+      transform: scale(.94) translateY(12px);
+      transition: transform .28s cubic-bezier(0.22,1,0.36,1);
+    }
+    .order-modal-overlay.active .order-modal-box {
+      transform: scale(1) translateY(0);
+    }
+    .order-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+      background: linear-gradient(135deg, var(--brown-dark) 0%, var(--brown-mid) 100%);
+      border-radius: 18px 18px 0 0;
+      position: sticky; top: 0; z-index: 1;
+    }
+    .order-modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .order-modal-close {
+      width: 30px; height: 30px;
+      border: none; background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .order-modal-close:hover { background: rgba(255,255,255,.28); }
+
+    .order-modal-body { padding: 20px; }
+
+    .order-status-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+    .order-status-banner.menunggu_konfirmasi { background: #fff8e1; border: 1.5px solid #ffe082; }
+    .order-status-banner.dikonfirmasi        { background: #e8f5e9; border: 1.5px solid #a5d6a7; }
+    .order-status-banner.dikirim             { background: #e3f2fd; border: 1.5px solid #90caf9; }
+    .order-status-banner.selesai             { background: #f3e5f5; border: 1.5px solid #ce93d8; }
+    .order-status-banner.dibatalkan          { background: #ffebee; border: 1.5px solid #ef9a9a; }
+
+    .order-status-icon { font-size: 28px; flex-shrink: 0; }
+    .order-status-label {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-main); line-height: 1.3;
+    }
+    .order-status-sub {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+
+    .order-detail-section {
+      margin-bottom: 16px;
+    }
+    .order-detail-section-title {
+      font-size: 11px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .8px;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .order-info-card {
+      background: #fdf6ee;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .order-info-row {
+      display: flex; justify-content: space-between;
+      align-items: flex-start;
+      font-size: 13px; padding: 4px 0;
+      border-bottom: 1px solid #f0ece8;
+      gap: 12px;
+    }
+    .order-info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .order-info-label { color: var(--text-muted); flex-shrink: 0; }
+    .order-info-value { color: var(--text-main); font-weight: 600; text-align: right; }
+    .order-info-value.total {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; color: var(--brown-dark);
+    }
+
+    .order-items-list { display: flex; flex-direction: column; gap: 10px; }
+    .order-item-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--white);
+      border-radius: 12px; padding: 10px 12px;
+      border: 1.5px solid #f0ece8;
+      box-shadow: 0 1px 4px rgba(60,20,0,.05);
+    }
+    .order-item-thumb {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      background: linear-gradient(135deg, #c8a87a, #a0784a);
+    }
+    .order-item-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 10px;
+    }
+    .order-item-info { flex: 1; min-width: 0; }
+    .order-item-name {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-main); line-height: 1.3;
+      margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .order-item-qty  {
+      font-size: 11px; color: var(--text-muted);
+      background: #f5f0eb; border-radius: 5px;
+      display: inline-block; padding: 2px 7px;
+    }
+    .order-item-price {
+      font-size: 14px; font-weight: 700;
+      color: var(--amber); flex-shrink: 0;
+      text-align: right;
+    }
+    .order-item-unit-price {
+      font-size: 10px; color: var(--text-muted);
+      text-align: right; margin-top: 2px;
+    }
+
+    .order-timeline {
+      display: flex; flex-direction: column; gap: 0;
+      padding-left: 4px;
+    }
+    .order-tl-step {
+      display: flex; gap: 12px; align-items: flex-start;
+      position: relative; padding-bottom: 14px;
+    }
+    .order-tl-step:last-child { padding-bottom: 0; }
+    .order-tl-dot-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      flex-shrink: 0;
+    }
+    .order-tl-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #ddd; flex-shrink: 0; margin-top: 3px;
+    }
+    .order-tl-dot.done  { background: #4caf50; }
+    .order-tl-dot.active { background: var(--amber); box-shadow: 0 0 0 3px rgba(232,160,32,.2); }
+    .order-tl-line {
+      width: 2px; flex: 1; background: #eee; margin: 3px 0;
+      min-height: 18px;
+    }
+    .order-tl-line.done { background: #4caf50; }
+    .order-tl-content { flex: 1; }
+    .order-tl-title { font-size: 12px; font-weight: 700; color: var(--text-main); }
+    .order-tl-time  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    .order-modal-dismiss-btn {
+      display: block; width: 100%;
+      padding: 12px;
+      background: var(--brown-dark);
+      color: #fff; border: none;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; letter-spacing: .5px;
+      margin-top: 18px;
+      transition: background .2s;
+    }
+    .order-modal-dismiss-btn:hover { background: var(--brown-mid); }
+
+    @media (max-width: 540px) {
+      .order-modal-box { border-radius: 14px; }
+      .order-modal-header { border-radius: 14px 14px 0 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">🍱</div>
+    <span>NusantaraFood</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Menu</a></li>
+    <li><a href="#">About Us</a></li>
+    <li><a href="#">Contact</a></li>
+    <li><a href="#">Promo</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="nav-icon-btn" title="Cari" onclick="toggleSearch()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+
+    <button class="nav-icon-btn" id="accountBtn" title="Akun" onclick="toggleAccountPanel()">
+      <span id="accountBtnInner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </span>
+    </button>
+    <div class="nav-icon-btn notif-btn notif-wrap" id="notifWrap" title="Notifikasi Pesanan">
+      <button class="nav-icon-btn" style="background:none;border:none;cursor:pointer;padding:0;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .18s" id="notifBell" onclick="toggleNotif(event)" title="Notifikasi">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge-dot" id="notifBadgeDot">0</span>
+      </button>
+
+      <!-- Dropdown Panel -->
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-dd-header">
+          <div class="notif-dd-title">🔔 Notifikasi Pesanan</div>
+          <button class="notif-dd-clear" onclick="clearNotifRead()">Tandai dibaca</button>
+        </div>
+        <div class="notif-dd-list" id="notifDdList">
+          <div class="notif-dd-empty"><div class="ico">⏳</div><div>Memuat…</div></div>
+        </div>
+        <div class="notif-dd-footer">
+          <button class="notif-dd-refresh" onclick="loadNotifData()">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="nav-icon-btn cart-btn" title="Keranjang" onclick="toggleCart()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="handleSearchOverlay(event)">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="Cari menu... (contoh: rendang, tumpeng)" oninput="doSearch(this.value)" autocomplete="off" />
+      <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none">✕</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-hint">Ketik nama menu yang ingin dicari</div>
+    </div>
+  </div>
+</div>
+
+<!-- CART PANEL -->
+<div class="cart-overlay" id="cartOverlay" onclick="handleCartOverlay(event)">
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <span class="cart-title"><span class="cart-title-icon" id="cartTitleIcon">🛒</span> Keranjang</span>
+      <button class="cart-close" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" id="cartEmpty">Keranjang masih kosong 🍽️</div>
+    </div>
+    <div class="cart-footer" id="cartFooter" style="display:none">
+      <div class="cart-total-row">
+        <span>Total</span>
+        <span class="cart-total-price" id="cartTotal">Rp0</span>
+      </div>
+      <button class="cart-checkout-btn" onclick="goToCheckout()">Checkout Sekarang</button>
+      <button class="cart-clear-btn" onclick="clearCart()">Kosongkan Keranjang</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- AUTH GUARD (hidden if logged in) -->
+<div id="authGuard" style="display:none;">
+  <div class="guard-emoji">🍱</div>
+  <h2>Silakan Masuk Terlebih Dahulu</h2>
+  <p>Untuk melihat menu dan melakukan pemesanan, Anda perlu login ke akun NusantaraFood.</p>
+  <a href="login.html?redirect=catering.html">Masuk / Daftar</a>
+</div>
+
+<!-- ACCOUNT PANEL -->
+<div class="account-overlay" id="accountOverlay" onclick="handleAccountOverlay(event)">
+  <div class="account-panel" id="accountPanel">
+    <div class="account-panel-header">
+      <span class="account-panel-title">Akun Saya</span>
+      <button class="account-panel-close" onclick="closeAccountPanel()">✕</button>
+    </div>
+
+    <div class="account-avatar-section">
+      <div class="account-avatar-wrap" onclick="document.getElementById('avatarUploadInput').click()" title="Ganti foto profil">
+        <div class="account-avatar-img" id="accountAvatarDisplay">👤</div>
+        <div class="avatar-overlay">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <input type="file" id="avatarUploadInput" accept="image/*" onchange="handleAvatarUpload(event)" />
+      <button class="avatar-remove-btn" id="avatarRemoveBtn" onclick="removeAvatar(event)" style="display:none;" title="Hapus foto profil">🗑️ Hapus Foto</button>
+      <div class="account-name" id="accountDisplayName">—</div>
+      <div class="account-email" id="accountDisplayEmail">—</div>
+    </div>
+
+    <div class="account-info-section">
+      <!-- Name -->
+      <div class="account-field-group">
+        <div class="account-field-label">Nama Lengkap</div>
+        <div class="account-field-value" id="fieldNameVal" onclick="editField('name')">—</div>
+        <input class="account-field-input" id="fieldNameInput" type="text" placeholder="Nama lengkap" oninput="showSaveBtn()" />
+      </div>
+      <!-- Address -->
+      <div class="account-field-group">
+        <div class="account-field-label">Alamat Rumah</div>
+        <div class="account-field-value" id="fieldAddressVal" onclick="editField('address')">—</div>
+        <textarea class="account-field-input textarea" id="fieldAddressInput" placeholder="Alamat lengkap" oninput="showSaveBtn()"></textarea>
+      </div>
+      <!-- Phone -->
+      <div class="account-field-group">
+        <div class="account-field-label">Nomor Telepon</div>
+        <div class="account-field-value" id="fieldPhoneVal" onclick="editField('phone')">—</div>
+        <input class="account-field-input" id="fieldPhoneInput" type="tel" placeholder="Nomor telepon" oninput="showSaveBtn()" />
+      </div>
+      <button class="account-save-btn" id="accountSaveBtn" onclick="saveProfile()">💾 Simpan Perubahan</button>
+    </div>
+
+    <div class="account-panel-footer">
+      <button class="account-logout-btn" onclick="doLogout()">Keluar dari Akun</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Pilih Sendiri Menumu, Nikmati Rasanya.</h1>
+    <p>Diracik dengan perhatian, disajikan untuk setiap momen yang tak tergantikan.</p>
+  </div>
+  <div class="hero-image-wrap">
+    <div style="width:100%;height:100%;background:linear-gradient(135deg,#6b3510,#a05820,#4a2008);display:flex;align-items:center;justify-content:center;font-size:80px;">🍛</div>
+    <div class="dots-pattern">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+</section>
+
+<!-- MENU NASI BOX -->
+<section class="section bg-white" id="sectionNasiBox">
+  <h2 class="section-title">Menu Baru Nasi Box</h2>
+  <div class="menu-grid" id="gridNasiBox">
+    <div style="color:#bbb;font-size:13px;padding:20px 0;">Memuat menu...</div>
+  </div>
+</section>
+
+<!-- MENU NASI TUMPENG -->
+<section class="section" id="sectionTumpeng">
+  <h2 class="section-title">Menu Nasi Tumpeng</h2>
+  <div class="menu-grid" id="gridTumpeng">
+    <div style="color:#bbb;font-size:13px;padding:20px 0;">Memuat menu...</div>
+  </div>
+</section>
+
+<!-- SECTION KATEGORI LAIN (muncul otomatis jika ada) -->
+<div id="extraSections"></div>
+
+<!-- WELCOME BANNER -->
+<div class="welcome-banner">
+  <div class="welcome-bg"></div>
+  <div style="position:absolute;left:0;top:0;bottom:0;width:180px;background:linear-gradient(135deg,#6b3510,#4a2008);opacity:.6;display:flex;align-items:center;justify-content:center;font-size:64px;">🍜</div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:180px;background:linear-gradient(135deg,#4a2008,#6b3510);opacity:.6;display:flex;align-items:center;justify-content:center;font-size:64px;">🥘</div>
+  <div class="welcome-content">
+    <div class="welcome-label">WELCOME!</div>
+    <div class="welcome-sub">Hidangan Lezat untuk<br>Setiap Acara</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <ul>
+        <li><a href="#">Nasi Box</a></li>
+        <li><a href="#">Nasi Tumpeng</a></li>
+        <li><a href="#">Catering</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Information</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">Menu</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact Us</h4>
+      <ul>
+        <li><span>📍</span> Jl. Angrek 6, Ceger</li>
+        <li><span>📞</span> +62 892188821</li>
+        <li><span>🕐</span> 09.00 – 16.00 WIB</li>
+        <li><span>✉️</span> cateringeyang@gmail.com</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 NusantaraFood. All rights reserved.</p>
+    <div class="footer-social">
+      <a href="#">f</a>
+      <a href="#">ig</a>
+      <a href="#">tw</a>
+      <a href="#">yt</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal-sheet" id="modalSheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+  <div class="modal-inner">
+    <div class="modal-breadcrumb">Home &gt; <span id="mBreadcrumb">Order</span></div>
+
+    <div class="modal-body-grid">
+      <!-- LEFT: gambar -->
+      <div class="modal-col-left">
+        <div class="modal-image" id="mImage" style="margin:14px 24px 0;width:calc(100% - 48px);">🍱</div>
+      </div>
+
+      <!-- RIGHT: detail & order -->
+      <div class="modal-col-right">
+        <div class="modal-info-row">
+          <div class="modal-price" id="mPrice">Rp32.000</div>
+          <div class="modal-name" id="mName">Nasi Sapi Lada Hitam</div>
+        </div>
+
+        <div class="modal-divider"></div>
+
+        <div class="modal-meta">
+          <div class="modal-meta-row"><span class="label">Berat:</span> <span id="mWeight">150 gram</span></div>
+          <div class="modal-meta-row"><span class="label">Availability:</span> <span id="mAvailability" class="stock-badge">In Stock</span></div>
+        </div>
+
+        <div class="modal-qty-section">
+          <div class="modal-qty-label">Quantity</div>
+          <div class="modal-qty-control">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <input class="qty-value" id="qtyInput" type="number" value="5" min="1" readonly />
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+          <div class="qty-min-note" id="mMinNote">Minimum order 5 box</div>
+        </div>
+
+        <button class="modal-order-btn" onclick="addToCart()">ORDER</button>
+      </div>
+    </div>
+
+    <div class="modal-divider" style="margin:8px 32px;"></div>
+
+    <div class="modal-desc-section">
+      <div class="modal-section-title">Deskripsi</div>
+      <p class="modal-desc-text" id="mDesc"></p>
+
+      <div class="modal-section-title">Paket catering terdiri dari:</div>
+      <ul class="modal-list" id="mIncludes"></ul>
+
+      <div class="modal-section-title">Pengiriman:</div>
+      <ul class="modal-list" id="mDelivery"></ul>
+    </div>
+
+    <div class="modal-ask">✉ Tanyakan pertanyaan Anda di sini</div>
+  </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="order-modal-overlay" id="orderDetailOverlay" onclick="handleOrderDetailOverlay(event)">
+  <div class="order-modal-box" id="orderDetailBox">
+    <div class="order-modal-header">
+      <div class="order-modal-title">🧾 Detail Pesanan</div>
+      <button class="order-modal-close" onclick="closeOrderDetail()">✕</button>
+    </div>
+    <div class="order-modal-body" id="orderDetailBody">
+      <!-- diisi lewat JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══════════════════════════════════════════════
+     SUPABASE CONFIG
+  ══════════════════════════════════════════════ */
+  const SUPABASE_URL  = 'https://rrcgjwnllrdszypdtljq.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
+  const API_BASE      = SUPABASE_URL + '/rest/v1';
+
+  /* ══════════════════════════════════════════════
+     LOAD MENUS FROM SUPABASE
+  ══════════════════════════════════════════════ */
+  let allMenus = [];
+
+  async function loadMenus() {
+    try {
+      const res = await fetch(API_BASE + '/menus?order=created_at.asc', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      if (!res.ok) throw new Error('Gagal memuat menu');
+      const data = await res.json();
+      allMenus = data;
+      renderMenus(data);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('gridNasiBox').innerHTML   = '<div style="color:#e05050;font-size:13px;padding:20px 0;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
+      document.getElementById('gridTumpeng').innerHTML   = '';
+    }
+  }
+
+  function menuToModalData(m) {
+    return {
+      id:           m.id,
+      emoji:        m.emoji        || '🍱',
+      bg:           m.bg_gradient  || 'linear-gradient(135deg,#c8a87a,#a0784a)',
+      price:        'Rp' + Number(m.price).toLocaleString('id-ID'),
+      priceRaw:     m.price,
+      name:         m.name,
+      weight:       m.weight       || '-',
+      minOrder:     m.min_order    || 1,
+      category:     m.category,
+      desc:         m.description  || '',
+      includes:     m.includes     || [],
+      delivery:     m.delivery_info || [],
+      image_url:    m.image_url    || null,
+      availability: m.availability || 'in_stock',
+    };
+  }
+
+  function buildCard(m) {
+    const d = menuToModalData(m);
+    const imgContent = d.image_url
+      ? `<img src="${d.image_url}" alt="${d.name}" style="width:100%;height:100%;object-fit:cover;" />`
+      : `<span style="font-size:36px">${d.emoji}</span>`;
+    const imgBg = d.image_url ? '#f5f0eb' : '';
+    const isOut = d.availability === 'out_of_stock';
+    const isLimited = d.availability === 'limited';
+    const ribbon = isOut
+      ? '<div class="card-stock-ribbon">Habis</div>'
+      : isLimited
+        ? '<div class="card-stock-ribbon limited">Terbatas</div>'
+        : '';
+    return `
+      <div class="menu-card${isOut ? ' is-out-of-stock' : ''}" onclick="openModal(allMenus.find(x=>x.id==='${m.id}') ? menuToModalData(allMenus.find(x=>x.id==='${m.id}')) : {})">
+        ${ribbon}
+        <div class="img-placeholder" style="background:${imgBg || d.bg};display:flex;align-items:center;justify-content:center;">${imgContent}</div>
+        <div class="menu-card-body">
+          <div class="price-badge">${Number(m.price).toLocaleString('id-ID')}</div>
+          <div class="menu-card-name">${m.name}</div>
+        </div>
+      </div>`;
+  }
+
+  function renderMenus(data) {
+    const nasiBox   = data.filter(m => m.category === 'Menu Nasi Box');
+    const tumpeng   = data.filter(m => m.category === 'Menu Nasi Tumpeng');
+    const others    = {};
+
+    data.forEach(m => {
+      if (m.category !== 'Menu Nasi Box' && m.category !== 'Menu Nasi Tumpeng') {
+        if (!others[m.category]) others[m.category] = [];
+        others[m.category].push(m);
+      }
+    });
+
+    document.getElementById('gridNasiBox').innerHTML =
+      nasiBox.length ? nasiBox.map(buildCard).join('') : '<div style="color:#bbb;font-size:13px;padding:16px 0;">Belum ada menu di kategori ini.</div>';
+
+    document.getElementById('gridTumpeng').innerHTML =
+      tumpeng.length ? tumpeng.map(buildCard).join('') : '<div style="color:#bbb;font-size:13px;padding:16px 0;">Belum ada menu di kategori ini.</div>';
+
+    // Render kategori tambahan
+    const extraEl = document.getElementById('extraSections');
+    extraEl.innerHTML = '';
+    Object.entries(others).forEach(([cat, items]) => {
+      const sec = document.createElement('section');
+      sec.className = 'section';
+      sec.innerHTML = `<h2 class="section-title">${cat}</h2><div class="menu-grid">${items.map(buildCard).join('')}</div>`;
+      extraEl.appendChild(sec);
+    });
+
+    // Update menuData untuk search
+    menuData.length = 0;
+    data.forEach(m => menuData.push(menuToModalData(m)));
+  }
+
+  let currentMinOrder = 5;
+  let currentItem = null;
+  let cart = [];
+
+  /* ── MODAL ── */
+  function openModal(data) {
+    if (!data || !data.name) return;
+    currentMinOrder = data.minOrder || 1;
+    currentItem = data;
+
+    document.getElementById('mBreadcrumb').textContent = data.name;
+
+    const mImage = document.getElementById('mImage');
+    if (data.image_url) {
+      mImage.style.background = '#f5f0eb';
+      mImage.innerHTML = `<img src="${data.image_url}" alt="${data.name}" style="width:100%;height:100%;object-fit:cover;" />`;
+    } else {
+      mImage.style.background = data.bg;
+      mImage.textContent = data.emoji;
+    }
+
+    document.getElementById('mPrice').textContent  = data.price;
+    document.getElementById('mName').textContent   = data.name;
+    document.getElementById('mWeight').textContent = data.weight;
+    document.getElementById('mDesc').textContent   = data.desc;
+    document.getElementById('mMinNote').textContent = 'Minimum order ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' box');
+    document.getElementById('qtyInput').value = currentMinOrder;
+
+    // Availability
+    const avEl = document.getElementById('mAvailability');
+    const avMap = {
+      in_stock:    { label: 'In Stock',     cls: '' },
+      out_of_stock:{ label: 'Out of Stock', cls: 'out-of-stock' },
+      limited:     { label: 'Stok Terbatas',cls: 'limited' },
+    };
+    const av = avMap[data.availability] || avMap['in_stock'];
+    avEl.textContent = av.label;
+    avEl.className = 'stock-badge ' + av.cls;
+
+    // Order button
+    const orderBtn = document.querySelector('.modal-order-btn');
+    if (data.availability === 'out_of_stock') {
+      orderBtn.disabled = true;
+      orderBtn.textContent = 'Habis';
+      orderBtn.style.opacity = '.5';
+      orderBtn.style.cursor = 'not-allowed';
+    } else {
+      orderBtn.disabled = false;
+      orderBtn.textContent = 'ORDER';
+      orderBtn.style.opacity = '';
+      orderBtn.style.cursor = '';
+    }
+
+    document.getElementById('mIncludes').innerHTML = (data.includes || []).map(i => `<li>${i}</li>`).join('');
+    document.getElementById('mDelivery').innerHTML = (data.delivery || []).map(d => `<li>${d}</li>`).join('');
+
+    const overlay = document.getElementById('modalOverlay');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
+    document.body.style.overflow = 'hidden';
+    document.getElementById('modalSheet').scrollTop = 0;
+  }
+
+  function closeModal() {
+    const overlay = document.getElementById('modalOverlay');
+    overlay.classList.remove('active');
+    setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = ''; }, 380);
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function changeQty(delta) {
+    const input = document.getElementById('qtyInput');
+    let val = parseInt(input.value) + delta;
+    if (val < currentMinOrder) val = currentMinOrder;
+    input.value = val;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeCart(); closeSearch(); }
+  });
+
+  /* ── CART ── */
+  function addToCart() {
+    if (!currentItem) return;
+    if (currentItem.availability === 'out_of_stock') {
+      showToast('Maaf, menu ini sedang habis 🙏');
+      return;
+    }
+    const qty = parseInt(document.getElementById('qtyInput').value);
+    const priceNum = currentItem.priceRaw || parseInt((currentItem.price || '').replace(/[^0-9]/g, ''));
+
+    const existing = cart.find(c => c.name === currentItem.name);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.push({
+        name: currentItem.name,
+        emoji: currentItem.emoji,
+        bg: currentItem.bg,
+        image_url: currentItem.image_url || null,
+        price: priceNum,
+        priceLabel: currentItem.price,
+        qty: qty,
+        minOrder: currentMinOrder,
+      });
+    }
+    updateCartUI();
+    closeModal();
+    showToast('✅ ' + currentItem.name + ' ditambahkan ke keranjang!');
+  }
+
+  function updateCartUI() {
+    const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const totalItems = cart.reduce((s, c) => s + c.qty, 0);
+
+    const badge = document.getElementById('cartBadge');
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+
+    const itemsEl  = document.getElementById('cartItems');
+    const footerEl = document.getElementById('cartFooter');
+
+    if (cart.length === 0) {
+      itemsEl.innerHTML = '<div class="cart-empty">Keranjang masih kosong 🍽️</div>';
+      footerEl.style.display = 'none';
+      return;
+    }
+
+    footerEl.style.display = 'block';
+    document.getElementById('cartTotal').textContent = 'Rp' + total.toLocaleString('id-ID');
+
+    itemsEl.innerHTML = cart.map((item, idx) => {
+      const iconContent = item.image_url
+        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        : item.emoji;
+      const iconBg = item.image_url ? '#f5f0eb' : item.bg;
+      return `
+        <div class="cart-item">
+          <div class="cart-item-icon" style="background:${iconBg}">${iconContent}</div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">Rp${(item.price * item.qty).toLocaleString('id-ID')}</div>
+            <div class="cart-item-qty">
+              <button onclick="cartChangeQty(${idx}, -1)">−</button>
+              <span>${item.qty}</span>
+              <button onclick="cartChangeQty(${idx}, 1)">+</button>
+            </div>
+          </div>
+          <button class="cart-item-delete" onclick="removeFromCart(${idx})" title="Hapus">🗑</button>
+        </div>`;
+    }).join('');
+  }
+
+  function cartChangeQty(idx, delta) {
+    cart[idx].qty += delta;
+    if (cart[idx].qty < cart[idx].minOrder) cart[idx].qty = cart[idx].minOrder;
+    updateCartUI();
+  }
+
+  function removeFromCart(idx) {
+    cart.splice(idx, 1);
+    updateCartUI();
+  }
+
+  function clearCart() {
+    cart = [];
+    updateCartUI();
+  }
+
+  function toggleCart() {
+    const overlay = document.getElementById('cartOverlay');
+    const isOpen = overlay.classList.contains('active');
+    if (isOpen) {
+      closeCart();
+    } else {
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      const icon = document.getElementById('cartTitleIcon');
+      icon.classList.remove('bounce');
+      void icon.offsetWidth;
+      icon.classList.add('bounce');
+      const header = overlay.querySelector('.cart-header');
+      header.classList.remove('shimmer');
+      void header.offsetWidth;
+      header.classList.add('shimmer');
+      setTimeout(() => header.classList.remove('shimmer'), 800);
+    }
+  }
+
+  function closeCart() {
+    const overlay = document.getElementById('cartOverlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function handleCartOverlay(e) {
+    if (e.target === document.getElementById('cartOverlay')) closeCart();
+  }
+
+  /* ── SEARCH ── */
+  const menuData = [];  // akan diisi dari Supabase
+
+  function toggleSearch() {
+    const overlay = document.getElementById('searchOverlay');
+    const isOpen = overlay.classList.contains('active');
+    if (isOpen) {
+      closeSearch();
+    } else {
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('searchInput').focus(), 80);
+      document.getElementById('searchResults').innerHTML = '<div class="search-hint">Ketik nama menu yang ingin dicari 🔍</div>';
+    }
+  }
+
+  function closeSearch() {
+    const overlay = document.getElementById('searchOverlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').style.display = 'none';
+  }
+
+  document.getElementById('searchOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSearch();
+  });
+
+  function handleSearchOverlay(e) {
+    if (e.target === document.getElementById('searchOverlay')) closeSearch();
+  }
+
+  function highlightMatch(text, query) {
+    if (!query) return text;
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(re, '<mark>$1</mark>');
+  }
+
+  function doSearch(val) {
+    const clear = document.getElementById('searchClear');
+    const results = document.getElementById('searchResults');
+    clear.style.display = val ? 'inline-block' : 'none';
+
+    if (!val.trim()) {
+      results.innerHTML = '<div class="search-hint">Ketik nama menu yang ingin dicari 🔍</div>';
+      return;
+    }
+
+    const q = val.trim().toLowerCase();
+    const filtered = menuData.filter(m => m.name.toLowerCase().includes(q) || (m.category || '').toLowerCase().includes(q));
+
+    if (filtered.length === 0) {
+      results.innerHTML = '<div class="search-no-result">Tidak ada menu yang cocok 😕</div>';
+      return;
+    }
+
+    results.innerHTML = filtered.map((m, i) => {
+      const idx = menuData.indexOf(m);
+      return `
+        <div class="search-result-item" onclick="closeSearch(); setTimeout(()=>openModal(menuData[${idx}]), 150);">
+          <div class="search-result-icon" style="background:${m.bg}">${m.image_url ? `<img src="${m.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />` : m.emoji}</div>
+          <div class="search-result-info">
+            <div class="search-result-name">${highlightMatch(m.name, val.trim())}</div>
+            <div class="search-result-price">${m.price}</div>
+            <div class="search-result-category">${m.category}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>`;
+    }).join('');
+  }
+
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = '<div class="search-hint">Ketik nama menu yang ingin dicari 🔍</div>';
+    document.getElementById('searchInput').focus();
+  }
+
+  /* ── TOAST ── */
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  /* ══════════════════════════════════════════════
+     AUTH GUARD + SESSION (tabel "users" custom,
+     TANPA Supabase Authentication)
+  ══════════════════════════════════════════════ */
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('nf_session')); }
+    catch { return null; }
+  }
+  function clearSession() {
+    localStorage.removeItem('nf_session');
+  }
+  function saveSession(data) {
+    localStorage.setItem('nf_session', JSON.stringify(data));
+  }
+
+  // Run auth check immediately
+  (function checkAuth() {
+    const session = getSession();
+    if (!session) {
+      document.getElementById('authGuard').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    } else {
+      initAccountUI(session);
+      refreshProfileFromServer(session);
+    }
+  })();
+
+  // Ambil data terbaru dari Supabase (nama/alamat/telepon/foto bisa saja
+  // diubah dari tempat lain) agar panel akun selalu mengikuti data server.
+  async function refreshProfileFromServer(session) {
+    try {
+      const res = await fetch(API_BASE + '/users?id=eq.' + session.id + '&select=*', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      const user = Array.isArray(rows) ? rows[0] : null;
+      if (!user) return;
+
+      const updated = {
+        ...session,
+        name:       user.full_name  || '',
+        address:    user.address    || '',
+        phone:      user.phone      || '',
+        avatar_url: user.avatar_url || '',
+      };
+      saveSession(updated);
+      initAccountUI(updated);
+    } catch (_) { /* offline, biarkan data lokal yang dipakai */ }
+  }
+
+  /* ══════════════════════════════════════════════
+     ACCOUNT PANEL
+  ══════════════════════════════════════════════ */
+  function initAccountUI(session) {
+    if (!session) return;
+    document.getElementById('accountDisplayName').textContent = session.name || '—';
+    document.getElementById('accountDisplayEmail').textContent = session.email || '—';
+    document.getElementById('fieldNameVal').textContent    = session.name    || '—';
+    document.getElementById('fieldAddressVal').textContent = session.address || '—';
+    document.getElementById('fieldPhoneVal').textContent   = session.phone   || '—';
+    document.getElementById('fieldNameInput').value    = session.name    || '';
+    document.getElementById('fieldAddressInput').value = session.address || '';
+    document.getElementById('fieldPhoneInput').value   = session.phone   || '';
+
+    updateAvatarUI(session.avatar_url);
+  }
+
+  function updateAvatarUI(avatarUrl) {
+    const display  = document.getElementById('accountAvatarDisplay');
+    const btnInner = document.getElementById('accountBtnInner');
+    const removeBtn = document.getElementById('avatarRemoveBtn');
+
+    if (avatarUrl) {
+      display.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Avatar" />`;
+      btnInner.innerHTML = `<img src="${avatarUrl}" class="account-avatar-btn" alt="Profil" />`;
+      if (removeBtn) removeBtn.style.display = 'inline-block';
+    } else {
+      display.textContent = '👤';
+      btnInner.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+      if (removeBtn) removeBtn.style.display = 'none';
+    }
+  }
+
+  function toggleAccountPanel() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = 'login.html?redirect=catering.html';
+      return;
+    }
+    const overlay = document.getElementById('accountOverlay');
+    if (overlay.classList.contains('active')) {
+      closeAccountPanel();
+    } else {
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeAccountPanel() {
+    document.getElementById('accountOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+    ['name','address','phone'].forEach(f => cancelEditField(f));
+    document.getElementById('accountSaveBtn').style.display = 'none';
+  }
+
+  function handleAccountOverlay(e) {
+    if (e.target === document.getElementById('accountOverlay')) closeAccountPanel();
+  }
+
+  // Inline field editing
+  function editField(field) {
+    const map = {
+      name:    ['fieldNameVal',    'fieldNameInput'],
+      address: ['fieldAddressVal', 'fieldAddressInput'],
+      phone:   ['fieldPhoneVal',   'fieldPhoneInput'],
+    };
+    const [valId, inpId] = map[field];
+    document.getElementById(valId).style.display = 'none';
+    const inp = document.getElementById(inpId);
+    inp.style.display = 'block';
+    inp.focus();
+  }
+
+  function cancelEditField(field) {
+    const map = {
+      name:    ['fieldNameVal',    'fieldNameInput'],
+      address: ['fieldAddressVal', 'fieldAddressInput'],
+      phone:   ['fieldPhoneVal',   'fieldPhoneInput'],
+    };
+    const [valId, inpId] = map[field];
+    document.getElementById(valId).style.display = '';
+    document.getElementById(inpId).style.display = 'none';
+  }
+
+  function showSaveBtn() {
+    document.getElementById('accountSaveBtn').style.display = 'block';
+  }
+
+  async function saveProfile() {
+    const session = getSession();
+    if (!session) return;
+    const btn = document.getElementById('accountSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const newName    = document.getElementById('fieldNameInput').value.trim()    || session.name;
+    const newAddress = document.getElementById('fieldAddressInput').value.trim() || session.address;
+    const newPhone   = document.getElementById('fieldPhoneInput').value.trim()   || session.phone;
+
+    try {
+      const res = await fetch(API_BASE + '/users?id=eq.' + session.id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ full_name: newName, address: newAddress, phone: newPhone })
+      });
+
+      if (res.ok || res.status === 204) {
+        const updated = { ...session, name: newName, address: newAddress, phone: newPhone };
+        saveSession(updated);
+        initAccountUI(updated);
+        document.getElementById('accountSaveBtn').style.display = 'none';
+        ['name','address','phone'].forEach(cancelEditField);
+        showToast('✅ Profil berhasil disimpan!');
+      } else {
+        showToast('❌ Gagal menyimpan. Coba lagi.');
+      }
+    } catch {
+      showToast('❌ Kesalahan jaringan.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Simpan Perubahan';
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     AVATAR UPLOAD & HAPUS (Supabase Storage)
+  ══════════════════════════════════════════════ */
+  async function handleAvatarUpload(event) {
+    const session = getSession();
+    if (!session) return;
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Preview lokal langsung agar terasa instan
+    const reader = new FileReader();
+    reader.onload = e => updateAvatarUI(e.target.result);
+    reader.readAsDataURL(file);
+
+    showToast('⏳ Mengupload foto...');
+
+    try {
+      const ext      = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const filePath = `avatars/${session.id}.${ext}`;
+      const uploadRes = await fetch(
+        SUPABASE_URL + '/storage/v1/object/avatars/' + filePath,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': file.type,
+            'x-upsert': 'true',
+          },
+          body: file
+        }
+      );
+
+      if (uploadRes.ok) {
+        const publicUrl = SUPABASE_URL + '/storage/v1/object/public/avatars/' + filePath + '?t=' + Date.now();
+        await fetch(API_BASE + '/users?id=eq.' + session.id, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ avatar_url: publicUrl })
+        });
+        const updated = { ...session, avatar_url: publicUrl };
+        saveSession(updated);
+        updateAvatarUI(publicUrl);
+        showToast('✅ Foto profil diperbarui!');
+      } else {
+        showToast('❌ Upload gagal. Periksa bucket "avatars" di Supabase Storage.');
+      }
+    } catch {
+      showToast('⚠️ Foto ditampilkan lokal saja, gagal upload ke server.');
+    }
+
+    event.target.value = '';
+  }
+
+  async function removeAvatar(event) {
+    if (event) event.stopPropagation();
+    const session = getSession();
+    if (!session || !session.avatar_url) return;
+
+    showToast('⏳ Menghapus foto...');
+
+    try {
+      // Coba hapus file fisik dari storage (best-effort)
+      const urlParts = session.avatar_url.split('/avatars/');
+      if (urlParts[1]) {
+        const filePath = 'avatars/' + urlParts[1].split('?')[0];
+        await fetch(SUPABASE_URL + '/storage/v1/object/avatars/' + filePath, {
+          method: 'DELETE',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+      }
+
+      await fetch(API_BASE + '/users?id=eq.' + session.id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ avatar_url: '' })
+      });
+
+      const updated = { ...session, avatar_url: '' };
+      saveSession(updated);
+      updateAvatarUI('');
+      showToast('🗑️ Foto profil dihapus.');
+    } catch {
+      showToast('❌ Gagal menghapus foto. Coba lagi.');
+    }
+  }
+
+  /* ══════════════════════════════════════════════
+     LOGOUT
+  ══════════════════════════════════════════════ */
+  function doLogout() {
+    clearSession();
+    window.location.href = 'login.html';
+  }
+
+  function goToCheckout() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = 'login.html?redirect=pembayaran.html';
+      return;
+    }
+    if (!cart.length) {
+      showToast('Keranjang masih kosong!');
+      return;
+    }
+    // Simpan cart ke localStorage agar terbaca di pembayaran.html
+    localStorage.setItem('nf_cart', JSON.stringify(cart));
+    window.location.href = 'pembayaran.html';
+  }
+
+  loadMenus();
+
+  /* ══════════════════════════════════════════════
+     NOTIFICATION SYSTEM — pesanan dari Supabase
+  ══════════════════════════════════════════════ */
+  let _notifOpen = false;
+  let _notifData  = [];
+
+  function toggleNotif(e) {
+    e.stopPropagation();
+    _notifOpen = !_notifOpen;
+    document.getElementById('notifDropdown').classList.toggle('open', _notifOpen);
+    if (_notifOpen) {
+      loadNotifData();
+      // close on outside click
+      setTimeout(() => document.addEventListener('click', _closeNotifOutside), 10);
+    } else {
+      document.removeEventListener('click', _closeNotifOutside);
+    }
+  }
+
+  function _closeNotifOutside(e) {
+    const wrap = document.getElementById('notifWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      _notifOpen = false;
+      document.getElementById('notifDropdown').classList.remove('open');
+      document.removeEventListener('click', _closeNotifOutside);
+    }
+  }
+
+  async function loadNotifData() {
+    const list = document.getElementById('notifDdList');
+    const session = getSession();
+    if (!session) {
+      list.innerHTML = '<div class="notif-dd-empty"><div class="ico">🔒</div><div>Masuk untuk melihat notifikasi</div></div>';
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        API_BASE + '/pesanan?user_id=eq.' + session.id
+        + '&select=id,status,confirmed_at,completed_at,cancelled_at,delivery_date,delivery_confirmed_date,created_at,items,total_amount'
+        + '&order=created_at.desc&limit=20',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!res.ok) throw new Error('Gagal memuat');
+      _notifData = (await res.json()) || [];
+      renderNotifList();
+    } catch(err) {
+      list.innerHTML = '<div class="notif-dd-empty"><div class="ico">⚠️</div><div>' + err.message + '</div></div>';
+    }
+  }
+
+  function renderNotifList() {
+    const list  = document.getElementById('notifDdList');
+    const badge = document.getElementById('notifBadgeDot');
+
+    if (!_notifData.length) {
+      list.innerHTML = '<div class="notif-dd-empty"><div class="ico">📭</div><div>Belum ada pesanan</div></div>';
+      badge.classList.remove('show');
+      return;
+    }
+
+    // Cek ID yang sudah dibaca
+    let readIds = [];
+    try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
+
+    const unreadItems = _notifData.filter(o => o.status === 'dikonfirmasi' && !readIds.includes(o.id));
+    const unreadCount = unreadItems.length;
+
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+
+    list.innerHTML = _notifData.map(order => {
+      const isConfirmed = order.status === 'dikonfirmasi';
+      const isWaiting   = order.status === 'menunggu_konfirmasi';
+      const isDikirim   = order.status === 'dikirim';
+      const isUnread    = isConfirmed && !readIds.includes(order.id);
+
+      const iconClass = isConfirmed || isDikirim ? 'notif-dd-icon confirmed' : 'notif-dd-icon';
+      const icon = isConfirmed ? '✅' : isDikirim ? '🚚' : isWaiting ? '⏳' : '📦';
+      const statusMap = {
+        menunggu_konfirmasi: 'Menunggu konfirmasi penjual',
+        dikonfirmasi:        'Pesanan dikonfirmasi penjual',
+        dikirim:             'Pesanan sedang dikirim',
+        selesai:             'Pesanan selesai',
+        dibatalkan:          'Pesanan dibatalkan',
+      };
+      const statusLabel = statusMap[order.status] || order.status;
+      const timeAgo     = _timeAgo(new Date(order.created_at));
+      const total       = order.total_amount ? 'Rp ' + order.total_amount.toLocaleString('id-ID') : '';
+
+      let deliveryLine = '';
+      if ((isConfirmed || isDikirim) && order.delivery_confirmed_date) {
+        const dDate = new Date(order.delivery_confirmed_date + 'T00:00:00');
+        const dStr  = dDate.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+        deliveryLine = '<div class="notif-dd-delivery">🚚 Diantar: ' + dStr + '</div>';
+      }
+
+      return '<div class="notif-dd-item ' + (isUnread ? 'unread' : '') + '" onclick="openOrderDetail(\'' + order.id + '\')">'
+        + '<div class="notif-dd-row">'
+        + '<div class="' + iconClass + '">' + icon + '</div>'
+        + '<div class="notif-dd-body">'
+        + '<div class="notif-dd-name">' + statusLabel + '</div>'
+        + (total ? '<div class="notif-dd-status">' + total + '</div>' : '')
+        + deliveryLine
+        + '</div>'
+        + (isUnread ? '<div class="notif-dd-unread-dot"></div>' : '')
+        + '<div class="notif-dd-time">' + timeAgo + '</div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function clearNotifRead() {
+    // Tandai semua item sebagai sudah dibaca secara visual
+    document.querySelectorAll('.notif-dd-item.unread').forEach(el => el.classList.remove('unread'));
+    document.querySelectorAll('.notif-dd-unread-dot').forEach(el => el.remove());
+    // Hilangkan badge angka di icon bell
+    const badge = document.getElementById('notifBadgeDot');
+    badge.textContent = '0';
+    badge.classList.remove('show');
+    // Simpan state sudah dibaca ke localStorage
+    const readIds = _notifData.map(o => o.id);
+    localStorage.setItem('nf_notif_read', JSON.stringify(readIds));
+  }
+
+  function _timeAgo(date) {
+    const diff = Math.floor((Date.now() - date) / 1000);
+    if (diff < 60)    return diff + 'd lalu';
+    if (diff < 3600)  return Math.floor(diff/60) + 'm lalu';
+    if (diff < 86400) return Math.floor(diff/3600) + 'j lalu';
+    return Math.floor(diff/86400) + ' hari lalu';
+  }
+
+  /* ══════════════════════════════════════════════
+     ORDER DETAIL MODAL
+  ══════════════════════════════════════════════ */
+  function openOrderDetail(orderId) {
+    const order = _notifData.find(o => o.id === orderId);
+    if (!order) return;
+
+    // Tutup dropdown notif
+    _notifOpen = false;
+    document.getElementById('notifDropdown').classList.remove('open');
+    document.removeEventListener('click', _closeNotifOutside);
+
+    // Tandai order ini sebagai sudah dibaca
+    let readIds = [];
+    try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
+    if (!readIds.includes(orderId)) {
+      readIds.push(orderId);
+      localStorage.setItem('nf_notif_read', JSON.stringify(readIds));
+    }
+    // Update badge — recalculate unread
+    const unreadNow = _notifData.filter(o => o.status === 'dikonfirmasi' && !readIds.includes(o.id));
+    const badge = document.getElementById('notifBadgeDot');
+    if (unreadNow.length > 0) {
+      badge.textContent = unreadNow.length > 9 ? '9+' : unreadNow.length;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+    // Update visual di dropdown juga
+    const itemEls = document.querySelectorAll('.notif-dd-item');
+    _notifData.forEach((o, idx) => {
+      if (o.id === orderId && itemEls[idx]) {
+        itemEls[idx].classList.remove('unread');
+        const dot = itemEls[idx].querySelector('.notif-dd-unread-dot');
+        if (dot) dot.remove();
+      }
+    });
+
+    // Render isi modal
+    const statusMap = {
+      menunggu_konfirmasi: { label: 'Menunggu Konfirmasi', icon: '⏳', sub: 'Penjual sedang memproses pesananmu' },
+      dikonfirmasi:        { label: 'Dikonfirmasi',         icon: '✅', sub: 'Pesananmu telah dikonfirmasi penjual' },
+      dikirim:             { label: 'Sedang Dikirim',       icon: '🚚', sub: 'Pesananmu dalam perjalanan' },
+      selesai:             { label: 'Selesai',              icon: '🎉', sub: 'Pesananmu telah diterima' },
+      dibatalkan:          { label: 'Dibatalkan',           icon: '❌', sub: 'Pesanan ini telah dibatalkan' },
+    };
+    const st = statusMap[order.status] || { label: order.status, icon: '📦', sub: '' };
+
+    const fmtDate = (d) => {
+      if (!d) return '—';
+      return new Date(d).toLocaleString('id-ID', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    };
+    const fmtDateOnly = (d) => {
+      if (!d) return '—';
+      return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    };
+
+    // Parse items
+    let items = [];
+    try {
+      items = Array.isArray(order.items) ? order.items
+            : (typeof order.items === 'string' ? JSON.parse(order.items) : []);
+    } catch { items = []; }
+
+    // Timeline steps — sesuai kolom Supabase: created_at, confirmed_at, sent_at, completed_at / cancelled_at
+    const isCancelled = order.status === 'dibatalkan';
+    const tlSteps = isCancelled
+      ? [
+          { key: 'menunggu_konfirmasi', label: 'Pesanan Diterima',     time: order.created_at,   done: true },
+          { key: 'dibatalkan',          label: 'Pesanan Dibatalkan',   time: order.cancelled_at, done: true, isCancel: true },
+        ]
+      : [
+          { key: 'menunggu_konfirmasi', label: 'Pesanan Diterima',     time: order.created_at },
+          { key: 'dikonfirmasi',        label: 'Dikonfirmasi Penjual', time: order.confirmed_at },
+          { key: 'dikirim',             label: 'Sedang Dikirim',       time: order.sent_at },
+          { key: 'selesai',             label: 'Pesanan Selesai',      time: order.completed_at },
+        ];
+
+    const statusOrder = ['menunggu_konfirmasi', 'dikonfirmasi', 'dikirim', 'selesai'];
+    const currentIdx  = statusOrder.indexOf(order.status);
+
+    const timelineHtml = tlSteps.map((step, i) => {
+      let isDone, isActive;
+      if (isCancelled) {
+        isDone = true; isActive = i === tlSteps.length - 1;
+      } else {
+        isDone   = i <= currentIdx;
+        isActive = statusOrder[currentIdx] === step.key;
+      }
+
+      const dotCls  = step.isCancel ? 'order-tl-dot' + ' active' : (isActive ? 'order-tl-dot active' : (isDone ? 'order-tl-dot done' : 'order-tl-dot'));
+      const lineCls = isDone && i < tlSteps.length - 1 ? 'order-tl-line done' : 'order-tl-line';
+
+      let timeStr = '—';
+      if (step.time) timeStr = fmtDate(step.time);
+      else if (!isDone) timeStr = '—';
+
+      return '<div class="order-tl-step">'
+        + '<div class="order-tl-dot-wrap"><div class="' + dotCls + '" style="' + (step.isCancel ? 'background:#e53935' : '') + '"></div>'
+        + (i < tlSteps.length - 1 ? '<div class="' + lineCls + '"></div>' : '')
+        + '</div>'
+        + '<div class="order-tl-content"><div class="order-tl-title" style="' + (step.isCancel ? 'color:#e53935' : '') + '">' + step.label + '</div>'
+        + '<div class="order-tl-time">' + (isDone || isActive ? timeStr : '—') + '</div></div>'
+        + '</div>';
+    }).join('');
+
+    const itemsHtml = items.length
+      ? items.map(item => {
+          // Support dua format field: menu_name/menu_id (dari pembayaran.html) atau name (lama)
+          const itemName  = item.menu_name || item.name || 'Item';
+          const qty       = item.qty || 1;
+          const unitPrice = item.unit_price || item.price || 0;
+          const subtotal  = item.subtotal || (unitPrice * qty);
+          const imgUrl    = item.image_url || null;
+          const emoji     = item.emoji || '🍱';
+
+          // Cari foto dari allMenus jika image_url tidak ada di item
+          let resolvedImg = imgUrl;
+          if (!resolvedImg && item.menu_id) {
+            const menuRef = allMenus.find(m => m.id === item.menu_id);
+            if (menuRef && menuRef.image_url) resolvedImg = menuRef.image_url;
+          }
+          if (!resolvedImg && !imgUrl) {
+            // Cari berdasarkan nama
+            const menuRef = allMenus.find(m => m.name === itemName);
+            if (menuRef && menuRef.image_url) resolvedImg = menuRef.image_url;
+          }
+
+          const thumbHtml = resolvedImg
+            ? '<img src="' + resolvedImg + '" alt="' + itemName + '" onerror="this.parentElement.innerHTML=\'' + emoji + '\'" />'
+            : emoji;
+
+          return '<div class="order-item-row">'
+            + '<div class="order-item-thumb">' + thumbHtml + '</div>'
+            + '<div class="order-item-info">'
+            + '<div class="order-item-name">' + itemName + '</div>'
+            + '<span class="order-item-qty">×' + qty + '</span>'
+            + '</div>'
+            + '<div>'
+            + '<div class="order-item-price">Rp' + subtotal.toLocaleString('id-ID') + '</div>'
+            + (qty > 1 ? '<div class="order-item-unit-price">@Rp' + unitPrice.toLocaleString('id-ID') + '</div>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('')
+      : '<div style="color:#bbb;font-size:13px;text-align:center;padding:12px;">Detail item tidak tersedia</div>';
+
+    const deliveryDateStr = order.delivery_confirmed_date ? fmtDateOnly(order.delivery_confirmed_date) : '—';
+
+    document.getElementById('orderDetailBody').innerHTML =
+      '<div class="order-status-banner ' + order.status + '">'
+      + '<div class="order-status-icon">' + st.icon + '</div>'
+      + '<div><div class="order-status-label">' + st.label + '</div>'
+      + '<div class="order-status-sub">' + st.sub + '</div></div>'
+      + '</div>'
+
+      + '<div class="order-detail-section">'
+      + '<div class="order-detail-section-title">Info Pesanan</div>'
+      + '<div class="order-info-card">'
+      + '<div class="order-info-row"><span class="order-info-label">ID Pesanan</span><span class="order-info-value">#' + String(orderId).slice(-8).toUpperCase() + '</span></div>'
+      + '<div class="order-info-row"><span class="order-info-label">Tanggal Pesan</span><span class="order-info-value">' + fmtDate(order.created_at) + '</span></div>'
+      + '<div class="order-info-row"><span class="order-info-label">Tanggal Antar</span><span class="order-info-value">' + deliveryDateStr + '</span></div>'
+      + '<div class="order-info-row"><span class="order-info-label">Total</span><span class="order-info-value total">Rp' + (order.total_amount || 0).toLocaleString('id-ID') + '</span></div>'
+      + '</div></div>'
+
+      + '<div class="order-detail-section">'
+      + '<div class="order-detail-section-title">Item Pesanan</div>'
+      + '<div class="order-items-list">' + itemsHtml + '</div>'
+      + '</div>'
+
+      + '<div class="order-detail-section">'
+      + '<div class="order-detail-section-title">Status Perjalanan</div>'
+      + '<div class="order-timeline">' + timelineHtml + '</div>'
+      + '</div>'
+
+      + '<button class="order-modal-dismiss-btn" onclick="closeOrderDetail()">Tutup</button>';
+
+    const overlay = document.getElementById('orderDetailOverlay');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOrderDetail() {
+    const overlay = document.getElementById('orderDetailOverlay');
+    overlay.classList.remove('active');
+    setTimeout(() => { overlay.style.display = 'none'; document.body.style.overflow = ''; }, 280);
+  }
+
+  function handleOrderDetailOverlay(e) {
+    if (e.target === document.getElementById('orderDetailOverlay')) closeOrderDetail();
+  }
+
+
+  setInterval(() => {
+    const session = getSession();
+    if (!session || _notifOpen) return;
+    fetch(
+      API_BASE + '/pesanan?user_id=eq.' + session.id + '&status=eq.dikonfirmasi&select=id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    ).then(r => r.json()).then(data => {
+      let readIds = [];
+      try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
+      const unread = (data || []).filter(o => !readIds.includes(o.id));
+      const count = unread.length;
+      const badge = document.getElementById('notifBadgeDot');
+      if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.add('show'); }
+      else badge.classList.remove('show');
+    }).catch(() => {});
+  }, 60000);
+
+  // Load badge on init (after a short delay)
+  setTimeout(() => {
+    const session = getSession();
+    if (!session) return;
+    fetch(
+      API_BASE + '/pesanan?user_id=eq.' + session.id + '&status=eq.dikonfirmasi&select=id',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    ).then(r => r.json()).then(data => {
+      let readIds = [];
+      try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
+      const unread = (data || []).filter(o => !readIds.includes(o.id));
+      const count = unread.length;
+      if (count > 0) {
+        const badge = document.getElementById('notifBadgeDot');
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.classList.add('show');
+      }
+    }).catch(() => {});
+  }, 1200);
+
+</script>
+</body>
+</html>

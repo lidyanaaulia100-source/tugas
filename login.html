@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buat Akun — NusantaraFood</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brown-dark: #3d1f0a;
+      --brown-mid:  #5c2d0e;
+      --amber:      #e8a020;
+      --amber-dark: #c8880e;
+      --cream:      #fdf6ee;
+      --white:      #ffffff;
+      --text-main:  #2a1200;
+      --text-muted: #7a5c3a;
+      --radius:     10px;
+      --red:        #e05050;
+      --green:      #2e7d32;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      padding: 14px 48px;
+      background: var(--brown-dark);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--amber); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-logo span {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; color: var(--white); letter-spacing: .5px;
+    }
+    @media (max-width: 600px) { nav { padding: 12px 20px; } }
+
+    main {
+      flex: 1; display: flex; align-items: center;
+      justify-content: center; padding: 40px 20px;
+    }
+
+    .auth-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 4px 32px rgba(60,20,0,.12);
+      width: 100%; max-width: 460px;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .auth-header { padding: 32px 32px 0; text-align: center; }
+    .auth-icon { font-size: 40px; margin-bottom: 10px; }
+    .auth-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 700; color: var(--brown-dark); margin-bottom: 6px;
+    }
+    .auth-sub { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* FORM */
+    .auth-form { padding: 24px 32px 28px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: .8px; margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #e8e0d8; border-radius: var(--radius);
+      font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text-main);
+      background: var(--cream); transition: border-color .2s, background .2s;
+      outline: none; -webkit-appearance: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: var(--amber); background: var(--white); }
+    .form-group textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+    /* Password wrapper with show/hide toggle */
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 42px; }
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: #bbb;
+      font-size: 16px; padding: 4px; line-height: 1;
+      transition: color .2s;
+    }
+    .pw-toggle:hover { color: var(--text-muted); }
+
+    /* SUBMIT BTN */
+    .auth-btn {
+      width: 100%; padding: 13px;
+      background: var(--brown-dark); color: var(--white);
+      font-size: 14px; font-weight: 700; letter-spacing: 1px;
+      border: none; border-radius: var(--radius); cursor: pointer;
+      text-transform: uppercase; transition: background .2s, transform .1s;
+      margin-top: 4px; font-family: 'Inter', sans-serif;
+    }
+    .auth-btn:hover { background: var(--brown-mid); }
+    .auth-btn:active { transform: scale(.98); }
+    .auth-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* MESSAGES */
+    .auth-msg {
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; font-weight: 500; margin-bottom: 16px;
+      display: none; line-height: 1.5;
+    }
+    .auth-msg.error {
+      background: #fff0f0; color: var(--red);
+      border: 1px solid #ffd0d0; display: block;
+    }
+    .auth-msg.success {
+      background: #f0fff4; color: var(--green);
+      border: 1px solid #c3e6cb; display: block;
+    }
+
+    /* DIVIDER */
+    .form-divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 4px 0 16px; font-size: 11px; color: #ccc;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .form-divider::before,
+    .form-divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
+
+    /* SPINNER */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.4); border-top-color: white;
+      border-radius: 50%; animation: spin .7s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SWITCH LINK */
+    .switch-line {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 0 32px 28px;
+      margin-top: -8px;
+    }
+    .switch-line button {
+      background: none; border: none; cursor: pointer;
+      color: var(--amber-dark); font-weight: 700;
+      font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 0; text-decoration: underline;
+    }
+    .switch-line button:hover { color: var(--brown-dark); }
+
+    /* ALREADY LOGGED */
+    .already-logged { display: none; padding: 40px 32px; text-align: center; }
+    .already-logged .big-emoji { font-size: 48px; margin-bottom: 14px; }
+    .already-logged h2 {
+      font-family: 'Playfair Display', serif; font-size: 20px;
+      color: var(--brown-dark); margin-bottom: 8px;
+    }
+    .already-logged p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .go-btn {
+      display: inline-block; padding: 12px 28px;
+      background: var(--brown-dark); color: var(--white);
+      text-decoration: none; border-radius: var(--radius);
+      font-size: 14px; font-weight: 700; transition: background .2s;
+    }
+    .go-btn:hover { background: var(--brown-mid); }
+    .logout-link {
+      display: block; margin-top: 12px; font-size: 12px; color: #ccc;
+      cursor: pointer; background: none; border: none;
+      font-family: 'Inter', sans-serif; transition: color .2s;
+    }
+    .logout-link:hover { color: var(--red); }
+
+    footer {
+      background: var(--brown-dark); color: #7a5c3a;
+      text-align: center; font-size: 12px; padding: 16px;
+    }
+
+    @media (max-width: 520px) {
+      .auth-form { padding: 20px 20px 24px; }
+      .auth-header { padding: 26px 20px 0; }
+      .switch-line { padding: 0 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="catering.html" class="nav-logo">
+    <div class="nav-logo-icon">🍱</div>
+    <span>NusantaraFood</span>
+  </a>
+</nav>
+
+<main>
+  <div class="auth-card" id="authCard">
+
+    <!-- Already logged in -->
+    <div class="already-logged" id="alreadyLogged">
+      <div class="big-emoji">👋</div>
+      <h2 id="greetName">Selamat datang!</h2>
+      <p>Anda sudah masuk. Kembali ke halaman utama untuk melihat menu.</p>
+      <a href="catering.html" class="go-btn">Lihat Menu →</a>
+      <button class="logout-link" onclick="doLogout()">Keluar dari akun ini</button>
+    </div>
+
+    <!-- ═══ MAIN: BUAT AKUN (default) ═══ -->
+    <div id="registerSection">
+      <div class="auth-header">
+        <div class="auth-icon">✨</div>
+        <div class="auth-title">Buat Akun Baru</div>
+        <div class="auth-sub">Daftar sekali, gunakan email &amp; password yang sama untuk masuk kembali nanti.</div>
+      </div>
+      <div class="auth-form">
+        <div class="auth-msg" id="registerMsg"></div>
+        <div class="form-group">
+          <label for="regName">Nama Lengkap</label>
+          <input type="text" id="regName" placeholder="Nama lengkap Anda" autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <input type="email" id="regEmail" placeholder="contoh@email.com"
+                 autocomplete="email" inputmode="email" />
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="regPassword" placeholder="Minimal 6 karakter"
+                   autocomplete="new-password" />
+            <button type="button" class="pw-toggle" onclick="togglePw('regPassword', this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="regPasswordConfirm">Konfirmasi Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="regPasswordConfirm" placeholder="Ulangi password"
+                   autocomplete="new-password" />
+            <button type="button" class="pw-toggle" onclick="togglePw('regPasswordConfirm', this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <div class="form-divider">Info Pengiriman</div>
+        <div class="form-group">
+          <label for="regAddress">Alamat Rumah</label>
+          <textarea id="regAddress" placeholder="Jl. Contoh No. 1, RT/RW, Kelurahan, Kecamatan, Kota"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="regPhone">Nomor Telepon</label>
+          <input type="tel" id="regPhone" placeholder="+62 8xx xxxx xxxx"
+                 autocomplete="tel" inputmode="tel" />
+        </div>
+        <button class="auth-btn" id="registerBtn" onclick="doRegister()">Buat Akun</button>
+      </div>
+      <div class="switch-line">
+        Sudah punya akun? <button onclick="switchTab('login')">Masuk di sini</button>
+      </div>
+    </div>
+
+    <!-- ═══ LOGIN (email + password saja) ═══ -->
+    <div id="loginSection" style="display:none;">
+      <div class="auth-header">
+        <div class="auth-icon">🔑</div>
+        <div class="auth-title">Masuk ke Akun</div>
+        <div class="auth-sub">Gunakan email &amp; password yang Anda buat saat daftar.</div>
+      </div>
+      <div class="auth-form">
+        <div class="auth-msg" id="loginMsg"></div>
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="contoh@email.com"
+                 autocomplete="email" inputmode="email" />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="loginPassword" placeholder="Masukkan password"
+                   autocomplete="current-password" />
+            <button type="button" class="pw-toggle" onclick="togglePw('loginPassword', this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button class="auth-btn" id="loginBtn" onclick="doLogin()">Masuk</button>
+      </div>
+      <div class="switch-line">
+        Belum punya akun? <button onclick="switchTab('register')">Buat akun di sini</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>© 2024 NusantaraFood. All rights reserved.</footer>
+
+<script>
+  /* ══════════════════════════════════════
+     CONFIG
+  ══════════════════════════════════════ */
+  const SUPABASE_URL = 'https://rrcgjwnllrdszypdtljq.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
+  const API_BASE     = SUPABASE_URL + '/rest/v1';
+
+  /* ══════════════════════════════════════
+     PASSWORD HASHING (SHA-256, client-side)
+     Catatan: ini BUKAN tabel auth.users bawaan
+     Supabase — ini tabel custom "users" biasa.
+     Password tidak pernah disimpan dalam teks
+     polos, hanya hash SHA-256-nya.
+  ══════════════════════════════════════ */
+  async function hashPassword(password) {
+    const enc = new TextEncoder().encode(password);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* ══════════════════════════════════════
+     INIT
+  ══════════════════════════════════════ */
+  window.addEventListener('DOMContentLoaded', () => {
+    const session = getSession();
+    if (session) {
+      document.getElementById('registerSection').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('alreadyLogged').style.display = 'block';
+      document.getElementById('greetName').textContent = 'Halo, ' + (session.name || 'Pengguna') + '!';
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const tag = document.activeElement.tagName;
+      if (tag === 'TEXTAREA') return;
+      if (document.getElementById('loginSection').style.display !== 'none') doLogin();
+      else if (document.getElementById('registerSection').style.display !== 'none') doRegister();
+    });
+  });
+
+  /* ══════════════════════════════════════
+     SESSION — localStorage
+  ══════════════════════════════════════ */
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('nf_session')); }
+    catch { return null; }
+  }
+  function saveSession(d) { localStorage.setItem('nf_session', JSON.stringify(d)); }
+  function clearSession() { localStorage.removeItem('nf_session'); }
+
+  /* ══════════════════════════════════════
+     UI HELPERS
+  ══════════════════════════════════════ */
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('loginSection').style.display    = isLogin ? '' : 'none';
+    document.getElementById('registerSection').style.display = isLogin ? 'none' : '';
+    clearMessages();
+  }
+
+  function clearMessages() {
+    ['loginMsg','registerMsg'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'auth-msg';
+      el.textContent = '';
+    });
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.innerHTML = text;
+    el.className = 'auth-msg ' + type;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function togglePw(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  }
+
+  /* ══════════════════════════════════════
+     LOGIN — cek langsung ke tabel "users"
+     (email + hash password harus cocok)
+  ══════════════════════════════════════ */
+  async function doLogin() {
+    const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+
+    clearMessages();
+    if (!email)    { showMsg('loginMsg', '⚠️ Email wajib diisi.',    'error'); document.getElementById('loginEmail').focus(); return; }
+    if (!password) { showMsg('loginMsg', '⚠️ Password wajib diisi.', 'error'); document.getElementById('loginPassword').focus(); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Memproses...';
+
+    try {
+      const passwordHash = await hashPassword(password);
+
+      // Cari user berdasarkan email saja dulu (agar pesan error lebih jelas)
+      const res = await fetch(
+        API_BASE + '/users?email=eq.' + encodeURIComponent(email) + '&select=*',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+
+      if (!res.ok) {
+        showMsg('loginMsg', '❌ Gagal terhubung ke database. Periksa konfigurasi Supabase / tabel "users".', 'error');
+        return;
+      }
+
+      const rows = await res.json();
+      const user = Array.isArray(rows) ? rows[0] : null;
+
+      if (!user) {
+        showMsg('loginMsg', '❌ Email tidak ditemukan. Silakan buat akun terlebih dahulu.', 'error');
+        return;
+      }
+
+      if (user.password_hash !== passwordHash) {
+        showMsg('loginMsg', '❌ Password salah. Coba lagi.', 'error');
+        return;
+      }
+
+      saveSession({
+        id:         user.id,
+        email:      user.email,
+        name:       user.full_name  || '',
+        address:    user.address    || '',
+        phone:      user.phone      || '',
+        avatar_url: user.avatar_url || '',
+      });
+
+      showMsg('loginMsg', '✅ Berhasil masuk! Mengalihkan...', 'success');
+      setTimeout(() => {
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'catering.html';
+        window.location.href = redirect;
+      }, 700);
+
+    } catch (err) {
+      console.error('Login error:', err);
+      showMsg('loginMsg', '❌ Gagal terhubung ke server. Periksa koneksi internet Anda.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Masuk';
+    }
+  }
+
+  /* ══════════════════════════════════════
+     BUAT AKUN — insert langsung ke tabel
+     "users" (nama, email, password_hash,
+     alamat, telepon). Tidak menggunakan
+     Supabase Authentication sama sekali.
+  ══════════════════════════════════════ */
+  async function doRegister() {
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim().toLowerCase();
+    const password = document.getElementById('regPassword').value;
+    const confirm  = document.getElementById('regPasswordConfirm').value;
+    const address  = document.getElementById('regAddress').value.trim();
+    const phone    = document.getElementById('regPhone').value.trim();
+    const btn      = document.getElementById('registerBtn');
+
+    clearMessages();
+
+    if (!name)    { showMsg('registerMsg', '⚠️ Nama lengkap wajib diisi.',   'error'); document.getElementById('regName').focus(); return; }
+    if (!email)   { showMsg('registerMsg', '⚠️ Email wajib diisi.',          'error'); document.getElementById('regEmail').focus(); return; }
+    if (!password){ showMsg('registerMsg', '⚠️ Password wajib diisi.',       'error'); document.getElementById('regPassword').focus(); return; }
+    if (password.length < 6) { showMsg('registerMsg', '⚠️ Password minimal 6 karakter.', 'error'); document.getElementById('regPassword').focus(); return; }
+    if (password !== confirm) { showMsg('registerMsg', '⚠️ Konfirmasi password tidak cocok.', 'error'); document.getElementById('regPasswordConfirm').focus(); return; }
+    if (!address) { showMsg('registerMsg', '⚠️ Alamat rumah wajib diisi.',   'error'); document.getElementById('regAddress').focus(); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Membuat akun...';
+
+    try {
+      // Cek apakah email sudah terdaftar
+      const checkRes = await fetch(
+        API_BASE + '/users?email=eq.' + encodeURIComponent(email) + '&select=id',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const existing = checkRes.ok ? await checkRes.json() : [];
+      if (Array.isArray(existing) && existing.length > 0) {
+        showMsg('registerMsg', '❌ Email sudah terdaftar. Silakan masuk lewat tombol "Masuk di sini" di bawah.', 'error');
+        return;
+      }
+
+      const passwordHash = await hashPassword(password);
+
+      const insertRes = await fetch(API_BASE + '/users', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
+          full_name:     name,
+          email:         email,
+          password_hash: passwordHash,
+          address:       address,
+          phone:         phone,
+          avatar_url:    ''
+        })
+      });
+
+      if (!insertRes.ok) {
+        const errData = await insertRes.json().catch(() => ({}));
+        const msg = errData?.message || errData?.hint || 'Gagal membuat akun. Periksa apakah tabel "users" sudah dibuat di Supabase.';
+        showMsg('registerMsg', '❌ ' + msg, 'error');
+        return;
+      }
+
+      const inserted = await insertRes.json();
+      const newUser  = Array.isArray(inserted) ? inserted[0] : inserted;
+
+      saveSession({
+        id:         newUser.id,
+        email:      newUser.email,
+        name:       newUser.full_name,
+        address:    newUser.address,
+        phone:      newUser.phone,
+        avatar_url: newUser.avatar_url || '',
+      });
+
+      showMsg('registerMsg', '✅ Akun berhasil dibuat! Mengalihkan ke menu...', 'success');
+      setTimeout(() => {
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'catering.html';
+        window.location.href = redirect;
+      }, 800);
+
+    } catch (err) {
+      console.error('Register error:', err);
+      showMsg('registerMsg', '❌ Gagal terhubung ke server. Periksa koneksi internet Anda.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Buat Akun';
+    }
+  }
+
+  /* ══════════════════════════════════════
+     LOGOUT
+  ══════════════════════════════════════ */
+  function doLogout() {
+    clearSession();
+    document.getElementById('alreadyLogged').style.display = 'none';
+    switchTab('register');
+  }
+</script>
+</body>
+</html>
