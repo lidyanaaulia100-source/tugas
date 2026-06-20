@@ -1212,7 +1212,7 @@
       flex-direction: column;
       align-items: flex-start;
       padding: 20px 24px 0;
-      gap: 6px;
+      gap: 4px;
     }
     .modal-price {
       font-family: 'Inter', sans-serif;
@@ -2366,6 +2366,17 @@
       font-size: 11px;
       color: var(--text-muted);
     }
+    /* Bintang promo di tengah kartu — tanpa nilai & jumlah */
+    .menu-card-rating-promo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .menu-card-rating-promo .menu-card-rating-stars {
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
 
     /* ── STAR DISPLAY di modal ── */
     .modal-rating-row {
@@ -2813,10 +2824,8 @@
       <div class="modal-col-right">
         <div class="modal-info-row">
           <div class="modal-name" id="mName">Nasi Sapi Lada Hitam</div>
-          <div style="text-align:right">
-            <div class="modal-price-original" id="mOriginalPrice" style="display:none"></div>
-            <div class="modal-price" id="mPrice">Rp32.000</div>
-          </div>
+          <div class="modal-price-original" id="mOriginalPrice" style="display:none"></div>
+          <div class="modal-price" id="mPrice">Rp32.000</div>
         </div>
 
         <div class="modal-divider"></div>
@@ -3179,7 +3188,7 @@
 
   // Cache rating per menu_id: { avg, count }
 
-  function buildCard(m) {
+  function buildCard(m, inPromoSection = false) {
     const d = menuToModalData(m);
     const imgContent = d.image_url
       ? `<img src="${d.image_url}" alt="${d.name}" style="width:100%;height:100%;object-fit:cover;" />`
@@ -3196,14 +3205,23 @@
         : '';
     const discountRibbon = discPercent ? `<div class="discount-ribbon">Diskon ${discPercent}%</div>` : '';
 
-    // Rating display
+    // Rating display — bedakan berdasarkan posisi kartu, bukan kategori menu
     const rating = _menuRatings[m.id];
-    const ratingHtml = rating && rating.count > 0
-      ? `<div class="menu-card-rating">
-           <span class="menu-card-rating-stars">${renderStarsDisplay(rating.avg)}</span>
-           <span class="menu-card-rating-count">${rating.avg.toFixed(1)} (${rating.count})</span>
-         </div>`
-      : '';
+    let ratingHtml = '';
+    if (rating && rating.count > 0) {
+      if (inPromoSection) {
+        // Di section promo (background kuning): bintang di tengah, tanpa nilai & jumlah
+        ratingHtml = `<div class="menu-card-rating-promo">
+          <span class="menu-card-rating-stars">${renderStarsDisplay(rating.avg)}</span>
+        </div>`;
+      } else {
+        // Di section lain: bintang di kiri + nilai + jumlah
+        ratingHtml = `<div class="menu-card-rating">
+          <span class="menu-card-rating-stars">${renderStarsDisplay(rating.avg)}</span>
+          <span class="menu-card-rating-count">${rating.avg.toFixed(1)} (${rating.count})</span>
+        </div>`;
+      }
+    }
 
     return `
       <div class="menu-card${isOut ? ' is-out-of-stock' : ''}" onclick="openModal(allMenus.find(x=>x.id==='${m.id}') ? menuToModalData(allMenus.find(x=>x.id==='${m.id}')) : {})">
@@ -3316,7 +3334,7 @@
     // Render section promo (paling atas, background emas)
     const promoSec = document.getElementById('sectionPromo');
     if (promo.length > 0) {
-      document.getElementById('gridPromo').innerHTML = promo.map(buildCard).join('');
+      document.getElementById('gridPromo').innerHTML = promo.map(m => buildCard(m, true)).join('');
       promoSec.style.display = '';
       initPromoSlider(promo.length);
     } else {
@@ -3333,7 +3351,7 @@
         const items = others[cat];
         const sec = document.createElement('section');
         sec.className = 'section' + (i % 2 === 0 ? ' bg-white' : '');
-        sec.innerHTML = `<h2 class="section-title">${cat}</h2><div class="menu-grid">${items.map(buildCard).join('')}</div>`;
+        sec.innerHTML = `<h2 class="section-title">${cat}</h2><div class="menu-grid">${items.map(m => buildCard(m, false)).join('')}</div>`;
         extraEl.appendChild(sec);
       });
     }
@@ -3542,12 +3560,12 @@
     const mRating = mMenuId ? _menuRatings[mMenuId] : null;
     let ratingRowEl = document.getElementById('mRatingRow');
     if (!ratingRowEl) {
-      // Buat elemen sekali jika belum ada, sisipkan di bawah mName
+      // Buat elemen sekali jika belum ada, sisipkan di bawah harga
       ratingRowEl = document.createElement('div');
       ratingRowEl.id = 'mRatingRow';
       ratingRowEl.className = 'modal-rating-row';
-      const mNameEl = document.getElementById('mName');
-      mNameEl.parentNode.insertBefore(ratingRowEl, mNameEl.nextSibling);
+      const mPriceEl = document.getElementById('mPrice');
+      mPriceEl.parentNode.insertBefore(ratingRowEl, mPriceEl.nextSibling);
     }
     if (mRating && mRating.count > 0) {
       ratingRowEl.innerHTML = `<span class="modal-rating-stars">${renderStarsDisplay(mRating.avg)}</span><span class="modal-rating-text">${mRating.avg.toFixed(1)} dari ${mRating.count} ulasan</span>`;
