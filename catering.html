@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Catering Nusantara</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -373,16 +373,32 @@
     }
     .hero-slide-label {
       position: absolute;
-      bottom: 0;
+      top: 0;
       left: 0;
       right: 0;
-      padding: 32px 16px 12px;
-      background: linear-gradient(to top, rgba(20,8,0,.7) 0%, transparent 100%);
+      padding: 18px 18px 60px;
+      background: linear-gradient(to bottom, rgba(20,6,0,.72) 0%, rgba(20,6,0,.18) 70%, transparent 100%);
       color: #fff;
-      font-size: 13px;
-      font-weight: 600;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(16px, 3.5vw, 26px);
+      font-weight: 700;
+      line-height: 1.25;
       letter-spacing: .3px;
-      text-align: center;
+      text-align: left;
+      text-shadow: 0 2px 8px rgba(0,0,0,.55);
+    }
+    .hero-slide-label-tag {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--brown-dark);
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-bottom: 7px;
     }
     /* Dots */
     .hero-slider-dots {
@@ -545,6 +561,194 @@
       font-weight: 700;
       color: var(--amber);
       line-height: 1.4;
+    }
+
+    /* ── SECTION PROMO ── */
+    .section-promo {
+      background: #e8a020;
+      padding: 56px 48px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Decorative white circles – berbagai ukuran tersebar */
+    .section-promo::before {
+      content: '';
+      position: absolute;
+      top: -70px; left: -70px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      pointer-events: none;
+    }
+    .section-promo::after {
+      content: '';
+      position: absolute;
+      bottom: -50px; right: -50px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      pointer-events: none;
+    }
+    /* Extra decorative circles via generated elements */
+    .promo-circle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      background: rgba(255,255,255,.12);
+    }
+    .promo-circle.c1  { width:120px; height:120px; top:10px;   right:120px; }
+    .promo-circle.c2  { width: 60px; height: 60px; top:40px;   left:200px; }
+    .promo-circle.c3  { width: 90px; height: 90px; top:-20px;  right:280px; }
+    .promo-circle.c4  { width:160px; height:160px; bottom:-30px; left: 80px; background:rgba(255,255,255,.08); }
+    .promo-circle.c5  { width: 50px; height: 50px; bottom:30px; left:240px; }
+    .promo-circle.c6  { width: 80px; height: 80px; top:60px;   right:40px; background:rgba(255,255,255,.15); }
+    .promo-circle.c7  { width: 40px; height: 40px; top:20px;   left:60px; }
+    .promo-circle.c8  { width:110px; height:110px; bottom:10px; right:160px; background:rgba(255,255,255,.07); }
+    .promo-circle.c9  { width: 35px; height: 35px; top:80px;   left:300px; }
+    .promo-circle.c10 { width: 70px; height: 70px; bottom:50px; right:300px; background:rgba(255,255,255,.13); }
+    .promo-circle.c11 { width: 25px; height: 25px; top:120px;  left:120px; }
+    .promo-circle.c12 { width: 45px; height: 45px; bottom:20px; left:360px; }
+    /* ring-only circles for variety */
+    .promo-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,.22);
+    }
+    .promo-ring.r1 { width:180px; height:180px; top:-40px;  left:140px; }
+    .promo-ring.r2 { width:100px; height:100px; bottom:20px; right:80px; }
+    .promo-ring.r3 { width:240px; height:240px; bottom:-80px; left:-60px; border-color:rgba(255,255,255,.14); }
+    .promo-ring.r4 { width: 70px; height: 70px; top:30px;   right:200px; }
+    .promo-ring.r5 { width:130px; height:130px; top:-30px;  right:400px; border-color:rgba(255,255,255,.18); }
+    .promo-ring.r6 { width: 55px; height: 55px; bottom:60px; left:480px; }
+    .promo-eyebrow {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #7a4a0a;
+      margin-bottom: 6px;
+      opacity: .75;
+    }
+    .promo-heading {
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: clamp(52px, 8vw, 88px);
+      font-weight: 400;
+      color: var(--brown-dark);
+      line-height: 1;
+      margin-bottom: 10px;
+      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    }
+    .promo-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 0 auto 12px;
+      max-width: 260px;
+    }
+    .promo-divider-line {
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(to right, transparent, #c8880e);
+    }
+    .promo-divider-line.r {
+      background: linear-gradient(to left, transparent, #c8880e);
+    }
+    .promo-divider-diamond {
+      width: 6px; height: 6px;
+      background: #c8880e;
+      transform: rotate(45deg);
+      flex-shrink: 0;
+    }
+    .promo-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 300;
+      color: var(--brown-mid);
+      letter-spacing: 1px;
+      margin-bottom: 44px;
+    }
+    /* ── PROMO SLIDER ── */
+    .promo-slider-wrap {
+      position: relative;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .promo-slider-viewport {
+      overflow: hidden;
+    }
+    .promo-slider-track {
+      display: flex;
+      gap: 20px;
+      transition: transform .45s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+    }
+    .promo-slider-track .menu-card {
+      flex: 0 0 calc(25% - 15px);
+      min-width: 0;
+    }
+    .promo-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.92);
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      color: #7a4a0a;
+      box-shadow: 0 3px 14px rgba(0,0,0,.18);
+      z-index: 5;
+      transition: background .18s, box-shadow .18s, opacity .18s;
+    }
+    .promo-arrow:hover {
+      background: #fff;
+      box-shadow: 0 5px 20px rgba(0,0,0,.25);
+    }
+    .promo-arrow:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+    .promo-arrow-prev { left: -22px; }
+    .promo-arrow-next { right: -22px; }
+    .promo-slider-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 28px;
+      position: relative; z-index: 1;
+    }
+    .promo-slider-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.5);
+      border: none; cursor: pointer; padding: 0;
+      transition: background .2s, transform .2s;
+    }
+    .promo-slider-dot.active {
+      background: #fff;
+      transform: scale(1.35);
+    }
+
+    @media (max-width: 900px) {
+      .section-promo { padding: 36px 20px 32px; }
+      .promo-slider-track .menu-card { flex: 0 0 calc(50% - 10px); }
+      .promo-arrow-prev { left: -12px; }
+      .promo-arrow-next { right: -12px; }
+    }
+    @media (max-width: 480px) {
+      .promo-slider-track .menu-card { flex: 0 0 calc(50% - 8px); }
+      .promo-arrow-prev { left: -8px; }
+      .promo-arrow-next { right: -8px; }
+      .promo-arrow { width: 32px; height: 32px; font-size: 18px; }
     }
 
     /* ── FOOTER ── */
@@ -1836,7 +2040,6 @@
     <span></span>
   </button>
   <a href="#" class="nav-logo">
-    <div class="nav-logo-icon">🍱</div>
     <span>NusantaraFood</span>
   </a>
   <ul class="nav-links">
@@ -2040,6 +2243,53 @@
   </div>
 </section>
 
+<!-- SECTION PROMO -->
+<div id="sectionPromo" style="display:none;">
+  <div class="section-promo">
+    <!-- Decorative filled circles -->
+    <div class="promo-circle c1"></div>
+    <div class="promo-circle c2"></div>
+    <div class="promo-circle c3"></div>
+    <div class="promo-circle c4"></div>
+    <div class="promo-circle c5"></div>
+    <div class="promo-circle c6"></div>
+    <div class="promo-circle c7"></div>
+    <div class="promo-circle c8"></div>
+    <div class="promo-circle c9"></div>
+    <div class="promo-circle c10"></div>
+    <div class="promo-circle c11"></div>
+    <div class="promo-circle c12"></div>
+    <!-- Decorative ring circles -->
+    <div class="promo-ring r1"></div>
+    <div class="promo-ring r2"></div>
+    <div class="promo-ring r3"></div>
+    <div class="promo-ring r4"></div>
+    <div class="promo-ring r5"></div>
+    <div class="promo-ring r6"></div>
+
+    <div style="position:relative;z-index:1;">
+      <div class="promo-eyebrow">penawaran spesial</div>
+      <div class="promo-heading">Promo</div>
+      <div class="promo-divider">
+        <div class="promo-divider-line"></div>
+        <div class="promo-divider-diamond"></div>
+        <div class="promo-divider-line r"></div>
+      </div>
+      <div class="promo-sub">Harga Spesial &middot; Terbatas</div>
+
+      <!-- Promo Slider -->
+      <div class="promo-slider-wrap" id="promoSliderWrap">
+        <button class="promo-arrow promo-arrow-prev" id="promoArrowPrev" onclick="promoSliderMove(-1)" title="Sebelumnya">&#8249;</button>
+        <div class="promo-slider-viewport">
+          <div class="promo-slider-track" id="gridPromo"></div>
+        </div>
+        <button class="promo-arrow promo-arrow-next" id="promoArrowNext" onclick="promoSliderMove(1)" title="Berikutnya">&#8250;</button>
+      </div>
+      <div class="promo-slider-dots" id="promoSliderDots"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MENU NASI BOX -->
 <section class="section bg-white" id="sectionNasiBox">
   <h2 class="section-title">Menu Baru Nasi Box</h2>
@@ -2203,8 +2453,13 @@
   let _heroDragDelta  = 0;
 
   function buildHeroSlider(menus) {
-    // Ambil maksimal 5 menu yang punya image_url
+    // Ambil semua menu yang punya image_url, lalu acak urutannya setiap refresh
     const withImg = menus.filter(m => m.image_url);
+    // Fisher-Yates shuffle
+    for (let i = withImg.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [withImg[i], withImg[j]] = [withImg[j], withImg[i]];
+    }
     _heroSlides = withImg.slice(0, 5);
 
     if (_heroSlides.length === 0) return; // biarkan placeholder emoji
@@ -2223,8 +2478,7 @@
       slide.style.cursor = 'pointer';
       slide.addEventListener('click', () => {
         if (_heroDragging) return;
-        const el = document.getElementById(sectionId) || document.getElementById('sectionNasiBox');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        openModal(menuToModalData(m));
       });
 
       const img = document.createElement('img');
@@ -2232,9 +2486,11 @@
       img.alt = m.name;
       slide.appendChild(img);
 
+      // Label — kiri atas, font besar
       const label = document.createElement('div');
       label.className = 'hero-slide-label';
-      label.textContent = m.name;
+      const cat = m.category || 'Menu Spesial';
+      label.innerHTML = `<div class="hero-slide-label-tag">${cat}</div><div>${m.name}</div>`;
       slide.appendChild(label);
 
       track.appendChild(slide);
@@ -2316,6 +2572,87 @@
   }
 
   /* ══════════════════════════════════════════════
+     PROMO SLIDER
+  ══════════════════════════════════════════════ */
+  let _promoIdx        = 0;
+  let _promoPerPage    = 4;
+  let _promoTotal      = 0;
+
+  function getPromoPerPage() {
+    if (window.innerWidth <= 900) return 2;
+    return 4;
+  }
+
+  function initPromoSlider(total) {
+    _promoTotal   = total;
+    _promoIdx     = 0;
+    _promoPerPage = getPromoPerPage();
+
+    // Build dots
+    const dotsEl = document.getElementById('promoSliderDots');
+    dotsEl.innerHTML = '';
+    const pages = Math.ceil(_promoTotal / _promoPerPage);
+    if (pages <= 1) {
+      // Hide arrows + dots if everything fits
+      document.getElementById('promoArrowPrev').style.display = 'none';
+      document.getElementById('promoArrowNext').style.display = 'none';
+      dotsEl.style.display = 'none';
+    } else {
+      document.getElementById('promoArrowPrev').style.display = '';
+      document.getElementById('promoArrowNext').style.display = '';
+      dotsEl.style.display = '';
+      for (let i = 0; i < pages; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'promo-slider-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Halaman ' + (i + 1));
+        dot.addEventListener('click', () => promoSliderGoTo(i));
+        dotsEl.appendChild(dot);
+      }
+    }
+    promoSliderGoTo(0);
+  }
+
+  function promoSliderGoTo(page) {
+    _promoPerPage = getPromoPerPage();
+    const pages   = Math.ceil(_promoTotal / _promoPerPage);
+    _promoIdx     = Math.max(0, Math.min(page, pages - 1));
+
+    const track   = document.getElementById('gridPromo');
+    const cards   = track.querySelectorAll('.menu-card');
+    const gap     = 20;
+
+    if (cards.length === 0) return;
+
+    // Calculate card width from viewport
+    const viewport = track.parentElement;
+    const cardW    = (viewport.offsetWidth - gap * (_promoPerPage - 1)) / _promoPerPage;
+    const offset   = _promoIdx * (_promoPerPage * (cardW + gap));
+    track.style.transform = `translateX(-${offset}px)`;
+
+    // Update dots
+    document.querySelectorAll('.promo-slider-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === _promoIdx);
+    });
+
+    // Update arrow states
+    const prevBtn = document.getElementById('promoArrowPrev');
+    const nextBtn = document.getElementById('promoArrowNext');
+    if (prevBtn) prevBtn.disabled = _promoIdx === 0;
+    if (nextBtn) nextBtn.disabled = _promoIdx >= pages - 1;
+  }
+
+  function promoSliderMove(dir) {
+    promoSliderGoTo(_promoIdx + dir);
+  }
+
+  window.addEventListener('resize', () => {
+    const newPer = getPromoPerPage();
+    if (newPer !== _promoPerPage && _promoTotal > 0) {
+      initPromoSlider(_promoTotal);
+    }
+  });
+
+  /* ══════════════════════════════════════════════
      LOAD MENUS FROM SUPABASE
   ══════════════════════════════════════════════ */
   let allMenus = [];
@@ -2383,14 +2720,25 @@
   function renderMenus(data) {
     const nasiBox   = data.filter(m => m.category === 'Menu Nasi Box');
     const tumpeng   = data.filter(m => m.category === 'Menu Nasi Tumpeng');
+    const promo     = data.filter(m => m.category === 'Promo');
     const others    = {};
 
     data.forEach(m => {
-      if (m.category !== 'Menu Nasi Box' && m.category !== 'Menu Nasi Tumpeng') {
+      if (m.category !== 'Menu Nasi Box' && m.category !== 'Menu Nasi Tumpeng' && m.category !== 'Promo') {
         if (!others[m.category]) others[m.category] = [];
         others[m.category].push(m);
       }
     });
+
+    // Render section promo (paling atas, background emas)
+    const promoSec = document.getElementById('sectionPromo');
+    if (promo.length > 0) {
+      document.getElementById('gridPromo').innerHTML = promo.map(buildCard).join('');
+      promoSec.style.display = '';
+      initPromoSlider(promo.length);
+    } else {
+      promoSec.style.display = 'none';
+    }
 
     document.getElementById('gridNasiBox').innerHTML =
       nasiBox.length ? nasiBox.map(buildCard).join('') : '<div style="color:#bbb;font-size:13px;padding:16px 0;">Belum ada menu di kategori ini.</div>';
