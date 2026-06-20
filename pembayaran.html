@@ -132,7 +132,6 @@
     }
 
     @media (max-width: 600px) {
-      .nav-back span.nav-back-text { display: none; }
       .step-label { font-size: 9.5px; }
       .step-circle { width: 30px; height: 30px; font-size: 12px; }
       .step-connector { margin-bottom: 18px; }
@@ -142,15 +141,20 @@
     }
 
     @media (max-width: 420px) {
-      nav { padding: 10px 14px; }
-      .nav-logo-icon { width: 30px; height: 30px; font-size: 15px; }
-      .nav-logo span { font-size: 14px; }
-      .nav-back { font-size: 12px; }
+      nav { padding: 10px 14px; gap: 8px; }
+      .nav-logo { gap: 6px; }
+      .nav-logo-icon { width: 28px; height: 28px; font-size: 14px; }
+      .nav-logo span { font-size: 13px; }
+      .nav-back { font-size: 11px; gap: 4px; }
       .stepper-wrap { padding: 12px 10px; }
       .step-label { font-size: 8.5px; letter-spacing: 0; }
       main { padding: 16px 10px; }
       .card-body { padding: 14px; }
       .review-value { max-width: 55%; }
+    }
+
+    @media (max-width: 340px) {
+      .nav-logo span { display: none; }
     }
 
     /* ── CARDS ── */
