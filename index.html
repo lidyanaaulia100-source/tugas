@@ -2336,6 +2336,8 @@
     }
     .star-btn:hover, .star-btn.hover { color: #f5a623; transform: scale(1.15); }
     .star-btn.active { color: #f5a623; }
+    .star-btn.loading { color: #ddd; animation: star-pulse .8s ease-in-out infinite alternate; pointer-events: none; }
+    @keyframes star-pulse { from { opacity: .3; } to { opacity: .8; } }
     .star-saved-label {
       font-size: 11px;
       color: #2e7d32;
@@ -4813,8 +4815,11 @@
     document.body.style.overflow = 'hidden';
 
     // Muat rating tersimpan untuk order ini jika statusnya selesai
+    // Pakai requestAnimationFrame ganda agar DOM modal benar-benar siap sebelum restore bintang
     if (order.status === 'selesai' && items.length > 0) {
-      loadSavedRatingsForOrder(orderId, items);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        loadSavedRatingsForOrder(orderId, items);
+      }));
     }
   }
 
@@ -4857,7 +4862,8 @@
     items.forEach(item => {
       const menuId   = item.menu_id || null;
       const itemName = item.menu_name || item.name || 'Item';
-      const key = (menuId || itemName).replace(/'/g, '');
+      // Harus sama persis dengan ratingKey yang dipakai saat render HTML di showOrderDetail
+      const key = (menuId || itemName).replace(/[' ]/g, '_');
       const cacheKey = _ratingKey(orderId, menuId, itemName);
       const saved = _savedRatings[cacheKey];
       if (saved) {
@@ -4870,20 +4876,73 @@
   async function loadSavedRatingsForOrder(orderId, items) {
     const session = getSession();
     if (!session || !items || !items.length) return;
+
+    // Langkah 1: Tampilkan cache localStorage dulu (instan, tidak perlu tunggu network)
+    const hasCachedRating = items.some(item => {
+      const menuId   = item.menu_id || null;
+      const itemName = item.menu_name || item.name || 'Item';
+      return !!_savedRatings[_ratingKey(orderId, menuId, itemName)];
+    });
+
+    if (hasCachedRating) {
+      // Ada cache lokal — tampilkan langsung dulu
+      restoreStarsAfterRender(orderId, items);
+    } else {
+      // Tidak ada cache — tampilkan animasi loading pada bintang
+      items.forEach(item => {
+        const menuId   = item.menu_id || null;
+        const itemName = item.menu_name || item.name || 'Item';
+        const key = (menuId || itemName).replace(/[' ]/g, '_');
+        for (let s = 1; s <= 5; s++) {
+          const el = document.getElementById('star-' + key + '-' + s);
+          if (el) el.classList.add('loading');
+        }
+      });
+    }
+
+    // Langkah 2: Fetch dari Supabase (sumber kebenaran)
     try {
       const res = await fetch(
         API_BASE + '/ulasan?order_id=eq.' + orderId + '&user_id=eq.' + session.id + '&select=menu_id,menu_name,rating',
         { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
       );
-      if (!res.ok) return;
+      if (!res.ok) {
+        // Fetch gagal — hapus loading state, biarkan cache lokal tetap tampil
+        _removeLoadingState(items);
+        return;
+      }
       const rows = await res.json();
-      if (!Array.isArray(rows)) return;
+      if (!Array.isArray(rows)) { _removeLoadingState(items); return; }
+
+      // Update cache dengan data terbaru dari Supabase
       rows.forEach(r => {
         const cacheKey = _ratingKey(orderId, r.menu_id, r.menu_name);
         _savedRatings[cacheKey] = r.rating;
       });
+      try { localStorage.setItem('nf_ratings', JSON.stringify(_savedRatings)); } catch {}
+
+      // Hapus loading state lalu render bintang dari data Supabase
+      _removeLoadingState(items);
       restoreStarsAfterRender(orderId, items);
-    } catch (_) {}
+    } catch (_) {
+      // Network error — hapus loading state, tampilkan cache lokal jika ada
+      _removeLoadingState(items);
+      if (hasCachedRating) restoreStarsAfterRender(orderId, items);
+    }
+  }
+
+  /** Hapus class loading dari semua bintang */
+  function _removeLoadingState(items) {
+    if (!items) return;
+    items.forEach(item => {
+      const menuId   = item.menu_id || null;
+      const itemName = item.menu_name || item.name || 'Item';
+      const key = (menuId || itemName).replace(/[' ]/g, '_');
+      for (let s = 1; s <= 5; s++) {
+        const el = document.getElementById('star-' + key + '-' + s);
+        if (el) el.classList.remove('loading');
+      }
+    });
   }
 
   function hoverStars(key, star) {
