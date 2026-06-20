@@ -307,9 +307,10 @@
 
     /* Payment badge */
     .pay-badge {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 6px;
       background: #fff8ee; border: 1px solid #f0d8a0;
-      border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600;
+      border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+      width: fit-content; white-space: nowrap;
     }
 
     /* ── STATUS MESSAGE ── */
@@ -617,9 +618,9 @@
             <!-- Pembayaran -->
             <div class="review-group">
               <div class="review-group-title">💳 Metode Pembayaran</div>
-              <div class="review-field">
+              <div class="review-field" style="flex-direction:column;align-items:flex-start;gap:7px">
                 <span class="review-label">Metode</span>
-                <span class="review-value" id="rv_payment">—</span>
+                <span class="review-value" id="rv_payment" style="max-width:100%;text-align:left">—</span>
               </div>
             </div>
 
