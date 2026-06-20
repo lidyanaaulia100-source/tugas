@@ -503,7 +503,7 @@
     .menu-card-body { padding: 12px 14px 14px; }
     .price-badge {
       display: inline-block;
-      background: var(--amber);
+      background: var(--brown-dark);
       color: var(--white);
       font-size: 11px;
       font-weight: 700;
@@ -512,6 +512,7 @@
       margin-bottom: 8px;
       letter-spacing: .3px;
     }
+    .price-badge.promo { background: var(--amber); color: var(--brown-dark); }
     .menu-card-name {
       font-size: 13px;
       font-weight: 600;
@@ -2701,6 +2702,7 @@
     const imgBg = d.image_url ? '#f5f0eb' : '';
     const isOut = d.availability === 'out_of_stock';
     const isLimited = d.availability === 'limited';
+    const isPromo = m.category === 'Promo';
     const ribbon = isOut
       ? '<div class="card-stock-ribbon">Habis</div>'
       : isLimited
@@ -2711,7 +2713,7 @@
         ${ribbon}
         <div class="img-placeholder" style="background:${imgBg || d.bg};display:flex;align-items:center;justify-content:center;">${imgContent}</div>
         <div class="menu-card-body">
-          <div class="price-badge">${Number(m.price).toLocaleString('id-ID')}</div>
+          <div class="price-badge${isPromo ? ' promo' : ''}">${Number(m.price).toLocaleString('id-ID')}</div>
           <div class="menu-card-name">${m.name}</div>
         </div>
       </div>`;
