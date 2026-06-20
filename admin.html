@@ -549,6 +549,43 @@
   }
   .cat-add-row input:focus { outline: none; border-color: var(--batik-gold); background: #fff; }
 
+  /* ── VOUCHER MANAGER ── */
+  .voucher-manager-modal { max-width: 620px; }
+  .voucher-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .voucher-list { display: flex; flex-direction: column; gap: 9px; }
+  .voucher-item {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 13px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--batik-cream);
+  }
+  .voucher-item .v-code {
+    font-weight: 700; font-size: .92rem; color: var(--ink);
+    background: var(--batik-warm); padding: 3px 9px; border-radius: 7px; letter-spacing: .5px;
+  }
+  .voucher-item .v-info { flex: 1; min-width: 140px; font-size: .78rem; color: var(--ink-soft); }
+  .voucher-item .v-meta { font-size: .72rem; color: var(--ink-soft); opacity: .8; }
+  .voucher-badge {
+    font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .voucher-badge.active   { background: var(--leaf-light); color: var(--leaf); }
+  .voucher-badge.inactive { background: var(--rose-light); color: var(--rose); }
+  .voucher-item-actions { display: flex; gap: 5px; }
+  .voucher-item-actions button {
+    background: none; border: none; cursor: pointer; font-size: 1rem;
+    padding: 4px 6px; border-radius: 6px; color: var(--ink-soft); transition: background .2s, color .2s;
+  }
+  .voucher-item-actions button:hover { background: var(--batik-warm); }
+  .voucher-item-actions button.btn-del-voucher:hover { color: var(--rose); background: var(--rose-light); }
+  .voucher-form-modal { max-width: 460px; }
+  .voucher-target-toggle, .voucher-type-toggle { display: flex; gap: 8px; }
+  .toggle-pill {
+    flex: 1; text-align: center; padding: 9px; border-radius: 9px;
+    border: 1.5px solid var(--border); background: #fff; cursor: pointer;
+    font-size: .82rem; font-weight: 600; color: var(--ink-soft); transition: all .15s;
+  }
+  .toggle-pill.active { background: var(--batik-gold); border-color: var(--batik-gold); color: #fff; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 600px) {
     header { padding: 10px 14px; gap: 10px; }
@@ -569,6 +606,8 @@
     .modal-footer { padding: 12px 14px; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .full { grid-column: 1; }
+    .voucher-item { flex-direction: column; align-items: stretch; }
+    .voucher-item-actions { justify-content: flex-end; }
   }
 
   @media (min-width: 601px) and (max-width: 900px) {
@@ -589,6 +628,9 @@
   <div class="header-actions">
     <button class="btn-header" onclick="openHistory()">
       🗂️ <span class="btn-header-text">Histori</span>
+    </button>
+    <button class="btn-header" onclick="openVoucherManager()">
+      🎟️ <span class="btn-header-text">Voucher</span>
     </button>
     <div class="notif-wrap">
       <button class="notif-bell" id="notifBell" onclick="toggleNotifPanel()" title="Notifikasi Pesanan">
@@ -764,6 +806,96 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeCatManager()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VOUCHER MANAGER ── -->
+<div class="modal-overlay" id="voucherOverlay">
+  <div class="modal voucher-manager-modal">
+    <div class="modal-header">
+      <h2>🎟️ Kelola Voucher</h2>
+      <button class="modal-close" onclick="closeVoucherManager()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="voucher-toolbar">
+        <button class="btn btn-primary btn-sm" onclick="openVoucherForm()">＋ Tambah Voucher</button>
+      </div>
+      <div class="voucher-list" id="voucherList">
+        <div class="empty-state" style="padding:20px"><div class="icon">⏳</div><p>Memuat…</p></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeVoucherManager()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VOUCHER FORM (Tambah/Edit) ── -->
+<div class="modal-overlay" id="voucherFormOverlay">
+  <div class="modal voucher-form-modal">
+    <div class="modal-header">
+      <h2 id="voucherFormTitle">＋ Tambah Voucher</h2>
+      <button class="modal-close" onclick="closeVoucherForm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Kode Voucher <span>*</span></label>
+          <input type="text" id="vf_code" placeholder="cth. HEMAT10" style="text-transform:uppercase">
+        </div>
+        <div class="form-group full">
+          <label>Jenis Diskon</label>
+          <div class="voucher-type-toggle">
+            <div class="toggle-pill active" id="vf_type_percent" onclick="setVoucherType('percent')">Persentase (%)</div>
+            <div class="toggle-pill" id="vf_type_fixed" onclick="setVoucherType('fixed')">Nominal (Rp)</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Berlaku Untuk</label>
+          <div class="voucher-target-toggle">
+            <div class="toggle-pill active" id="vf_target_item" onclick="setVoucherTarget('item')">Harga Item</div>
+            <div class="toggle-pill" id="vf_target_ongkir" onclick="setVoucherTarget('ongkir')">Ongkos Kirim</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label id="vf_value_label">Nilai Diskon (%) <span>*</span></label>
+          <input type="number" id="vf_value" placeholder="10" min="0">
+        </div>
+        <div class="form-group">
+          <label>Maks. Diskon (Rp)</label>
+          <input type="number" id="vf_max_discount" placeholder="opsional" min="0">
+        </div>
+        <div class="form-group">
+          <label>Min. Belanja (Rp)</label>
+          <input type="number" id="vf_min_purchase" placeholder="opsional" min="0">
+        </div>
+        <div class="form-group">
+          <label>Batas Pemakaian</label>
+          <input type="number" id="vf_usage_limit" placeholder="opsional" min="1">
+        </div>
+        <div class="form-group full">
+          <label>Berlaku Sampai</label>
+          <input type="date" id="vf_valid_until">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeVoucherForm()">Batal</button>
+      <button class="btn btn-primary" id="voucherSaveBtn" onclick="saveVoucher()">Simpan Voucher</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HAPUS VOUCHER CONFIRM ── -->
+<div class="confirm-modal" id="voucherDeleteModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <h3>Hapus Voucher?</h3>
+    <p id="voucherDeleteText">Voucher ini akan dihapus permanen.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-cancel" onclick="closeVoucherDeleteConfirm()">Batal</button>
+      <button class="btn btn-danger" id="confirmVoucherDeleteBtn" onclick="confirmDeleteVoucher()">Ya, Hapus</button>
     </div>
   </div>
 </div>
@@ -1014,6 +1146,185 @@ async function deleteCategory(idx) {
     showToast('Kategori dihapus', 'info');
   } catch(e) {
     showToast('Gagal hapus: ' + e.message, 'error');
+  }
+}
+
+/* ════ VOUCHER ════ */
+let allVouchers = [];
+let editingVoucherId = null;
+let voucherFormType = 'percent';
+let voucherFormTarget = 'item';
+let voucherDeleteTargetId = null;
+
+function openVoucherManager() {
+  document.getElementById('voucherOverlay').classList.add('open');
+  loadVouchers();
+}
+function closeVoucherManager() {
+  document.getElementById('voucherOverlay').classList.remove('open');
+}
+
+async function loadVouchers() {
+  const list = document.getElementById('voucherList');
+  list.innerHTML = '<div class="empty-state" style="padding:20px"><div class="icon">⏳</div><p>Memuat…</p></div>';
+  try {
+    allVouchers = await apiFetch('/voucher?order=created_at.desc') || [];
+    renderVoucherList();
+  } catch(e) {
+    list.innerHTML = `<div class="empty-state" style="padding:20px"><div class="icon">⚠️</div><p>Gagal memuat voucher.<br>Pastikan tabel "voucher" sudah dibuat di Supabase.</p></div>`;
+  }
+}
+
+function renderVoucherList() {
+  const list = document.getElementById('voucherList');
+  if (!allVouchers.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px"><div class="icon">🎟️</div><p>Belum ada voucher. Tambahkan voucher pertama!</p></div>';
+    return;
+  }
+  list.innerHTML = allVouchers.map(v => {
+    const valTxt = v.type === 'percent' ? v.value + '%' : 'Rp ' + Number(v.value).toLocaleString('id-ID');
+    const targetTxt = v.target === 'ongkir' ? 'Ongkos Kirim' : 'Harga Item';
+    const maxTxt = (v.type === 'percent' && v.max_discount) ? ` (maks Rp ${Number(v.max_discount).toLocaleString('id-ID')})` : '';
+    const minTxt = v.min_purchase ? `Min. belanja Rp ${Number(v.min_purchase).toLocaleString('id-ID')} · ` : '';
+    const usageTxt = v.usage_limit ? `${v.usage_count || 0}/${v.usage_limit} dipakai` : `${v.usage_count || 0}x dipakai`;
+    const expTxt = v.valid_until ? ` · s/d ${formatTglVoucher(v.valid_until)}` : '';
+    return `
+      <div class="voucher-item">
+        <span class="v-code">${esc(v.code)}</span>
+        <div class="v-info">
+          Diskon ${valTxt}${maxTxt} untuk <strong>${targetTxt}</strong>
+          <div class="v-meta">${minTxt}${usageTxt}${expTxt}</div>
+        </div>
+        <button class="voucher-badge ${v.is_active ? 'active' : 'inactive'}" onclick="toggleVoucherActive('${v.id}', ${v.is_active})">
+          ${v.is_active ? 'Aktif' : 'Nonaktif'}
+        </button>
+        <div class="voucher-item-actions">
+          <button onclick="openVoucherForm('${v.id}')" title="Edit">✏️</button>
+          <button class="btn-del-voucher" onclick="askDeleteVoucher('${v.id}','${esc(v.code)}')" title="Hapus">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function formatTglVoucher(d) {
+  try { return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
+  catch(e) { return d; }
+}
+
+function setVoucherType(type) {
+  voucherFormType = type;
+  document.getElementById('vf_type_percent').classList.toggle('active', type === 'percent');
+  document.getElementById('vf_type_fixed').classList.toggle('active', type === 'fixed');
+  document.getElementById('vf_value_label').innerHTML = type === 'percent'
+    ? 'Nilai Diskon (%) <span>*</span>' : 'Nilai Diskon (Rp) <span>*</span>';
+}
+function setVoucherTarget(target) {
+  voucherFormTarget = target;
+  document.getElementById('vf_target_item').classList.toggle('active', target === 'item');
+  document.getElementById('vf_target_ongkir').classList.toggle('active', target === 'ongkir');
+}
+
+function openVoucherForm(id = null) {
+  editingVoucherId = id;
+  const v = id ? allVouchers.find(x => x.id === id) : null;
+
+  document.getElementById('voucherFormTitle').textContent = v ? '✏️ Edit Voucher' : '＋ Tambah Voucher';
+  document.getElementById('vf_code').value = v ? v.code : '';
+  document.getElementById('vf_value').value = v ? v.value : '';
+  document.getElementById('vf_max_discount').value = v && v.max_discount != null ? v.max_discount : '';
+  document.getElementById('vf_min_purchase').value = v && v.min_purchase ? v.min_purchase : '';
+  document.getElementById('vf_usage_limit').value = v && v.usage_limit != null ? v.usage_limit : '';
+  document.getElementById('vf_valid_until').value = v && v.valid_until ? String(v.valid_until).slice(0,10) : '';
+
+  setVoucherType(v ? v.type : 'percent');
+  setVoucherTarget(v ? v.target : 'item');
+
+  document.getElementById('voucherFormOverlay').classList.add('open');
+}
+function closeVoucherForm() {
+  document.getElementById('voucherFormOverlay').classList.remove('open');
+  editingVoucherId = null;
+}
+
+async function saveVoucher() {
+  const code = document.getElementById('vf_code').value.trim().toUpperCase();
+  const value = parseFloat(document.getElementById('vf_value').value);
+  const maxDiscount = document.getElementById('vf_max_discount').value;
+  const minPurchase = document.getElementById('vf_min_purchase').value;
+  const usageLimit = document.getElementById('vf_usage_limit').value;
+  const validUntil = document.getElementById('vf_valid_until').value;
+
+  if (!code) { showToast('Kode voucher wajib diisi', 'error'); return; }
+  if (isNaN(value) || value < 0) { showToast('Nilai diskon tidak valid', 'error'); return; }
+  if (voucherFormType === 'percent' && value > 100) { showToast('Persentase maksimal 100%', 'error'); return; }
+
+  const payload = {
+    code,
+    type: voucherFormType,
+    target: voucherFormTarget,
+    value,
+    max_discount: (voucherFormType === 'percent' && maxDiscount) ? Number(maxDiscount) : null,
+    min_purchase: minPurchase ? Number(minPurchase) : 0,
+    usage_limit: usageLimit ? Number(usageLimit) : null,
+    valid_until: validUntil ? validUntil + 'T23:59:59' : null
+  };
+
+  const btn = document.getElementById('voucherSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan…';
+
+  try {
+    if (editingVoucherId) {
+      await apiFetch('/voucher?id=eq.' + editingVoucherId, { method: 'PATCH', body: JSON.stringify(payload) });
+      showToast('Voucher diperbarui ✅', 'success');
+    } else {
+      payload.is_active = true;
+      payload.usage_count = 0;
+      await apiFetch('/voucher', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Voucher ditambahkan ✅', 'success');
+    }
+    closeVoucherForm();
+    loadVouchers();
+  } catch(e) {
+    const msg = /duplicate|unique/i.test(e.message) ? 'Kode voucher sudah dipakai' : e.message;
+    showToast('Gagal menyimpan: ' + msg, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Simpan Voucher';
+  }
+}
+
+async function toggleVoucherActive(id, current) {
+  try {
+    await apiFetch('/voucher?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ is_active: !current }) });
+    const v = allVouchers.find(x => x.id === id);
+    if (v) v.is_active = !current;
+    renderVoucherList();
+  } catch(e) {
+    showToast('Gagal mengubah status: ' + e.message, 'error');
+  }
+}
+
+function askDeleteVoucher(id, code) {
+  voucherDeleteTargetId = id;
+  document.getElementById('voucherDeleteText').textContent = `Voucher "${code}" akan dihapus permanen.`;
+  document.getElementById('voucherDeleteModal').classList.add('open');
+}
+function closeVoucherDeleteConfirm() {
+  document.getElementById('voucherDeleteModal').classList.remove('open');
+  voucherDeleteTargetId = null;
+}
+async function confirmDeleteVoucher() {
+  if (!voucherDeleteTargetId) return;
+  try {
+    await apiFetch('/voucher?id=eq.' + voucherDeleteTargetId, { method: 'DELETE' });
+    allVouchers = allVouchers.filter(v => v.id !== voucherDeleteTargetId);
+    renderVoucherList();
+    showToast('Voucher dihapus', 'info');
+  } catch(e) {
+    showToast('Gagal hapus: ' + e.message, 'error');
+  } finally {
+    closeVoucherDeleteConfirm();
   }
 }
 
