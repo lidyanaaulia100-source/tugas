@@ -1994,6 +1994,7 @@ function renderOrderDetail(order) {
           }
           return '';
         })()}
+        ${order.voucher_code ? `<div class="order-item-row" style="color:var(--leaf)"><div>🎟️ Voucher <strong>${esc(order.voucher_code)}</strong></div><div class="sub">-${formatRupiah(order.discount_amount||0)}</div></div>` : ''}
         <div class="order-total-row"><div>Total</div><div class="amount">${formatRupiah(order.total_amount||order.total_price)}</div></div>
       </div>
     </div>
