@@ -2250,7 +2250,7 @@
     <li><a href="#">Menu</a></li>
     <li><a href="#">About Us</a></li>
     <li><a href="#">Contact</a></li>
-    <li><a href="#">Promo</a></li>
+    <li><a href="#" onclick="return scrollToPromo(event)">Promo</a></li>
   </ul>
   <div class="nav-actions">
     <button class="nav-icon-btn" title="Cari" onclick="toggleSearch()">
@@ -2313,7 +2313,7 @@
     <a href="#" onclick="toggleMobileNav()">Menu</a>
     <a href="#" onclick="toggleMobileNav()">About Us</a>
     <a href="#" onclick="toggleMobileNav()">Contact</a>
-    <a href="#" onclick="toggleMobileNav()">Promo</a>
+    <a href="#" onclick="toggleMobileNav(); scrollToPromo(event)">Promo</a>
   </div>
 </div>
 
@@ -2500,24 +2500,10 @@
   </div>
 </div>
 
-<!-- MENU NASI BOX -->
-<section class="section bg-white" id="sectionNasiBox">
-  <h2 class="section-title">Menu Baru Nasi Box</h2>
-  <div class="menu-grid" id="gridNasiBox">
-    <div style="color:#bbb;font-size:13px;padding:20px 0;">Memuat menu...</div>
-  </div>
-</section>
-
-<!-- MENU NASI TUMPENG -->
-<section class="section" id="sectionTumpeng">
-  <h2 class="section-title">Menu Nasi Tumpeng</h2>
-  <div class="menu-grid" id="gridTumpeng">
-    <div style="color:#bbb;font-size:13px;padding:20px 0;">Memuat menu...</div>
-  </div>
-</section>
-
-<!-- SECTION KATEGORI LAIN (muncul otomatis jika ada) -->
-<div id="extraSections"></div>
+<!-- SECTION KATEGORI (dirender otomatis sesuai kategori dari Supabase) -->
+<div id="extraSections">
+  <div style="color:#bbb;font-size:13px;padding:20px 24px;">Memuat menu...</div>
+</div>
 
 <!-- WELCOME BANNER -->
 <div class="welcome-banner">
@@ -2535,10 +2521,8 @@
   <div class="footer-grid">
     <div class="footer-col">
       <h4>Categories</h4>
-      <ul>
-        <li><a href="#">Nasi Box</a></li>
-        <li><a href="#">Nasi Tumpeng</a></li>
-        <li><a href="#">Catering</a></li>
+      <ul id="footerCategoryList">
+        <li><span style="color:#999;">Memuat...</span></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -2693,8 +2677,7 @@
     _heroSlides.forEach((m, i) => {
       const slide = document.createElement('div');
       slide.className = 'hero-slide';
-      // klik → scroll ke menu
-      const sectionId = m.category === 'Menu Nasi Tumpeng' ? 'sectionTumpeng' : 'sectionNasiBox';
+      // klik → buka detail menu
       slide.style.cursor = 'pointer';
       slide.addEventListener('click', () => {
         if (_heroDragging) return;
@@ -2889,8 +2872,7 @@
       buildHeroSlider(data);
     } catch (err) {
       console.error(err);
-      document.getElementById('gridNasiBox').innerHTML   = '<div style="color:#e05050;font-size:13px;padding:20px 0;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
-      document.getElementById('gridTumpeng').innerHTML   = '';
+      document.getElementById('extraSections').innerHTML = '<div style="color:#e05050;font-size:13px;padding:20px 24px;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
     }
   }
 
@@ -2970,17 +2952,15 @@
   }
 
   function renderMenus(data) {
-    const nasiBox   = data.filter(m => hasCategory(m, 'Menu Nasi Box'));
-    const tumpeng   = data.filter(m => hasCategory(m, 'Menu Nasi Tumpeng'));
-    const promo     = data.filter(m => hasCategory(m, 'Promo'));
-    const others    = {};
+    const promo  = data.filter(m => hasCategory(m, 'Promo'));
+    const others = {};       // { kategori: [menu, ...] }
+    const order  = [];       // urutan kemunculan kategori (sesuai data dari Supabase)
 
     data.forEach(m => {
       getMenuCats(m).forEach(cat => {
-        if (cat !== 'Menu Nasi Box' && cat !== 'Menu Nasi Tumpeng' && cat !== 'Promo') {
-          if (!others[cat]) others[cat] = [];
-          if (!others[cat].find(x => x.id === m.id)) others[cat].push(m);
-        }
+        if (cat === 'Promo') return; // Promo sudah punya section sendiri di atas
+        if (!others[cat]) { others[cat] = []; order.push(cat); }
+        if (!others[cat].find(x => x.id === m.id)) others[cat].push(m);
       });
     });
 
@@ -2994,21 +2974,28 @@
       promoSec.style.display = 'none';
     }
 
-    document.getElementById('gridNasiBox').innerHTML =
-      nasiBox.length ? nasiBox.map(buildCard).join('') : '<div style="color:#bbb;font-size:13px;padding:16px 0;">Belum ada menu di kategori ini.</div>';
-
-    document.getElementById('gridTumpeng').innerHTML =
-      tumpeng.length ? tumpeng.map(buildCard).join('') : '<div style="color:#bbb;font-size:13px;padding:16px 0;">Belum ada menu di kategori ini.</div>';
-
-    // Render kategori tambahan
+    // Render section untuk setiap kategori (murni dari Supabase, tanpa hardcode)
     const extraEl = document.getElementById('extraSections');
     extraEl.innerHTML = '';
-    Object.entries(others).forEach(([cat, items]) => {
-      const sec = document.createElement('section');
-      sec.className = 'section';
-      sec.innerHTML = `<h2 class="section-title">${cat}</h2><div class="menu-grid">${items.map(buildCard).join('')}</div>`;
-      extraEl.appendChild(sec);
-    });
+    if (order.length === 0) {
+      extraEl.innerHTML = '<div style="color:#bbb;font-size:13px;padding:20px 24px;">Belum ada menu.</div>';
+    } else {
+      order.forEach((cat, i) => {
+        const items = others[cat];
+        const sec = document.createElement('section');
+        sec.className = 'section' + (i % 2 === 0 ? ' bg-white' : '');
+        sec.innerHTML = `<h2 class="section-title">${cat}</h2><div class="menu-grid">${items.map(buildCard).join('')}</div>`;
+        extraEl.appendChild(sec);
+      });
+    }
+
+    // Update daftar kategori di footer (murni dari Supabase, tanpa hardcode)
+    const footerCatEl = document.getElementById('footerCategoryList');
+    if (footerCatEl) {
+      footerCatEl.innerHTML = order.length
+        ? order.map(cat => `<li><a href="#">${cat}</a></li>`).join('')
+        : '<li><span style="color:#999;">Belum ada kategori</span></li>';
+    }
 
     // Update menuData untuk search
     menuData.length = 0;
@@ -3459,6 +3446,21 @@
 
   function handleMobileNavOverlay(e) {
     if (e.target === document.getElementById('mobileNavOverlay')) toggleMobileNav();
+  }
+
+  /* ── SCROLL KE SECTION PROMO ── */
+  function scrollToPromo(e) {
+    if (e) e.preventDefault();
+    const promoSec = document.getElementById('sectionPromo');
+    if (promoSec && promoSec.style.display !== 'none') {
+      const navEl = document.querySelector('nav');
+      const navHeight = navEl ? navEl.getBoundingClientRect().height : 0;
+      const top = promoSec.getBoundingClientRect().top + window.pageYOffset - navHeight;
+      window.scrollTo({ top, behavior: 'smooth' });
+    } else {
+      showToast('Belum ada promo saat ini');
+    }
+    return false;
   }
 
   /* ── SEARCH ── */
