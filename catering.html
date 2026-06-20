@@ -2492,7 +2492,7 @@
       // Label — kiri atas, font besar
       const label = document.createElement('div');
       label.className = 'hero-slide-label';
-      const cat = m.category || 'Menu Spesial';
+      const cat = getMenuCats(m).join(', ') || 'Menu Spesial';
       label.innerHTML = `<div class="hero-slide-label-tag">${cat}</div><div>${m.name}</div>`;
       slide.appendChild(label);
 
@@ -2704,7 +2704,7 @@
     const imgBg = d.image_url ? '#f5f0eb' : '';
     const isOut = d.availability === 'out_of_stock';
     const isLimited = d.availability === 'limited';
-    const isPromo = m.category === 'Promo';
+    const isPromo = hasCategory(m, 'Promo');
     const ribbon = isOut
       ? '<div class="card-stock-ribbon">Habis</div>'
       : isLimited
@@ -2721,17 +2721,27 @@
       </div>`;
   }
 
+  function getMenuCats(m) {
+    if (!m.category) return [];
+    return m.category.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  function hasCategory(m, cat) {
+    return getMenuCats(m).includes(cat);
+  }
+
   function renderMenus(data) {
-    const nasiBox   = data.filter(m => m.category === 'Menu Nasi Box');
-    const tumpeng   = data.filter(m => m.category === 'Menu Nasi Tumpeng');
-    const promo     = data.filter(m => m.category === 'Promo');
+    const nasiBox   = data.filter(m => hasCategory(m, 'Menu Nasi Box'));
+    const tumpeng   = data.filter(m => hasCategory(m, 'Menu Nasi Tumpeng'));
+    const promo     = data.filter(m => hasCategory(m, 'Promo'));
     const others    = {};
 
     data.forEach(m => {
-      if (m.category !== 'Menu Nasi Box' && m.category !== 'Menu Nasi Tumpeng' && m.category !== 'Promo') {
-        if (!others[m.category]) others[m.category] = [];
-        others[m.category].push(m);
-      }
+      getMenuCats(m).forEach(cat => {
+        if (cat !== 'Menu Nasi Box' && cat !== 'Menu Nasi Tumpeng' && cat !== 'Promo') {
+          if (!others[cat]) others[cat] = [];
+          if (!others[cat].find(x => x.id === m.id)) others[cat].push(m);
+        }
+      });
     });
 
     // Render section promo (paling atas, background emas)
@@ -2925,7 +2935,7 @@
 
     // Warna harga: kuning jika kategori Promo, hitam jika tidak
     const priceEl = document.getElementById('mPrice');
-    priceEl.style.color = (data.category === 'Promo') ? '#e8a020' : '#000000';
+    priceEl.style.color = ((data.category||'').split(',').map(s=>s.trim()).includes('Promo')) ? '#e8a020' : '#000000';
     document.getElementById('qtyInput').value = currentMinOrder;
     updateModalPrice(currentMinOrder);
 
@@ -3200,7 +3210,7 @@
           <div class="search-result-info">
             <div class="search-result-name">${highlightMatch(m.name, val.trim())}</div>
             <div class="search-result-price">${m.price}</div>
-            <div class="search-result-category">${m.category}</div>
+            <div class="search-result-category">${(m.category||'').split(',').map(s=>s.trim()).filter(Boolean).join(' · ')}</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>`;
