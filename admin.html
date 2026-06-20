@@ -242,6 +242,7 @@
   /* Category select row */
   .category-select-wrap { display: flex; gap: 8px; align-items: center; }
   .category-select-wrap select { flex: 1; }
+  .cat-tag-group { position: relative; flex: 1; }
   .btn-manage-cat {
     padding: 9px 11px; background: var(--batik-warm); color: var(--batik-dark);
     border: 1.5px solid var(--border); border-radius: 9px;
@@ -654,8 +655,16 @@
         </div>
         <div class="form-group">
           <label>Kategori <span>*</span></label>
-          <div class="category-select-wrap">
-            <select id="f_category"><option value="">— pilih —</option></select>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+          <div style="flex:1;position:relative">
+              <div class="tag-input-wrap" id="catTagWrap" onclick="focusCatInput()">
+                <div id="cat_tags"></div>
+                <input type="text" id="cat_input" class="tag-input-inner" placeholder="Pilih atau ketik kategori…"
+                  oninput="showCatDropdown()" onkeydown="handleCatKey(event)" onblur="hideCatDropdown()" autocomplete="off">
+              </div>
+              <div id="cat_dropdown" style="display:none;position:absolute;z-index:200;background:#fff;border:1.5px solid var(--batik-gold);border-radius:9px;box-shadow:0 4px 16px var(--shadow);max-height:160px;overflow-y:auto;min-width:200px;width:100%"></div>
+              <p class="tag-hint">Pilih dari daftar atau ketik lalu tekan <strong>Enter</strong> untuk tambah baru</p>
+            </div>
             <button class="btn-manage-cat" onclick="openCatManager()" title="Kelola Kategori">⚙️ Kelola</button>
           </div>
         </div>
@@ -904,12 +913,6 @@ function syncCategoryUI() {
     allCategories.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
   if (prevFilter) filterSel.value = prevFilter;
 
-  const formSel = document.getElementById('f_category');
-  const prevVal = formSel.value;
-  formSel.innerHTML = '<option value="">— pilih —</option>' +
-    allCategories.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-  if (prevVal) formSel.value = prevVal;
-
   renderCategoryStats();
 }
 
@@ -921,7 +924,7 @@ function renderCategoryStats() {
   document.getElementById('statTotal').textContent = allMenus.length;
 
   allCategories.forEach(cat => {
-    const count = allMenus.filter(m => m.category === cat.name).length;
+    const count = allMenus.filter(m => getMenuCats(m).includes(cat.name)).length;
     const card = document.createElement('div');
     card.className = 'stat-card';
     card.innerHTML = `<div class="num">${count}</div><div class="lbl">${esc(cat.name)}</div>`;
@@ -944,7 +947,7 @@ function renderCatList() {
     return;
   }
   el.innerHTML = allCategories.map((cat, idx) => {
-    const count = allMenus.filter(m => m.category === cat.name).length;
+    const count = allMenus.filter(m => getMenuCats(m).includes(cat.name)).length;
     return `<div class="cat-item">
       <span class="cat-name">${esc(cat.name)}</span>
       <span class="cat-count">${count} menu</span>
@@ -983,7 +986,7 @@ async function addCategory() {
 }
 async function deleteCategory(idx) {
   const cat = allCategories[idx];
-  const count = allMenus.filter(m => m.category === cat.name).length;
+  const count = allMenus.filter(m => getMenuCats(m).includes(cat.name)).length;
   if (count > 0) {
     showToast(`Tidak bisa hapus — masih ada ${count} menu di kategori ini`, 'error'); return;
   }
@@ -1041,7 +1044,7 @@ function renderTable(menus) {
         ${m.description ? `<div style="font-size:.75rem;color:#7A6040;margin-top:1px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.description)}</div>` : ''}
         ${stockPill(m.availability)}
       </td>
-      <td><span class="menu-cat">${esc(m.category)}</span></td>
+      <td>${menuCatPills(m)}</td>
       <td class="menu-price">Rp ${m.price.toLocaleString('id-ID')}</td>
       <td class="menu-weight">${m.weight||'—'}<br><small style="color:#aaa">Min. ${m.min_order||1}x</small></td>
       <td>
@@ -1070,7 +1073,7 @@ function renderCards(menus) {
         <div class="menu-card-name">${esc(m.name)}</div>
         ${m.description ? `<div class="menu-card-desc">${esc(m.description)}</div>` : ''}
         <div class="menu-card-meta">
-          <span class="menu-cat">${esc(m.category)}</span>
+          <span>${menuCatPills(m)}</span>
           <span class="menu-price" style="font-size:.82rem">Rp ${m.price.toLocaleString('id-ID')}</span>
           ${stockPill(m.availability)}
         </div>
@@ -1089,7 +1092,7 @@ function filterMenus() {
   const cat = document.getElementById('filterCategory').value;
   const filtered = allMenus.filter(m =>
     (m.name.toLowerCase().includes(q) || (m.description||'').toLowerCase().includes(q)) &&
-    (!cat || m.category === cat)
+    (!cat || getMenuCats(m).includes(cat))
   );
   renderTable(filtered);
   renderCards(filtered);
@@ -1109,7 +1112,9 @@ function openEditModal(id) {
   document.getElementById('modalTitle').textContent = 'Edit Menu';
   document.getElementById('saveBtn').textContent = '✔️ Perbarui Menu';
   document.getElementById('f_name').value         = m.name || '';
-  document.getElementById('f_category').value     = m.category || '';
+  // Load categories (support comma-separated string "Kat1,Kat2")
+  tagData.categories = getMenuCats(m);
+  renderCatTags();
   document.getElementById('f_emoji').value        = m.emoji || '';
   document.getElementById('f_price').value        = m.price || '';
   document.getElementById('f_min_order').value    = m.min_order || 1;
@@ -1134,13 +1139,79 @@ function resetForm() {
   ['f_name','f_emoji','f_price','f_min_order','f_weight','f_bg_gradient','f_description']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('f_emoji').value = '🍱';
-  document.getElementById('f_category').value = '';
   document.getElementById('f_availability').value = 'in_stock';
   document.getElementById('f_image').value = '';
   const prev = document.getElementById('imagePreview');
   prev.src = ''; prev.style.display = 'none';
-  tagData = { includes: [], delivery: [] };
-  renderTags('includes'); renderTags('delivery');
+  tagData = { includes: [], delivery: [], categories: [] };
+  renderTags('includes'); renderTags('delivery'); renderCatTags();
+}
+
+/* ════ CATEGORY TAG INPUT ════ */
+function getMenuCats(m) {
+  if (Array.isArray(m.categories)) return m.categories;
+  if (m.category) return m.category.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+}
+function menuCatPills(m) {
+  const cats = getMenuCats(m);
+  if (!cats.length) return '<span class="menu-cat" style="opacity:.4">—</span>';
+  return cats.map(c => `<span class="menu-cat" style="margin-right:3px">${esc(c)}</span>`).join('');
+}
+
+function focusCatInput() { document.getElementById('cat_input').focus(); }
+
+function renderCatTags() {
+  const container = document.getElementById('cat_tags');
+  container.innerHTML = (tagData.categories||[]).map((t, i) =>
+    `<span class="tag-item">${esc(t)}<button type="button" onclick="removeCatTag(${i})">×</button></span>`
+  ).join('');
+}
+function removeCatTag(idx) {
+  tagData.categories.splice(idx, 1);
+  renderCatTags();
+}
+function addCatTag(name) {
+  name = name.trim();
+  if (!name) return;
+  if (!tagData.categories) tagData.categories = [];
+  if (tagData.categories.includes(name)) { showToast('Kategori sudah ditambahkan', 'error'); return; }
+  tagData.categories.push(name);
+  renderCatTags();
+  document.getElementById('cat_input').value = '';
+  hideCatDropdown();
+}
+function handleCatKey(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (val) addCatTag(val);
+  } else if (e.key === 'Escape') {
+    hideCatDropdown();
+  }
+}
+function showCatDropdown() {
+  const input = document.getElementById('cat_input');
+  const q = input.value.toLowerCase();
+  const existing = tagData.categories || [];
+  const matches = allCategories.filter(c =>
+    c.name.toLowerCase().includes(q) && !existing.includes(c.name)
+  );
+  const dd = document.getElementById('cat_dropdown');
+  if (!matches.length && !q) { dd.style.display = 'none'; return; }
+  const items = matches.map(c =>
+    `<div onmousedown="addCatTag('${esc(c.name)}')" style="padding:9px 14px;cursor:pointer;font-size:.88rem;transition:background .15s"
+      onmouseover="this.style.background='var(--batik-warm)'" onmouseout="this.style.background=''">${esc(c.name)}</div>`
+  ).join('');
+  const hint = q && !allCategories.some(c => c.name.toLowerCase() === q)
+    ? `<div onmousedown="addCatTag('${esc(input.value.trim())}')" style="padding:9px 14px;cursor:pointer;font-size:.84rem;color:var(--batik-dark);border-top:1px solid var(--border);font-weight:600"
+        onmouseover="this.style.background='var(--batik-warm)'" onmouseout="this.style.background=''">＋ Tambah "<strong>${esc(input.value.trim())}</strong>"</div>`
+    : '';
+  dd.innerHTML = items + hint;
+  dd.style.display = (items || hint) ? 'block' : 'none';
+}
+function hideCatDropdown() {
+  setTimeout(() => { document.getElementById('cat_dropdown').style.display = 'none'; }, 150);
 }
 
 /* ════ TAGS ════ */
@@ -1191,9 +1262,9 @@ async function uploadImage(file) {
 /* ════ SAVE MENU ════ */
 async function saveMenu() {
   const name     = document.getElementById('f_name').value.trim();
-  const category = document.getElementById('f_category').value;
+  const categories = tagData.categories || [];
   const price    = parseInt(document.getElementById('f_price').value);
-  if (!name || !category || isNaN(price)) { showToast('Nama, Kategori, dan Harga wajib diisi!', 'error'); return; }
+  if (!name || !categories.length || isNaN(price)) { showToast('Nama, Kategori, dan Harga wajib diisi!', 'error'); return; }
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.textContent = '⏳ Menyimpan…';
   try {
@@ -1202,7 +1273,9 @@ async function saveMenu() {
     if (imageFile) { image_url = await uploadImage(imageFile); }
     else if (editingId) { image_url = allMenus.find(m => m.id === editingId)?.image_url || null; }
     const payload = {
-      name, category, price,
+      name,
+      category: categories.join(','),   // simpan multi-kategori sebagai "Kat1,Kat2"
+      price,
       emoji:         document.getElementById('f_emoji').value || '🍱',
       min_order:     parseInt(document.getElementById('f_min_order').value) || 1,
       weight:        document.getElementById('f_weight').value.trim() || null,
