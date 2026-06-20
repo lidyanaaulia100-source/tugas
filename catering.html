@@ -513,6 +513,14 @@
       letter-spacing: .3px;
     }
     .price-badge.promo { background: none; color: var(--amber-dark); }
+    .price-original {
+      font-size: 13px;
+      font-weight: 500;
+      color: #b0a090;
+      text-decoration: line-through;
+      line-height: 1.3;
+      margin-bottom: 1px;
+    }
     .menu-card-name {
       font-size: 13px;
       font-weight: 600;
@@ -945,6 +953,13 @@
       font-size: 20px;
       font-weight: 700;
       color: #000000;
+    }
+    .modal-price-original {
+      font-size: 13px;
+      font-weight: 500;
+      color: #b0a090;
+      text-decoration: line-through;
+      line-height: 1.3;
     }
     .modal-name {
       font-family: 'Playfair Display', serif;
@@ -2382,7 +2397,11 @@
       <div class="modal-col-right">
         <div class="modal-info-row">
           <div class="modal-name" id="mName">Nasi Sapi Lada Hitam</div>
-          <div class="modal-price" id="mPrice">Rp32.000</div>
+          <div style="text-align:right">
+            <div class="modal-price-original" id="mOriginalPrice" style="display:none"></div>
+            <div class="modal-price" id="mPrice">Rp32.000</div>
+          </div>
+        </div>
         </div>
 
         <div class="modal-divider"></div>
@@ -2677,7 +2696,17 @@
     }
   }
 
+  /* ── ORIGINAL PRICE — decode dari description field ── */
+  function decodeOrigPrice(desc) {
+    if (!desc) return { desc: '', origPrice: null };
+    const m = desc.match(/\[orig:(\d+)\]/);
+    const origPrice = m ? parseInt(m[1]) : null;
+    const cleanDesc = desc.replace(/\n?\[orig:\d+\]/g, '').trimEnd();
+    return { desc: cleanDesc, origPrice };
+  }
+
   function menuToModalData(m) {
+    const { desc: cleanDesc, origPrice } = decodeOrigPrice(m.description);
     return {
       id:           m.id,
       emoji:        m.emoji        || '🍱',
@@ -2688,11 +2717,12 @@
       weight:       m.weight       || '-',
       minOrder:     m.min_order    || 1,
       category:     m.category,
-      desc:         m.description  || '',
+      desc:         cleanDesc,
       includes:     m.includes     || [],
       delivery:     m.delivery_info || [],
       image_url:    m.image_url    || null,
       availability: m.availability || 'in_stock',
+      original_price: origPrice,
     };
   }
 
@@ -2716,6 +2746,7 @@
         <div class="img-placeholder" style="background:${imgBg || d.bg};display:flex;align-items:center;justify-content:center;">${imgContent}</div>
         <div class="menu-card-body">
           <div class="menu-card-name">${m.name}</div>
+          ${d.original_price ? `<div class="price-original">Rp ${Number(d.original_price).toLocaleString('id-ID')}</div>` : ''}
           <div class="price-badge${isPromo ? ' promo' : ''}">Rp ${Number(m.price).toLocaleString('id-ID')}</div>
         </div>
       </div>`;
@@ -2927,6 +2958,15 @@
 
     // Hitung harga per box: priceRaw (harga total minimum) / minOrder
     currentUnitPrice = Math.round(data.priceRaw / currentMinOrder);
+
+    // Harga asli (sebelum diskon)
+    const origEl = document.getElementById('mOriginalPrice');
+    if (data.original_price) {
+      origEl.textContent = 'Rp ' + Number(data.original_price).toLocaleString('id-ID');
+      origEl.style.display = 'block';
+    } else {
+      origEl.style.display = 'none';
+    }
 
     document.getElementById('mName').textContent   = data.name;
     document.getElementById('mWeight').textContent = data.weight;
