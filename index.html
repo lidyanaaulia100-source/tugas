@@ -2302,16 +2302,96 @@
       font-size: 16px; color: var(--brown-dark);
     }
 
-    .order-items-list { display: flex; flex-direction: column; gap: 10px; }
+    /* ── ORDER TIMELINE DOT — hijau bila selesai ── */
+    .order-tl-dot.selesai-done {
+      background: #2e7d32 !important;
+      border-color: #2e7d32 !important;
+    }
+
+    /* ── STAR RATING di order detail ── */
+    .order-item-rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px dashed #f0ece8;
+    }
+    .order-item-rating-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 1px;
+      color: #ddd;
+      transition: color .15s, transform .1s;
+      user-select: none;
+    }
+    .star-btn:hover, .star-btn.hover { color: #f5a623; transform: scale(1.15); }
+    .star-btn.active { color: #f5a623; }
+    .star-saved-label {
+      font-size: 11px;
+      color: #2e7d32;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+    .star-saving-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    /* ── STAR DISPLAY di menu card ── */
+    .menu-card-rating {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 3px;
+    }
+    .menu-card-rating-stars {
+      color: #f5a623;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .menu-card-rating-count {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── STAR DISPLAY di modal ── */
+    .modal-rating-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .modal-rating-stars {
+      color: #f5a623;
+      font-size: 15px;
+      line-height: 1;
+    }
+    .modal-rating-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .order-items-list { display: flex; flex-direction: column; gap: 6px; }
     .order-item-row {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: flex-start; gap: 12px;
       background: var(--white);
-      border-radius: 12px; padding: 10px 12px;
+      border-radius: 12px; padding: 8px 12px;
       border: 1.5px solid #f0ece8;
       box-shadow: 0 1px 4px rgba(60,20,0,.05);
     }
     .order-item-thumb {
-      width: 56px; height: 56px;
+      width: 64px; height: 64px;
       border-radius: 10px;
       flex-shrink: 0;
       overflow: hidden;
@@ -2333,15 +2413,15 @@
     .order-item-qty  {
       font-size: 11px; color: var(--text-muted);
       background: #f5f0eb; border-radius: 5px;
-      display: inline-block; padding: 2px 7px;
+      display: inline-block; padding: 1px 7px;
     }
     .order-item-price {
-      font-size: 14px; font-weight: 700;
+      font-size: 12px; font-weight: 700;
       color: var(--amber); flex-shrink: 0;
       text-align: right;
     }
     .order-item-unit-price {
-      font-size: 10px; color: var(--text-muted);
+      font-size: 9px; color: var(--text-muted);
       text-align: right; margin-top: 2px;
     }
 
@@ -3037,6 +3117,7 @@
      LOAD MENUS FROM SUPABASE
   ══════════════════════════════════════════════ */
   let allMenus = [];
+  const _menuRatings = {};
 
   async function loadMenus() {
     try {
@@ -3046,6 +3127,8 @@
       if (!res.ok) throw new Error('Gagal memuat menu');
       const data = await res.json();
       allMenus = data;
+      // Muat rating dulu baru render kartu
+      await loadMenuRatings();
       renderMenus(data);
       buildHeroSlider(data);
     } catch (err) {
@@ -3092,6 +3175,8 @@
     };
   }
 
+  // Cache rating per menu_id: { avg, count }
+
   function buildCard(m) {
     const d = menuToModalData(m);
     const imgContent = d.image_url
@@ -3108,6 +3193,16 @@
         ? '<div class="card-stock-ribbon limited">Terbatas</div>'
         : '';
     const discountRibbon = discPercent ? `<div class="discount-ribbon">Diskon ${discPercent}%</div>` : '';
+
+    // Rating display
+    const rating = _menuRatings[m.id];
+    const ratingHtml = rating && rating.count > 0
+      ? `<div class="menu-card-rating">
+           <span class="menu-card-rating-stars">${renderStarsDisplay(rating.avg)}</span>
+           <span class="menu-card-rating-count">${rating.avg.toFixed(1)} (${rating.count})</span>
+         </div>`
+      : '';
+
     return `
       <div class="menu-card${isOut ? ' is-out-of-stock' : ''}" onclick="openModal(allMenus.find(x=>x.id==='${m.id}') ? menuToModalData(allMenus.find(x=>x.id==='${m.id}')) : {})">
         <div class="img-placeholder" style="background:${imgBg || d.bg};display:flex;align-items:center;justify-content:center;position:relative;">${imgContent}${ribbon}${discountRibbon}</div>
@@ -3115,8 +3210,84 @@
           <div class="menu-card-name">${m.name}</div>
           ${d.original_price ? `<div class="price-original">Rp ${Number(d.original_price).toLocaleString('id-ID')}</div>` : ''}
           <div class="price-badge${isPromo ? ' promo' : ''}">Rp ${Number(m.price).toLocaleString('id-ID')}</div>
+          ${ratingHtml}
         </div>
       </div>`;
+  }
+
+  /** Render bintang display (tidak interaktif) */
+  function renderStarsDisplay(avg) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      if (avg >= i) html += '★';
+      else if (avg >= i - 0.5) html += '✭';
+      else html += '☆';
+    }
+    return html;
+  }
+
+  /** Muat rata-rata rating semua menu dari tabel ulasan */
+  async function loadMenuRatings() {
+    try {
+      const res = await fetch(
+        API_BASE + '/ulasan?select=menu_id,menu_name,rating',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!res.ok) { console.warn('loadMenuRatings: fetch gagal', res.status); return; }
+      const rows = await res.json();
+      if (!Array.isArray(rows)) return;
+
+      // Kelompokkan per menu_id; kalau tidak ada menu_id, cari menu lewat menu_name
+      const grouped = {}; // menu_id -> [rating]
+      const byName  = {}; // menu_name (trim) -> [rating]
+      rows.forEach(r => {
+        if (!r.rating) return;
+        if (r.menu_id) {
+          if (!grouped[r.menu_id]) grouped[r.menu_id] = [];
+          grouped[r.menu_id].push(r.rating);
+        } else if (r.menu_name) {
+          const nameKey = r.menu_name.trim();
+          if (!byName[nameKey]) byName[nameKey] = [];
+          byName[nameKey].push(r.rating);
+        }
+      });
+
+      // Masukkan ke _menuRatings berdasarkan menu_id
+      Object.keys(grouped).forEach(id => {
+        const arr = grouped[id];
+        _menuRatings[id] = { avg: arr.reduce((a,b)=>a+b,0)/arr.length, count: arr.length };
+      });
+
+      // Untuk ulasan yang hanya punya menu_name, cocokkan ke allMenus
+      if (Object.keys(byName).length > 0 && allMenus.length > 0) {
+        allMenus.forEach(m => {
+          if (_menuRatings[m.id]) return; // sudah ada dari menu_id
+          const arr = byName[(m.name || '').trim()];
+          if (arr && arr.length > 0) {
+            _menuRatings[m.id] = { avg: arr.reduce((a,b)=>a+b,0)/arr.length, count: arr.length };
+          }
+        });
+      }
+
+      // Re-render kartu menu agar rating tampil
+      if (allMenus.length > 0) renderMenus(allMenus);
+
+      // Perbarui rating di modal yang sedang terbuka (jika ada)
+      _refreshModalRating();
+    } catch (err) { console.error('loadMenuRatings error:', err); }
+  }
+
+  function _refreshModalRating() {
+    const ratingRowEl = document.getElementById('mRatingRow');
+    if (!ratingRowEl || !currentItem) return;
+    const mId = currentItem.id;
+    const r   = mId ? _menuRatings[mId] : null;
+    if (r && r.count > 0) {
+      ratingRowEl.innerHTML = `<span class="modal-rating-stars">${renderStarsDisplay(r.avg)}</span><span class="modal-rating-text">${r.avg.toFixed(1)} dari ${r.count} ulasan</span>`;
+      ratingRowEl.style.display = 'flex';
+    } else {
+      ratingRowEl.style.display = 'none';
+    }
   }
 
   function getMenuCats(m) {
@@ -3364,6 +3535,25 @@
     document.getElementById('mDesc').textContent   = data.desc;
     document.getElementById('mMinNote').textContent = 'Jumlah Minimal ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' item') + ' · Rp ' + currentUnitPrice.toLocaleString('id-ID') + '/item';
 
+    // Rating di modal
+    const mMenuId = data.id;
+    const mRating = mMenuId ? _menuRatings[mMenuId] : null;
+    let ratingRowEl = document.getElementById('mRatingRow');
+    if (!ratingRowEl) {
+      // Buat elemen sekali jika belum ada, sisipkan di bawah mName
+      ratingRowEl = document.createElement('div');
+      ratingRowEl.id = 'mRatingRow';
+      ratingRowEl.className = 'modal-rating-row';
+      const mNameEl = document.getElementById('mName');
+      mNameEl.parentNode.insertBefore(ratingRowEl, mNameEl.nextSibling);
+    }
+    if (mRating && mRating.count > 0) {
+      ratingRowEl.innerHTML = `<span class="modal-rating-stars">${renderStarsDisplay(mRating.avg)}</span><span class="modal-rating-text">${mRating.avg.toFixed(1)} dari ${mRating.count} ulasan</span>`;
+      ratingRowEl.style.display = 'flex';
+    } else {
+      ratingRowEl.style.display = 'none';
+    }
+
     // Warna harga: kuning jika kategori Promo, hitam jika tidak
     const priceEl = document.getElementById('mPrice');
     priceEl.style.color = ((data.category||'').split(',').map(s=>s.trim()).includes('Promo')) ? '#e8a020' : '#000000';
@@ -3494,6 +3684,7 @@
       existing.qty += qty;
     } else {
       cart.push({
+        menu_id: currentItem.id || null,
         name: currentItem.name,
         emoji: currentItem.emoji,
         bg: currentItem.bg,
@@ -4494,7 +4685,17 @@
         isActive = statusOrder[currentIdx] === step.key;
       }
 
-      const dotCls  = step.isCancel ? 'order-tl-dot' + ' active' : (isActive ? 'order-tl-dot active' : (isDone ? 'order-tl-dot done' : 'order-tl-dot'));
+      // Titik hijau khusus untuk status selesai
+      const isSelesaiStep = step.key === 'selesai' && isDone;
+      let dotStyle = '';
+      let dotExtraCls = '';
+      if (step.isCancel) {
+        dotStyle = 'background:#e53935';
+      } else if (isSelesaiStep) {
+        dotExtraCls = ' selesai-done';
+      }
+
+      const dotCls  = step.isCancel ? 'order-tl-dot active' : (isActive ? 'order-tl-dot active' : (isDone ? 'order-tl-dot done' : 'order-tl-dot')) + dotExtraCls;
       const lineCls = isDone && i < tlSteps.length - 1 ? 'order-tl-line done' : 'order-tl-line';
 
       let timeStr = '—';
@@ -4502,13 +4703,15 @@
       else if (!isDone) timeStr = '—';
 
       return '<div class="order-tl-step">'
-        + '<div class="order-tl-dot-wrap"><div class="' + dotCls + '" style="' + (step.isCancel ? 'background:#e53935' : '') + '"></div>'
+        + '<div class="order-tl-dot-wrap"><div class="' + dotCls + '" style="' + dotStyle + '"></div>'
         + (i < tlSteps.length - 1 ? '<div class="' + lineCls + '"></div>' : '')
         + '</div>'
-        + '<div class="order-tl-content"><div class="order-tl-title" style="' + (step.isCancel ? 'color:#e53935' : '') + '">' + step.label + '</div>'
+        + '<div class="order-tl-content"><div class="order-tl-title" style="' + (step.isCancel ? 'color:#e53935' : (isSelesaiStep ? 'color:#2e7d32' : '')) + '">' + step.label + '</div>'
         + '<div class="order-tl-time">' + (isDone || isActive ? timeStr : '—') + '</div></div>'
         + '</div>';
     }).join('');
+
+    const isSelesai = order.status === 'selesai';
 
     const itemsHtml = items.length
       ? items.map(item => {
@@ -4519,11 +4722,12 @@
           const subtotal  = item.subtotal || (unitPrice * qty);
           const imgUrl    = item.image_url || null;
           const emoji     = item.emoji || '🍱';
+          const menuId    = item.menu_id || null;
 
           // Cari foto dari allMenus jika image_url tidak ada di item
           let resolvedImg = imgUrl;
-          if (!resolvedImg && item.menu_id) {
-            const menuRef = allMenus.find(m => m.id === item.menu_id);
+          if (!resolvedImg && menuId) {
+            const menuRef = allMenus.find(m => m.id === menuId);
             if (menuRef && menuRef.image_url) resolvedImg = menuRef.image_url;
           }
           if (!resolvedImg && !imgUrl) {
@@ -4536,11 +4740,34 @@
             ? '<img src="' + resolvedImg + '" alt="' + itemName + '" onerror="this.parentElement.innerHTML=\'' + emoji + '\'" />'
             : emoji;
 
+          // Rating HTML hanya muncul jika status selesai
+          let ratingHtml = '';
+          if (isSelesai) {
+            const ratingKey = (menuId || itemName).replace(/[' ]/g, '_');
+            const savedStar = _savedRatings[_ratingKey(order.id, menuId, itemName)] || 0;
+            ratingHtml = '<div class="order-item-rating" id="rating-wrap-' + ratingKey + '">'
+              + '<span class="order-item-rating-label">Nilai:</span>'
+              + [1,2,3,4,5].map(s => {
+                  const cls = s <= savedStar ? 'star-btn active' : 'star-btn';
+                  return '<button class="' + cls + '" '
+                    + 'data-menu-id="' + (menuId||'') + '" data-menu-name="' + itemName + '" '
+                    + 'data-order-id="' + order.id + '" data-star="' + s + '" '
+                    + 'id="star-' + ratingKey + '-' + s + '" '
+                    + 'onmouseover="hoverStars(\'' + ratingKey + '\',' + s + ')" '
+                    + 'onmouseout="unhoverStars(\'' + ratingKey + '\')" '
+                    + 'onclick="submitRating(\'' + ratingKey + '\',' + s + ',\'' + (menuId||'') + '\',\'' + order.id + '\',\'' + itemName + '\')">'
+                    + '★</button>';
+                }).join('')
+              + '</div>';
+
+          }
+
           return '<div class="order-item-row">'
             + '<div class="order-item-thumb">' + thumbHtml + '</div>'
             + '<div class="order-item-info">'
             + '<div class="order-item-name">' + itemName + '</div>'
             + '<span class="order-item-qty">×' + qty + '</span>'
+            + ratingHtml
             + '</div>'
             + '<div>'
             + '<div class="order-item-price">Rp' + subtotal.toLocaleString('id-ID') + '</div>'
@@ -4584,6 +4811,11 @@
     overlay.style.display = 'flex';
     requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
     document.body.style.overflow = 'hidden';
+
+    // Muat rating tersimpan untuk order ini jika statusnya selesai
+    if (order.status === 'selesai' && items.length > 0) {
+      loadSavedRatingsForOrder(orderId, items);
+    }
   }
 
   function closeOrderDetail() {
@@ -4596,6 +4828,147 @@
     if (e.target === document.getElementById('orderDetailOverlay')) closeOrderDetail();
   }
 
+
+  /* ══════════════════════════════════════════════
+     STAR RATING — Kirim ke tabel ulasan Supabase
+     Schema: ulasan(id, order_id, menu_id, menu_name, rating, user_id, created_at)
+  ══════════════════════════════════════════════ */
+  // key: orderId_menuId|menuName → nilai bintang
+  // Persist ke localStorage agar tidak hilang saat buka/tutup modal
+  const _savedRatings = (() => {
+    try { return JSON.parse(localStorage.getItem('nf_ratings') || '{}'); } catch { return {}; }
+  })();
+
+  function _ratingKey(orderId, menuId, menuName) {
+    // Gunakan menuId jika ada dan tidak kosong, fallback ke menuName
+    const id = (menuId && menuId.trim()) ? menuId.trim() : (menuName || '').trim();
+    return orderId + '_' + id;
+  }
+
+  function _saveRatingCache(orderId, menuId, menuName, star) {
+    const k = _ratingKey(orderId, menuId, menuName);
+    _savedRatings[k] = star;
+    try { localStorage.setItem('nf_ratings', JSON.stringify(_savedRatings)); } catch {}
+  }
+
+  /** Isi bintang tersimpan setelah modal render */
+  function restoreStarsAfterRender(orderId, items) {
+    if (!items || !items.length) return;
+    items.forEach(item => {
+      const menuId   = item.menu_id || null;
+      const itemName = item.menu_name || item.name || 'Item';
+      const key = (menuId || itemName).replace(/'/g, '');
+      const cacheKey = _ratingKey(orderId, menuId, itemName);
+      const saved = _savedRatings[cacheKey];
+      if (saved) {
+        highlightStars(key, saved, false);
+      }
+    });
+  }
+
+  /** Muat rating yang sudah disimpan user untuk order ini dari Supabase */
+  async function loadSavedRatingsForOrder(orderId, items) {
+    const session = getSession();
+    if (!session || !items || !items.length) return;
+    try {
+      const res = await fetch(
+        API_BASE + '/ulasan?order_id=eq.' + orderId + '&user_id=eq.' + session.id + '&select=menu_id,menu_name,rating',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows)) return;
+      rows.forEach(r => {
+        const cacheKey = _ratingKey(orderId, r.menu_id, r.menu_name);
+        _savedRatings[cacheKey] = r.rating;
+      });
+      restoreStarsAfterRender(orderId, items);
+    } catch (_) {}
+  }
+
+  function hoverStars(key, star) {
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById('star-' + key + '-' + i);
+      if (!el) continue;
+      el.classList.toggle('hover', i <= star);
+    }
+  }
+
+  function unhoverStars(key) {
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById('star-' + key + '-' + i);
+      if (el) el.classList.remove('hover');
+    }
+  }
+
+  function highlightStars(key, star, animate) {
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById('star-' + key + '-' + i);
+      if (!el) continue;
+      el.classList.toggle('active', i <= star);
+    }
+  }
+
+  async function submitRating(key, star, menuId, orderId, menuName) {
+    const session = getSession();
+    if (!session) { showToast('Login dulu untuk memberi nilai 🔒'); return; }
+
+    highlightStars(key, star, true);
+
+    _saveRatingCache(orderId, menuId, menuName, star);
+
+    try {
+      // Cek apakah sudah ada ulasan untuk kombinasi order + menu ini
+      const checkRes = await fetch(
+        API_BASE + '/ulasan?order_id=eq.' + orderId + '&user_id=eq.' + session.id
+        + (menuId ? '&menu_id=eq.' + menuId : '&menu_name=eq.' + encodeURIComponent(menuName))
+        + '&select=id',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const existingRows = checkRes.ok ? await checkRes.json() : [];
+      const existingId = (Array.isArray(existingRows) && existingRows.length > 0) ? existingRows[0].id : null;
+
+      if (existingId) {
+        // Update
+        await fetch(API_BASE + '/ulasan?id=eq.' + existingId, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ rating: star })
+        });
+      } else {
+        // Insert baru
+        const body = {
+          order_id:   orderId,
+          user_id:    session.id,
+          menu_name:  menuName,
+          rating:     star,
+          created_at: new Date().toISOString()
+        };
+        if (menuId) body.menu_id = menuId;
+        await fetch(API_BASE + '/ulasan', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(body)
+        });
+      }
+
+      // Perbarui cache _menuRatings dan re-render kartu menu
+      await loadMenuRatings();
+    } catch (err) {
+      showToast('Gagal menyimpan nilai ❌');
+      console.error('Rating error:', err);
+    }
+  }
 
   setInterval(() => {
     const session = getSession();
