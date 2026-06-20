@@ -595,7 +595,7 @@
     /* ── SECTION PROMO ── */
     .section-promo {
       background: #e8a020;
-      padding: 56px 48px 48px;
+      padding: 32px 48px 48px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -655,12 +655,24 @@
     .promo-eyebrow {
       font-family: 'Cormorant Garamond', serif;
       font-size: 13px;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: 5px;
       text-transform: uppercase;
-      color: #7a4a0a;
-      margin-bottom: 6px;
-      opacity: .75;
+      color: #1a1a1a;
+      margin-bottom: 0;
+      line-height: 1.2;
+      opacity: 1;
+    }
+    .promo-user-line {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(15px, 2vw, 19px);
+      font-weight: 600;
+      color: var(--brown-dark);
+      margin-bottom: 0;
+      margin-top: 2px;
+      line-height: 1.2;
+      letter-spacing: .3px;
     }
     .promo-heading {
       font-family: 'DM Serif Display', serif;
@@ -669,6 +681,7 @@
       font-weight: 400;
       color: var(--brown-dark);
       line-height: 1;
+      margin-top: 4px;
       margin-bottom: 10px;
       text-shadow: 0 1px 0 rgba(255,255,255,.5);
     }
@@ -768,7 +781,7 @@
     }
 
     @media (max-width: 900px) {
-      .section-promo { padding: 36px 20px 32px; }
+      .section-promo { padding: 24px 20px 32px; }
       .promo-slider-track .menu-card { flex: 0 0 calc(50% - 10px); }
       .promo-arrow-prev { left: -12px; }
       .promo-arrow-next { right: -12px; }
@@ -1132,13 +1145,26 @@
     }
     .qty-btn:hover { border-color: var(--amber); color: var(--amber); }
     .qty-value {
-      width: 48px;
+      width: 56px;
       text-align: center;
       font-size: 16px;
       font-weight: 600;
       color: var(--text-main);
-      border: none; outline: none;
-      background: transparent;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      outline: none;
+      background: var(--white);
+      padding: 7px 4px;
+      margin: 0 6px;
+      -moz-appearance: textfield;
+    }
+    .qty-value::-webkit-outer-spin-button,
+    .qty-value::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .qty-value:focus {
+      border-color: var(--amber);
     }
     .qty-min-note {
       font-size: 12px;
@@ -1456,6 +1482,27 @@
       min-width: 20px;
       text-align: center;
     }
+    .cart-item-qty-input {
+      font-size: 13px;
+      font-weight: 600;
+      width: 36px;
+      text-align: center;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      padding: 4px 2px;
+      font-family: inherit;
+      color: #333;
+      -moz-appearance: textfield;
+    }
+    .cart-item-qty-input::-webkit-outer-spin-button,
+    .cart-item-qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .cart-item-qty-input:focus {
+      outline: none;
+      border-color: var(--amber);
+    }
     .cart-item-delete {
       background: none;
       border: none;
@@ -1540,6 +1587,76 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* ── LOGIN PROMPT POPUP ── */
+    .login-prompt-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,8,0,0);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      padding: 20px;
+      transition: background .25s ease;
+    }
+    .login-prompt-overlay.active {
+      background: rgba(20,8,0,.5);
+      pointer-events: all;
+    }
+    .login-prompt-box {
+      background: var(--white);
+      width: 100%;
+      max-width: 320px;
+      border-radius: 18px;
+      padding: 32px 26px 24px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      transform: scale(.9) translateY(10px);
+      opacity: 0;
+      transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1), opacity .3s ease;
+    }
+    .login-prompt-overlay.active .login-prompt-box {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+    .login-prompt-emoji {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .login-prompt-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 16.5px;
+      font-weight: 600;
+      color: var(--brown-dark);
+      line-height: 1.4;
+      margin-bottom: 22px;
+    }
+    .login-prompt-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .login-prompt-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: background .2s, opacity .2s;
+    }
+    .login-prompt-btn.cancel {
+      background: #f0ebe4;
+      color: var(--brown-mid);
+    }
+    .login-prompt-btn.cancel:hover { background: #e6ddd2; }
+    .login-prompt-btn.confirm {
+      background: var(--amber);
+      color: var(--brown-dark);
+    }
+    .login-prompt-btn.confirm:hover { background: var(--amber-dark); }
 
     @keyframes searchBoxIn {
       from { opacity: 0; transform: translateY(-18px) scale(.97); }
@@ -1763,40 +1880,6 @@
     }
     .account-logout-btn:hover { background: #fff0f0; border-color: #e05050; }
 
-    /* ── AUTH GUARD OVERLAY ── */
-    #authGuard {
-      position: fixed;
-      inset: 0;
-      background: rgba(61,31,10,.97);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 16px;
-      text-align: center;
-      padding: 24px;
-    }
-    #authGuard .guard-emoji { font-size: 52px; }
-    #authGuard h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 24px;
-      color: var(--white);
-    }
-    #authGuard p { font-size: 14px; color: #c4a07a; max-width: 320px; }
-    #authGuard a {
-      display: inline-block;
-      margin-top: 6px;
-      padding: 13px 36px;
-      background: var(--amber);
-      color: var(--brown-dark);
-      text-decoration: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      transition: background .2s;
-    }
-    #authGuard a:hover { background: var(--amber-dark); }
 
     @media (max-width: 480px) {
       .account-panel { max-width: 100%; }
@@ -2275,13 +2358,18 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- AUTH GUARD (hidden if logged in) -->
-<div id="authGuard" style="display:none;">
-  <div class="guard-emoji">🍱</div>
-  <h2>Silakan Masuk Terlebih Dahulu</h2>
-  <p>Untuk melihat menu dan melakukan pemesanan, Anda perlu login ke akun NusantaraFood.</p>
-  <a href="index.html?redirect=catering.html">Masuk / Daftar</a>
+<!-- LOGIN PROMPT POPUP -->
+<div class="login-prompt-overlay" id="loginPromptOverlay" onclick="handleLoginPromptOverlay(event)">
+  <div class="login-prompt-box">
+    <div class="login-prompt-emoji">🔒</div>
+    <p class="login-prompt-text">Untuk lebih lanjut mohon login dahulu</p>
+    <div class="login-prompt-actions">
+      <button class="login-prompt-btn cancel" onclick="closeLoginPrompt()">Batal</button>
+      <button class="login-prompt-btn confirm" onclick="confirmLoginPrompt()">Ya, Login</button>
+    </div>
+  </div>
 </div>
+
 
 <!-- ACCOUNT PANEL -->
 <div class="account-overlay" id="accountOverlay" onclick="handleAccountOverlay(event)">
@@ -2389,7 +2477,8 @@
     <div class="promo-ring r6"></div>
 
     <div style="position:relative;z-index:1;">
-      <div class="promo-eyebrow">penawaran spesial</div>
+      <div class="promo-eyebrow" id="promoEyebrow">Penawaran Spesial Untuk</div>
+      <div class="promo-user-line" id="promoUserLine">"Anda"</div>
       <div class="promo-heading">Promo</div>
       <div class="promo-divider">
         <div class="promo-divider-line"></div>
@@ -2516,7 +2605,7 @@
           <div class="modal-qty-label">Quantity</div>
           <div class="modal-qty-control">
             <button class="qty-btn" onclick="changeQty(-1)">−</button>
-            <input class="qty-value" id="qtyInput" type="number" value="5" min="1" readonly />
+            <input class="qty-value" id="qtyInput" type="number" value="5" min="1" inputmode="numeric" oninput="handleQtyInput(this)" onblur="handleQtyBlur(this)" />
             <button class="qty-btn" onclick="changeQty(1)">+</button>
           </div>
           <div class="qty-min-note" id="mMinNote">Minimum order 5 box</div>
@@ -3183,14 +3272,34 @@
 
   function changeQty(delta) {
     const input = document.getElementById('qtyInput');
-    let val = parseInt(input.value) + delta;
+    let val = (parseInt(input.value) || 0) + delta;
     if (val < currentMinOrder) val = currentMinOrder;
     input.value = val;
     updateModalPrice(val);
   }
 
+  // Saat user mengetik langsung di kotak quantity: update harga secara live,
+  // tapi jangan paksa nilai minimum dulu (biar user bisa ngetik bebas / hapus angka).
+  function handleQtyInput(input) {
+    const raw = input.value.replace(/[^0-9]/g, '');
+    if (raw !== input.value) input.value = raw;
+    const val = parseInt(raw);
+    if (!isNaN(val) && val > 0) {
+      updateModalPrice(val);
+    }
+  }
+
+  // Saat user selesai mengetik (keluar dari kotak input): baru divalidasi
+  // supaya tidak kurang dari minimum order / tidak kosong.
+  function handleQtyBlur(input) {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < currentMinOrder) val = currentMinOrder;
+    input.value = val;
+    updateModalPrice(val);
+  }
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal(); closeCart(); closeSearch(); }
+    if (e.key === 'Escape') { closeModal(); closeCart(); closeSearch(); closeLoginPrompt(); }
   });
 
   /* ── CART ── */
@@ -3200,6 +3309,7 @@
       showToast('Maaf, menu ini sedang habis 🙏');
       return;
     }
+    if (!requireLogin('catering.html')) return;
     const qty = parseInt(document.getElementById('qtyInput').value);
     const priceNum = currentUnitPrice; // harga per box
 
@@ -3257,7 +3367,9 @@
             <div class="cart-item-price">Rp${(item.price * item.qty).toLocaleString('id-ID')}</div>
             <div class="cart-item-qty">
               <button onclick="cartChangeQty(${idx}, -1)">−</button>
-              <span>${item.qty}</span>
+              <input type="number" class="cart-item-qty-input" value="${item.qty}" min="${item.minOrder || 1}" inputmode="numeric"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                onblur="cartSetQty(${idx}, this.value)" />
               <button onclick="cartChangeQty(${idx}, 1)">+</button>
             </div>
           </div>
@@ -3269,6 +3381,16 @@
   function cartChangeQty(idx, delta) {
     cart[idx].qty += delta;
     if (cart[idx].qty < cart[idx].minOrder) cart[idx].qty = cart[idx].minOrder;
+    updateCartUI();
+    scheduleCartSave();
+  }
+
+  // Update qty dari kotak input yang diketik manual di keranjang
+  function cartSetQty(idx, value) {
+    let val = parseInt(value);
+    const minOrder = cart[idx].minOrder || 1;
+    if (isNaN(val) || val < minOrder) val = minOrder;
+    cart[idx].qty = val;
     updateCartUI();
     scheduleCartSave();
   }
@@ -3291,6 +3413,7 @@
     if (isOpen) {
       closeCart();
     } else {
+      if (!requireLogin('catering.html')) return;
       overlay.classList.add('active');
       document.body.style.overflow = 'hidden';
       const icon = document.getElementById('cartTitleIcon');
@@ -3441,18 +3564,48 @@
     localStorage.setItem('nf_session', JSON.stringify(data));
   }
 
-  // Run auth check immediately
+  // Run auth check immediately — MODE TAMU: tampilan tetap bisa diakses
+  // tanpa login. Login hanya diwajibkan saat user membuka keranjang,
+  // akun, atau melakukan order/checkout (lihat requireLogin()).
   (function checkAuth() {
     const session = getSession();
-    if (!session) {
-      document.getElementById('authGuard').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    } else {
+    if (session) {
       initAccountUI(session);
       refreshProfileFromServer(session);
       loadCartFromServer(); // Muat keranjang dari Supabase
     }
   })();
+
+  /** Cek session; jika belum login, tampilkan popup konfirmasi yang
+   *  mengarahkan ke halaman login (membawa redirectTo agar kembali ke sini
+   *  setelah login berhasil). Mengembalikan true jika sudah login (boleh
+   *  lanjut), false jika tidak (popup ditampilkan, aksi dibatalkan). */
+  function requireLogin(redirectTo) {
+    const session = getSession();
+    if (session) return true;
+    showLoginPrompt(redirectTo || 'catering.html');
+    return false;
+  }
+
+  let _loginPromptTarget = 'catering.html';
+
+  function showLoginPrompt(redirectTo) {
+    _loginPromptTarget = redirectTo || 'catering.html';
+    document.getElementById('loginPromptOverlay').classList.add('active');
+  }
+
+  function closeLoginPrompt() {
+    document.getElementById('loginPromptOverlay').classList.remove('active');
+  }
+
+  function confirmLoginPrompt() {
+    window.location.href = 'login.html?redirect=' + encodeURIComponent(_loginPromptTarget);
+  }
+
+  function handleLoginPromptOverlay(e) {
+    if (e.target === document.getElementById('loginPromptOverlay')) closeLoginPrompt();
+  }
+
 
   // Ambil data terbaru dari Supabase (nama/alamat/telepon/foto bisa saja
   // diubah dari tempat lain) agar panel akun selalu mengikuti data server.
@@ -3493,6 +3646,13 @@
     document.getElementById('fieldPhoneInput').value   = session.phone   || '';
 
     updateAvatarUI(session.avatar_url);
+
+    // Tampilkan nama user yang login di paragraf baru di bawah "Penawaran Spesial Untuk".
+    // Mode tamu (belum login) akan menampilkan "Anda" sebagai default.
+    const promoUserLineEl = document.getElementById('promoUserLine');
+    if (promoUserLineEl) {
+      promoUserLineEl.textContent = session.name ? '"' + session.name + '"' : '"Anda"';
+    }
   }
 
   function updateAvatarUI(avatarUrl) {
@@ -3512,11 +3672,7 @@
   }
 
   function toggleAccountPanel() {
-    const session = getSession();
-    if (!session) {
-      window.location.href = 'index.html?redirect=catering.html';
-      return;
-    }
+    if (!requireLogin('catering.html')) return;
     const overlay = document.getElementById('accountOverlay');
     if (overlay.classList.contains('active')) {
       closeAccountPanel();
@@ -3709,15 +3865,11 @@
   ══════════════════════════════════════════════ */
   function doLogout() {
     clearSession();
-    window.location.href = 'index.html';
+    window.location.href = 'catering.html';
   }
 
   function goToCheckout() {
-    const session = getSession();
-    if (!session) {
-      window.location.href = 'index.html?redirect=pembayaran.html';
-      return;
-    }
+    if (!requireLogin('pembayaran.html')) return;
     if (!cart.length) {
       showToast('Keranjang masih kosong!');
       return;
