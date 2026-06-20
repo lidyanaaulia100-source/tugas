@@ -677,6 +677,10 @@
           <input type="number" id="f_price" placeholder="22000">
         </div>
         <div class="form-group">
+          <label>Harga Sebelum Diskon (Rp) <span style="color:var(--ink-soft);font-weight:400">(opsional)</span></label>
+          <input type="number" id="f_original_price" placeholder="30000">
+        </div>
+        <div class="form-group">
           <label>Min. Order</label>
           <input type="number" id="f_min_order" placeholder="5" min="1">
         </div>
@@ -1041,11 +1045,14 @@ function renderTable(menus) {
       </td>
       <td>
         <div class="menu-name">${esc(m.name)}</div>
-        ${m.description ? `<div style="font-size:.75rem;color:#7A6040;margin-top:1px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.description)}</div>` : ''}
+        ${getMenuDesc(m) ? `<div style="font-size:.75rem;color:#7A6040;margin-top:1px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(getMenuDesc(m))}</div>` : ''}
         ${stockPill(m.availability)}
       </td>
       <td>${menuCatPills(m)}</td>
-      <td class="menu-price">Rp ${m.price.toLocaleString('id-ID')}</td>
+      <td class="menu-price">
+        ${getMenuOrigPrice(m) ? `<div style="font-size:.72rem;color:#aaa;text-decoration:line-through;line-height:1.2">Rp ${getMenuOrigPrice(m).toLocaleString('id-ID')}</div>` : ''}
+        Rp ${m.price.toLocaleString('id-ID')}
+      </td>
       <td class="menu-weight">${m.weight||'—'}<br><small style="color:#aaa">Min. ${m.min_order||1}x</small></td>
       <td>
         <div class="action-group">
@@ -1071,10 +1078,13 @@ function renderCards(menus) {
         : `<div class="menu-thumb-placeholder">${m.emoji||'🍱'}</div>`}
       <div class="menu-card-body">
         <div class="menu-card-name">${esc(m.name)}</div>
-        ${m.description ? `<div class="menu-card-desc">${esc(m.description)}</div>` : ''}
+        ${getMenuDesc(m) ? `<div class="menu-card-desc">${esc(getMenuDesc(m))}</div>` : ''}
         <div class="menu-card-meta">
           <span>${menuCatPills(m)}</span>
-          <span class="menu-price" style="font-size:.82rem">Rp ${m.price.toLocaleString('id-ID')}</span>
+          <span class="menu-price" style="font-size:.82rem">
+            ${getMenuOrigPrice(m) ? `<span style="font-size:.72rem;color:#aaa;text-decoration:line-through;margin-right:3px">Rp ${getMenuOrigPrice(m).toLocaleString('id-ID')}</span>` : ''}
+            Rp ${m.price.toLocaleString('id-ID')}
+          </span>
           ${stockPill(m.availability)}
         </div>
         <div class="menu-card-actions">
@@ -1091,7 +1101,7 @@ function filterMenus() {
   const q   = document.getElementById('searchInput').value.toLowerCase();
   const cat = document.getElementById('filterCategory').value;
   const filtered = allMenus.filter(m =>
-    (m.name.toLowerCase().includes(q) || (m.description||'').toLowerCase().includes(q)) &&
+    (m.name.toLowerCase().includes(q) || (getMenuDesc(m)||'').toLowerCase().includes(q)) &&
     (!cat || getMenuCats(m).includes(cat))
   );
   renderTable(filtered);
@@ -1117,10 +1127,13 @@ function openEditModal(id) {
   renderCatTags();
   document.getElementById('f_emoji').value        = m.emoji || '';
   document.getElementById('f_price').value        = m.price || '';
+  document.getElementById('f_original_price').value = m.original_price || '';
   document.getElementById('f_min_order').value    = m.min_order || 1;
   document.getElementById('f_weight').value       = m.weight || '';
   document.getElementById('f_bg_gradient').value  = m.bg_gradient || '';
-  document.getElementById('f_description').value  = m.description || '';
+  document.getElementById('f_description').value  = getMenuDesc(m);
+  const origP = getMenuOrigPrice(m);
+  document.getElementById('f_original_price').value = origP || '';
   document.getElementById('f_availability').value = m.availability || 'in_stock';
   if (m.image_url) {
     const prev = document.getElementById('imagePreview');
@@ -1136,7 +1149,7 @@ function closeModal() {
   editingId = null;
 }
 function resetForm() {
-  ['f_name','f_emoji','f_price','f_min_order','f_weight','f_bg_gradient','f_description']
+  ['f_name','f_emoji','f_price','f_original_price','f_min_order','f_weight','f_bg_gradient','f_description']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('f_emoji').value = '🍱';
   document.getElementById('f_availability').value = 'in_stock';
@@ -1259,11 +1272,29 @@ async function uploadImage(file) {
   return `${STORAGE_URL}/object/public/menu-images/${name}`;
 }
 
+/* ════ ORIGINAL PRICE — encode/decode di field description ════ */
+function encodeOrigPrice(desc, origPrice) {
+  // Strip tag lama dulu (jika edit)
+  const clean = (desc || '').replace(/\n?\[orig:\d+\]/g, '').trimEnd();
+  if (origPrice && origPrice > 0) return clean + '\n[orig:' + origPrice + ']';
+  return clean || null;
+}
+function decodeOrigPrice(desc) {
+  if (!desc) return { desc: '', origPrice: null };
+  const m = desc.match(/\[orig:(\d+)\]/);
+  const origPrice = m ? parseInt(m[1]) : null;
+  const cleanDesc = desc.replace(/\n?\[orig:\d+\]/g, '').trimEnd();
+  return { desc: cleanDesc, origPrice };
+}
+function getMenuOrigPrice(m) { return decodeOrigPrice(m.description).origPrice; }
+function getMenuDesc(m)      { return decodeOrigPrice(m.description).desc; }
+
 /* ════ SAVE MENU ════ */
 async function saveMenu() {
-  const name     = document.getElementById('f_name').value.trim();
+  const name       = document.getElementById('f_name').value.trim();
   const categories = tagData.categories || [];
-  const price    = parseInt(document.getElementById('f_price').value);
+  const price      = parseInt(document.getElementById('f_price').value);
+  const origPrice  = parseInt(document.getElementById('f_original_price').value) || 0;
   if (!name || !categories.length || isNaN(price)) { showToast('Nama, Kategori, dan Harga wajib diisi!', 'error'); return; }
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.textContent = '⏳ Menyimpan…';
@@ -1272,15 +1303,16 @@ async function saveMenu() {
     const imageFile = document.getElementById('f_image').files[0];
     if (imageFile) { image_url = await uploadImage(imageFile); }
     else if (editingId) { image_url = allMenus.find(m => m.id === editingId)?.image_url || null; }
+    const rawDesc = document.getElementById('f_description').value.trim();
     const payload = {
       name,
-      category: categories.join(','),   // simpan multi-kategori sebagai "Kat1,Kat2"
+      category: categories.join(','),
       price,
       emoji:         document.getElementById('f_emoji').value || '🍱',
       min_order:     parseInt(document.getElementById('f_min_order').value) || 1,
       weight:        document.getElementById('f_weight').value.trim() || null,
       bg_gradient:   document.getElementById('f_bg_gradient').value.trim() || 'linear-gradient(135deg,#c8a87a,#a0784a)',
-      description:   document.getElementById('f_description').value.trim() || null,
+      description:   encodeOrigPrice(rawDesc, origPrice),
       availability:  document.getElementById('f_availability').value || 'in_stock',
       includes:      tagData.includes.length ? tagData.includes : null,
       delivery_info: tagData.delivery.length ? tagData.delivery : null,
