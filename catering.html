@@ -2927,6 +2927,7 @@
 
   let currentMinOrder = 5;
   let currentUnitPrice = 0;
+  let currentOriginalUnitPrice = 0;
   let currentItem = null;
   let cart = [];
 
@@ -3082,10 +3083,11 @@
     // Hitung harga per box: priceRaw (harga total minimum) / minOrder
     currentUnitPrice = Math.round(data.priceRaw / currentMinOrder);
 
-    // Harga asli (sebelum diskon)
+    // Harga asli per box (sebelum diskon) — disimpan untuk dikalikan qty
+    currentOriginalUnitPrice = data.original_price ? Math.round(Number(data.original_price) / currentMinOrder) : 0;
+
     const origEl = document.getElementById('mOriginalPrice');
     if (data.original_price) {
-      origEl.textContent = 'Rp ' + Number(data.original_price).toLocaleString('id-ID');
       origEl.style.display = 'block';
     } else {
       origEl.style.display = 'none';
@@ -3171,6 +3173,11 @@
   function updateModalPrice(qty) {
     const total = currentUnitPrice * qty;
     document.getElementById('mPrice').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    // Update harga yang dicoret (original price x qty)
+    if (currentOriginalUnitPrice > 0) {
+      const origEl = document.getElementById('mOriginalPrice');
+      origEl.textContent = 'Rp ' + (currentOriginalUnitPrice * qty).toLocaleString('id-ID');
+    }
   }
 
   function changeQty(delta) {
