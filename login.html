@@ -205,7 +205,7 @@
 <body>
 
 <nav>
-  <a href="catering.html" class="nav-logo">
+  <a href="index.html" class="nav-logo">
     <div class="nav-logo-icon">🍱</div>
     <span>NusantaraFood</span>
   </a>
@@ -219,7 +219,7 @@
       <div class="big-emoji">👋</div>
       <h2 id="greetName">Selamat datang!</h2>
       <p>Anda sudah masuk. Kembali ke halaman utama untuk melihat menu.</p>
-      <a href="catering.html" class="go-btn">Lihat Menu →</a>
+      <a href="index.html" class="go-btn">Lihat Menu →</a>
       <button class="logout-link" onclick="doLogout()">Keluar dari akun ini</button>
     </div>
 
@@ -445,7 +445,7 @@
 
       showMsg('loginMsg', '✅ Berhasil masuk! Mengalihkan...', 'success');
       setTimeout(() => {
-        const redirect = new URLSearchParams(location.search).get('redirect') || 'catering.html';
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
         window.location.href = redirect;
       }, 700);
 
@@ -538,7 +538,7 @@
 
       showMsg('registerMsg', '✅ Akun berhasil dibuat! Mengalihkan ke menu...', 'success');
       setTimeout(() => {
-        const redirect = new URLSearchParams(location.search).get('redirect') || 'catering.html';
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
         window.location.href = redirect;
       }, 800);
 
