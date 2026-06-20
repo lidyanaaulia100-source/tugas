@@ -2687,17 +2687,17 @@
 
         <div class="modal-meta">
           <div class="modal-meta-row"><span class="label">Berat:</span> <span id="mWeight">150 gram</span></div>
-          <div class="modal-meta-row"><span class="label">Availability:</span> <span id="mAvailability" class="stock-badge">In Stock</span></div>
+          <div class="modal-meta-row"><span class="label">Stok:</span> <span id="mAvailability" class="stock-badge">Tersedia</span></div>
         </div>
 
         <div class="modal-qty-section">
-          <div class="modal-qty-label">Quantity</div>
+          <div class="modal-qty-label">Jumlah</div>
           <div class="modal-qty-control">
             <button class="qty-btn" onclick="changeQty(-1)">−</button>
             <input class="qty-value" id="qtyInput" type="number" value="5" min="1" inputmode="numeric" oninput="handleQtyInput(this)" onblur="handleQtyBlur(this)" />
             <button class="qty-btn" onclick="changeQty(1)">+</button>
           </div>
-          <div class="qty-min-note" id="mMinNote">Minimum order 5 box</div>
+          <div class="qty-min-note" id="mMinNote">Jumlah Minimal 5 Item</div>
         </div>
 
         <button class="modal-order-btn" onclick="addToCart()">ORDER</button>
@@ -3297,7 +3297,7 @@
     document.getElementById('mName').textContent   = data.name;
     document.getElementById('mWeight').textContent = data.weight;
     document.getElementById('mDesc').textContent   = data.desc;
-    document.getElementById('mMinNote').textContent = 'Minimum order ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' box') + ' · Rp ' + currentUnitPrice.toLocaleString('id-ID') + '/box';
+    document.getElementById('mMinNote').textContent = 'Jumlah Minimal ' + currentMinOrder + (currentMinOrder === 1 ? ' porsi' : ' item') + ' · Rp ' + currentUnitPrice.toLocaleString('id-ID') + '/item';
 
     // Warna harga: kuning jika kategori Promo, hitam jika tidak
     const priceEl = document.getElementById('mPrice');
@@ -3308,8 +3308,8 @@
     // Availability
     const avEl = document.getElementById('mAvailability');
     const avMap = {
-      in_stock:    { label: 'In Stock',     cls: '' },
-      out_of_stock:{ label: 'Out of Stock', cls: 'out-of-stock' },
+      in_stock:    { label: 'Tersedia',     cls: '' },
+      out_of_stock:{ label: 'Habis', cls: 'out-of-stock' },
       limited:     { label: 'Stok Terbatas',cls: 'limited' },
     };
     const av = avMap[data.availability] || avMap['in_stock'];
@@ -3401,7 +3401,7 @@
   }
 
   // Saat user selesai mengetik (keluar dari kotak input): baru divalidasi
-  // supaya tidak kurang dari minimum order / tidak kosong.
+  // supaya tidak kurang dari Jumlah minimal / tidak kosong.
   function handleQtyBlur(input) {
     let val = parseInt(input.value);
     if (isNaN(val) || val < currentMinOrder) val = currentMinOrder;
@@ -3420,9 +3420,9 @@
       showToast('Maaf, menu ini sedang habis 🙏');
       return;
     }
-    if (!requireLogin('index.html')) return;
+    if (!requireLogin('catering.html')) return;
     const qty = parseInt(document.getElementById('qtyInput').value);
-    const priceNum = currentUnitPrice; // harga per box
+    const priceNum = currentUnitPrice; // harga per item
 
     const existing = cart.find(c => c.name === currentItem.name);
     if (existing) {
@@ -3433,7 +3433,7 @@
         emoji: currentItem.emoji,
         bg: currentItem.bg,
         image_url: currentItem.image_url || null,
-        price: priceNum,           // harga per box
+        price: priceNum,           // harga per item
         priceLabel: 'Rp' + priceNum.toLocaleString('id-ID'),
         qty: qty,
         minOrder: currentMinOrder,
@@ -3524,7 +3524,7 @@
     if (isOpen) {
       closeCart();
     } else {
-      if (!requireLogin('index.html')) return;
+      if (!requireLogin('catering.html')) return;
       overlay.classList.add('active');
       document.body.style.overflow = 'hidden';
       const icon = document.getElementById('cartTitleIcon');
@@ -3709,14 +3709,14 @@
   function requireLogin(redirectTo) {
     const session = getSession();
     if (session) return true;
-    showLoginPrompt(redirectTo || 'index.html');
+    showLoginPrompt(redirectTo || 'catering.html');
     return false;
   }
 
-  let _loginPromptTarget = 'index.html';
+  let _loginPromptTarget = 'catering.html';
 
   function showLoginPrompt(redirectTo) {
-    _loginPromptTarget = redirectTo || 'index.html';
+    _loginPromptTarget = redirectTo || 'catering.html';
     document.getElementById('loginPromptOverlay').classList.add('active');
   }
 
@@ -3811,7 +3811,7 @@
   }
 
   function toggleAccountPanel() {
-    if (!requireLogin('index.html')) return;
+    if (!requireLogin('catering.html')) return;
     const overlay = document.getElementById('accountOverlay');
     if (overlay.classList.contains('active')) {
       closeAccountPanel();
@@ -4153,7 +4153,7 @@
   ══════════════════════════════════════════════ */
   function doLogout() {
     clearSession();
-    window.location.href = 'index.html';
+    window.location.href = 'catering.html';
   }
 
   function goToCheckout() {
