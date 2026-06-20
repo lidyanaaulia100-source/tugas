@@ -3296,7 +3296,7 @@
       showToast('Maaf, menu ini sedang habis 🙏');
       return;
     }
-    if (!requireLogin('catering.html')) return;
+    if (!requireLogin('index.html')) return;
     const qty = parseInt(document.getElementById('qtyInput').value);
     const priceNum = currentUnitPrice; // harga per box
 
@@ -3400,7 +3400,7 @@
     if (isOpen) {
       closeCart();
     } else {
-      if (!requireLogin('catering.html')) return;
+      if (!requireLogin('index.html')) return;
       overlay.classList.add('active');
       document.body.style.overflow = 'hidden';
       const icon = document.getElementById('cartTitleIcon');
@@ -3585,14 +3585,14 @@
   function requireLogin(redirectTo) {
     const session = getSession();
     if (session) return true;
-    showLoginPrompt(redirectTo || 'catering.html');
+    showLoginPrompt(redirectTo || 'index.html');
     return false;
   }
 
-  let _loginPromptTarget = 'catering.html';
+  let _loginPromptTarget = 'index.html';
 
   function showLoginPrompt(redirectTo) {
-    _loginPromptTarget = redirectTo || 'catering.html';
+    _loginPromptTarget = redirectTo || 'index.html';
     document.getElementById('loginPromptOverlay').classList.add('active');
   }
 
@@ -3674,7 +3674,7 @@
   }
 
   function toggleAccountPanel() {
-    if (!requireLogin('catering.html')) return;
+    if (!requireLogin('index.html')) return;
     const overlay = document.getElementById('accountOverlay');
     if (overlay.classList.contains('active')) {
       closeAccountPanel();
@@ -3867,7 +3867,7 @@
   ══════════════════════════════════════════════ */
   function doLogout() {
     clearSession();
-    window.location.href = 'catering.html';
+    window.location.href = 'index.html';
   }
 
   function goToCheckout() {
