@@ -251,6 +251,27 @@
   }
   .btn-manage-cat:hover { background: var(--batik-gold); color: #fff; border-color: var(--batik-gold); }
 
+  /* Category checkbox buttons */
+  .cat-checkbox-group {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    padding: 8px; border: 1.5px solid var(--border); border-radius: 9px;
+    background: var(--batik-cream); min-height: 46px;
+  }
+  .cat-checkbox-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: #fff;
+    font-family: inherit; font-size: .82rem; font-weight: 600;
+    color: var(--ink-soft); cursor: pointer; transition: all .18s;
+    user-select: none;
+  }
+  .cat-checkbox-btn:hover { border-color: var(--batik-gold); color: var(--batik-dark); background: var(--batik-warm); }
+  .cat-checkbox-btn.checked {
+    background: var(--batik-gold); color: #fff; border-color: var(--batik-gold);
+  }
+  .cat-checkbox-btn .chk-icon { font-size: .75rem; }
+  .cat-empty-hint { font-size: .78rem; color: var(--ink-soft); padding: 4px 4px; align-self: center; }
+
   .tag-input-wrap {
     border: 1.5px solid var(--border); border-radius: 9px; padding: 7px;
     background: var(--batik-cream); min-height: 46px; cursor: text;
@@ -653,24 +674,15 @@
           <label>Nama Menu <span>*</span></label>
           <input type="text" id="f_name" placeholder="cth. Nasi Ayam Bakar">
         </div>
-        <div class="form-group">
+        <div class="form-group full">
           <label>Kategori <span>*</span></label>
           <div style="display:flex;gap:8px;align-items:flex-start">
-          <div style="flex:1;position:relative">
-              <div class="tag-input-wrap" id="catTagWrap" onclick="focusCatInput()">
-                <div id="cat_tags"></div>
-                <input type="text" id="cat_input" class="tag-input-inner" placeholder="Pilih atau ketik kategori…"
-                  oninput="showCatDropdown()" onkeydown="handleCatKey(event)" onblur="hideCatDropdown()" autocomplete="off">
-              </div>
-              <div id="cat_dropdown" style="display:none;position:absolute;z-index:200;background:#fff;border:1.5px solid var(--batik-gold);border-radius:9px;box-shadow:0 4px 16px var(--shadow);max-height:160px;overflow-y:auto;min-width:200px;width:100%"></div>
-              <p class="tag-hint">Pilih dari daftar atau ketik lalu tekan <strong>Enter</strong> untuk tambah baru</p>
+            <div class="cat-checkbox-group" id="catCheckboxGroup" style="flex:1">
+              <span class="cat-empty-hint" id="catEmptyHint">Belum ada kategori — klik ⚙️ Kelola untuk menambah</span>
             </div>
-            <button class="btn-manage-cat" onclick="openCatManager()" title="Kelola Kategori">⚙️ Kelola</button>
+            <button type="button" class="btn-manage-cat" onclick="openCatManager()" title="Kelola Kategori">⚙️ Kelola</button>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Emoji</label>
-          <input type="text" id="f_emoji" placeholder="🍱" maxlength="4">
+          <p class="tag-hint">Klik tombol kategori untuk memilih (bisa lebih dari satu)</p>
         </div>
         <div class="form-group">
           <label>Harga (Rp) <span>*</span></label>
@@ -695,10 +707,6 @@
             <option value="limited">⚠️ Stok Terbatas</option>
             <option value="out_of_stock">❌ Stok Habis</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>Background Gradient</label>
-          <input type="text" id="f_bg_gradient" placeholder="linear-gradient(135deg,#c8a87a,#a0784a)">
         </div>
         <div class="form-group full">
           <label>Deskripsi</label>
@@ -900,7 +908,8 @@ async function loadCategories() {
       cats = await apiFetch('/categories?order=sort_order.asc,name.asc') || [];
     } catch(e) {
       // Table belum ada — derive dari menu yang sudah ada
-      const unique = [...new Set(allMenus.map(m => m.category).filter(Boolean))];
+      const rawCats = allMenus.flatMap(m => getMenuCats(m)).filter(Boolean);
+      const unique = [...new Set(rawCats)];
       cats = unique.map((n, i) => ({ id: null, name: n, sort_order: i }));
     }
     allCategories = cats;
@@ -916,6 +925,9 @@ function syncCategoryUI() {
   filterSel.innerHTML = '<option value="">Semua Kategori</option>' +
     allCategories.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
   if (prevFilter) filterSel.value = prevFilter;
+
+  // Re-render checkbox buttons if modal is open
+  if (document.getElementById('catCheckboxGroup')) renderCatCheckboxes();
 
   renderCategoryStats();
 }
@@ -1124,13 +1136,11 @@ function openEditModal(id) {
   document.getElementById('f_name').value         = m.name || '';
   // Load categories (support comma-separated string "Kat1,Kat2")
   tagData.categories = getMenuCats(m);
-  renderCatTags();
-  document.getElementById('f_emoji').value        = m.emoji || '';
+  renderCatCheckboxes();
   document.getElementById('f_price').value        = m.price || '';
   document.getElementById('f_original_price').value = m.original_price || '';
   document.getElementById('f_min_order').value    = m.min_order || 1;
   document.getElementById('f_weight').value       = m.weight || '';
-  document.getElementById('f_bg_gradient').value  = m.bg_gradient || '';
   document.getElementById('f_description').value  = getMenuDesc(m);
   const origP = getMenuOrigPrice(m);
   document.getElementById('f_original_price').value = origP || '';
@@ -1149,9 +1159,8 @@ function closeModal() {
   editingId = null;
 }
 function resetForm() {
-  ['f_name','f_emoji','f_price','f_original_price','f_min_order','f_weight','f_bg_gradient','f_description']
+  ['f_name','f_price','f_original_price','f_min_order','f_weight','f_description']
     .forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f_emoji').value = '🍱';
   document.getElementById('f_availability').value = 'in_stock';
   document.getElementById('f_image').value = '';
   const prev = document.getElementById('imagePreview');
@@ -1160,7 +1169,7 @@ function resetForm() {
   renderTags('includes'); renderTags('delivery'); renderCatTags();
 }
 
-/* ════ CATEGORY TAG INPUT ════ */
+/* ════ CATEGORY CHECKBOX BUTTONS ════ */
 function getMenuCats(m) {
   if (Array.isArray(m.categories)) return m.categories;
   if (m.category) return m.category.split(',').map(s => s.trim()).filter(Boolean);
@@ -1169,63 +1178,42 @@ function getMenuCats(m) {
 function menuCatPills(m) {
   const cats = getMenuCats(m);
   if (!cats.length) return '<span class="menu-cat" style="opacity:.4">—</span>';
-  return cats.map(c => `<span class="menu-cat" style="margin-right:3px">${esc(c)}</span>`).join('');
+  return cats.map(c => `<span class="menu-cat">${esc(c)}</span>`).join('<span style="color:var(--border);font-weight:400;margin:0 3px">—</span>');
 }
 
-function focusCatInput() { document.getElementById('cat_input').focus(); }
+function renderCatCheckboxes() {
+  const group = document.getElementById('catCheckboxGroup');
+  const hint  = document.getElementById('catEmptyHint');
+  if (!allCategories.length) {
+    group.innerHTML = '<span class="cat-empty-hint">Belum ada kategori — klik ⚙️ Kelola untuk menambah</span>';
+    return;
+  }
+  const selected = tagData.categories || [];
+  group.innerHTML = allCategories.map(cat => {
+    const isChecked = selected.includes(cat.name);
+    return `<button type="button" class="cat-checkbox-btn${isChecked ? ' checked' : ''}"
+      onclick="toggleCatCheckbox('${esc(cat.name)}', this)">
+      <span class="chk-icon">${isChecked ? '✓' : '+'}</span>${esc(cat.name)}
+    </button>`;
+  }).join('');
+}
 
-function renderCatTags() {
-  const container = document.getElementById('cat_tags');
-  container.innerHTML = (tagData.categories||[]).map((t, i) =>
-    `<span class="tag-item">${esc(t)}<button type="button" onclick="removeCatTag(${i})">×</button></span>`
-  ).join('');
-}
-function removeCatTag(idx) {
-  tagData.categories.splice(idx, 1);
-  renderCatTags();
-}
-function addCatTag(name) {
-  name = name.trim();
-  if (!name) return;
+function toggleCatCheckbox(name, btn) {
   if (!tagData.categories) tagData.categories = [];
-  if (tagData.categories.includes(name)) { showToast('Kategori sudah ditambahkan', 'error'); return; }
-  tagData.categories.push(name);
-  renderCatTags();
-  document.getElementById('cat_input').value = '';
-  hideCatDropdown();
-}
-function handleCatKey(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const val = e.target.value.trim();
-    if (val) addCatTag(val);
-  } else if (e.key === 'Escape') {
-    hideCatDropdown();
+  const idx = tagData.categories.indexOf(name);
+  if (idx >= 0) {
+    tagData.categories.splice(idx, 1);
+    btn.classList.remove('checked');
+    btn.querySelector('.chk-icon').textContent = '+';
+  } else {
+    tagData.categories.push(name);
+    btn.classList.add('checked');
+    btn.querySelector('.chk-icon').textContent = '✓';
   }
 }
-function showCatDropdown() {
-  const input = document.getElementById('cat_input');
-  const q = input.value.toLowerCase();
-  const existing = tagData.categories || [];
-  const matches = allCategories.filter(c =>
-    c.name.toLowerCase().includes(q) && !existing.includes(c.name)
-  );
-  const dd = document.getElementById('cat_dropdown');
-  if (!matches.length && !q) { dd.style.display = 'none'; return; }
-  const items = matches.map(c =>
-    `<div onmousedown="addCatTag('${esc(c.name)}')" style="padding:9px 14px;cursor:pointer;font-size:.88rem;transition:background .15s"
-      onmouseover="this.style.background='var(--batik-warm)'" onmouseout="this.style.background=''">${esc(c.name)}</div>`
-  ).join('');
-  const hint = q && !allCategories.some(c => c.name.toLowerCase() === q)
-    ? `<div onmousedown="addCatTag('${esc(input.value.trim())}')" style="padding:9px 14px;cursor:pointer;font-size:.84rem;color:var(--batik-dark);border-top:1px solid var(--border);font-weight:600"
-        onmouseover="this.style.background='var(--batik-warm)'" onmouseout="this.style.background=''">＋ Tambah "<strong>${esc(input.value.trim())}</strong>"</div>`
-    : '';
-  dd.innerHTML = items + hint;
-  dd.style.display = (items || hint) ? 'block' : 'none';
-}
-function hideCatDropdown() {
-  setTimeout(() => { document.getElementById('cat_dropdown').style.display = 'none'; }, 150);
-}
+
+// Keep renderCatTags as alias so resetForm() still works
+function renderCatTags() { renderCatCheckboxes(); }
 
 /* ════ TAGS ════ */
 function focusTagInput(id) { document.getElementById(id).focus(); }
@@ -1308,10 +1296,8 @@ async function saveMenu() {
       name,
       category: categories.join(','),
       price,
-      emoji:         document.getElementById('f_emoji').value || '🍱',
       min_order:     parseInt(document.getElementById('f_min_order').value) || 1,
       weight:        document.getElementById('f_weight').value.trim() || null,
-      bg_gradient:   document.getElementById('f_bg_gradient').value.trim() || 'linear-gradient(135deg,#c8a87a,#a0784a)',
       description:   encodeOrigPrice(rawDesc, origPrice),
       availability:  document.getElementById('f_availability').value || 'in_stock',
       includes:      tagData.includes.length ? tagData.includes : null,
@@ -1615,10 +1601,13 @@ function renderOrderDetail(order) {
   const items = Array.isArray(order.items) ? order.items : [];
   const itemsHtml = items.length
     ? items.map(it => {
-        const qty = it.qty||1, price = it.price||0;
+        const qty = it.qty || it.quantity || 1;
+        // Try multiple possible price field names saved by the storefront
+        const price = it.price || it.unit_price || it.harga || it.item_price || 0;
+        const sub   = price > 0 ? qty * price : (it.subtotal || it.sub_total || it.total || 0);
         return '<div class="order-item-row">'
-          + '<div>' + (it.emoji ? esc(it.emoji)+' ' : '') + esc(it.menu_name||'Item') + ' <span class="qty">x'+qty+'</span></div>'
-          + '<div class="sub">' + formatRupiah(qty*price) + '</div></div>';
+          + '<div>' + (it.emoji ? esc(it.emoji)+' ' : '') + esc(it.menu_name||it.name||'Item') + ' <span class="qty">x'+qty+'</span></div>'
+          + '<div class="sub">' + formatRupiah(sub) + '</div></div>';
       }).join('')
     : '<div class="order-item-row"><div>Tidak ada item</div></div>';
 
@@ -1687,6 +1676,13 @@ function renderOrderDetail(order) {
       <h4>🍱 Pesanan</h4>
       <div class="order-items-list">
         ${itemsHtml}
+        ${(()=>{
+          const fee = order.delivery_fee ?? order.shipping_fee ?? order.shipping_cost ?? order.ongkir ?? null;
+          if (fee !== null && fee !== undefined) {
+            return `<div class="order-item-row" style="color:var(--ink-soft)"><div>🚚 Ongkos Kirim</div><div class="sub">${formatRupiah(fee)}</div></div>`;
+          }
+          return '';
+        })()}
         <div class="order-total-row"><div>Total</div><div class="amount">${formatRupiah(order.total_amount||order.total_price)}</div></div>
       </div>
     </div>
@@ -1810,23 +1806,40 @@ function renderHistory() {
     tbody.innerHTML = '<tr><td colspan="6"><div class="history-empty"><div class="icon">📭</div>Tidak ada data</div></td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.map(order => {
+
+  let html = '';
+  let lastDay = '';
+
+  filtered.forEach(order => {
+    // Day separator
+    const dayKey = order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+    if (dayKey !== lastDay) {
+      html += '<tr><td colspan="6" style="padding:10px 14px 6px;background:var(--batik-warm);border-top:2px solid var(--border)">'
+        + '<span style="font-size:.75rem;font-weight:700;color:var(--batik-dark);text-transform:uppercase;letter-spacing:.05em">📅 ' + dayKey + '</span>'
+        + '</td></tr>';
+      lastDay = dayKey;
+    }
+
     const items = Array.isArray(order.items) ? order.items : [];
     const itemSummary = items.map(i => (i.emoji||'🍱') + ' ' + (i.menu_name||'Item') + ' x' + (i.qty||1)).join(', ');
     const total = order.total_amount || order.total_price || 0;
     const pillCls   = order.status==='selesai' ? 'selesai' : order.status==='dikirim' ? 'dikirim' : order.status==='dikonfirmasi' ? 'confirmed' : 'dibatalkan';
     const pillIcon  = order.status==='selesai' ? '🎉' : order.status==='dikirim' ? '🚚' : order.status==='dikonfirmasi' ? '✅' : '❌';
     const pillLabel = order.status==='selesai' ? 'Selesai' : order.status==='dikirim' ? 'Dikirim' : order.status==='dikonfirmasi' ? 'Di Proses' : 'Dibatalkan';
-    return '<tr>'
+    const timeStr   = order.created_at ? new Date(order.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : '';
+
+    html += '<tr>'
       + '<td><div style="font-weight:700;font-size:.82rem">' + esc(order.customer_name||'—') + '</div>'
       + (order.customer_phone ? '<div style="font-size:.72rem;color:var(--ink-soft)">' + esc(order.customer_phone) + '</div>' : '') + '</td>'
       + '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem;color:var(--ink-soft)">' + esc(itemSummary||'—') + '</td>'
       + '<td style="font-weight:700;color:var(--leaf);font-size:.82rem">Rp ' + Number(total).toLocaleString('id-ID') + '</td>'
       + '<td><span class="pill ' + pillCls + '">' + pillIcon + ' ' + pillLabel + '</span></td>'
-      + '<td style="font-size:.75rem;color:var(--ink-soft)">' + formatDateLong(order.created_at, true) + '</td>'
+      + '<td style="font-size:.75rem;color:var(--ink-soft)">' + timeStr + '</td>'
       + '<td><button class="btn btn-edit btn-sm" onclick="openOrderDetail(\'' + order.id + '\');closeHistory()">Detail</button></td>'
       + '</tr>';
-  }).join('');
+  });
+
+  tbody.innerHTML = html;
 }
 
 /* ── Backdrop listeners ── */
