@@ -902,6 +902,102 @@
       .image-lightbox-viewport img.zoomed { width: auto; transform: scale(2); }
     }
 
+    /* ── AVATAR CROP MODAL (pangkas foto profil) ── */
+    .avatar-crop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 4, 0, 0.75);
+      z-index: 2100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+      padding: 20px;
+    }
+    .avatar-crop-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .avatar-crop-box {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 22px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.3);
+    }
+    .avatar-crop-header {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: center;
+    }
+    .avatar-crop-viewport {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 0 auto;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #1a1a1a;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: 0 0 0 2000px rgba(0,0,0,.5);
+    }
+    .avatar-crop-viewport.dragging { cursor: grabbing; }
+    .avatar-crop-viewport img {
+      position: absolute;
+      top: 0; left: 0;
+      max-width: none;
+      max-height: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .avatar-crop-hint {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      margin-top: -6px;
+    }
+    .avatar-crop-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 4px;
+      font-size: 14px;
+    }
+    .avatar-crop-controls input[type="range"] {
+      flex: 1;
+      accent-color: var(--amber);
+    }
+    .avatar-crop-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .avatar-crop-cancel, .avatar-crop-confirm {
+      flex: 1;
+      padding: 11px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      transition: background .2s, opacity .2s;
+    }
+    .avatar-crop-cancel { background: #f0ece8; color: #777; }
+    .avatar-crop-cancel:hover { background: #e0dbd5; }
+    .avatar-crop-confirm { background: var(--amber); color: #fff; }
+    .avatar-crop-confirm:hover { background: var(--amber-dark); }
+
     /* ── MODAL ── */
     .modal-overlay {
       position: fixed;
@@ -1775,22 +1871,28 @@
       justify-content: center;
       opacity: 0;
       transition: opacity .2s;
+      pointer-events: none;
     }
     .avatar-overlay svg { display: block; }
     #avatarUploadInput { display: none; }
-    .avatar-remove-btn {
+    .avatar-action-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .avatar-action-btn {
       background: none;
       border: none;
-      color: #e05050;
+      color: var(--amber-dark);
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      margin-bottom: 10px;
       padding: 2px 8px;
       transition: opacity .2s;
       font-family: 'Inter', sans-serif;
     }
-    .avatar-remove-btn:hover { opacity: .7; }
+    .avatar-action-btn:hover { opacity: .7; }
+    .avatar-action-btn.danger { color: #e05050; }
     .account-name {
       font-family: 'Playfair Display', serif;
       font-size: 18px;
@@ -2380,7 +2482,7 @@
     </div>
 
     <div class="account-avatar-section">
-      <div class="account-avatar-wrap" onclick="document.getElementById('avatarUploadInput').click()" title="Ganti foto profil">
+      <div class="account-avatar-wrap" id="accountAvatarWrap" onclick="handleAvatarClick()" title="Lihat foto profil">
         <div class="account-avatar-img" id="accountAvatarDisplay">👤</div>
         <div class="avatar-overlay">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2389,8 +2491,11 @@
           </svg>
         </div>
       </div>
-      <input type="file" id="avatarUploadInput" accept="image/*" onchange="handleAvatarUpload(event)" />
-      <button class="avatar-remove-btn" id="avatarRemoveBtn" onclick="removeAvatar(event)" style="display:none;" title="Hapus foto profil">🗑️ Hapus Foto</button>
+      <input type="file" id="avatarUploadInput" accept="image/*" onchange="handleAvatarFileSelect(event)" />
+      <div class="avatar-action-row">
+        <button class="avatar-action-btn" onclick="document.getElementById('avatarUploadInput').click()">✏️ Ganti Foto</button>
+        <button class="avatar-action-btn danger" id="avatarRemoveBtn" onclick="removeAvatar(event)" style="display:none;">🗑️ Hapus Foto</button>
+      </div>
       <div class="account-name" id="accountDisplayName">—</div>
       <div class="account-email" id="accountDisplayEmail">—</div>
     </div>
@@ -2635,6 +2740,25 @@
   <button class="image-lightbox-close" onclick="closeImageLightbox()">✕</button>
   <div class="image-lightbox-viewport">
     <img id="lightboxImg" src="" alt="" onclick="toggleLightboxZoom(event)" />
+  </div>
+</div>
+
+<!-- AVATAR CROP MODAL (pangkas foto profil sebelum upload) -->
+<div class="avatar-crop-overlay" id="avatarCropOverlay" onclick="handleAvatarCropOverlayClick(event)">
+  <div class="avatar-crop-box" onclick="event.stopPropagation()">
+    <div class="avatar-crop-header">Pangkas Foto Profil</div>
+    <div class="avatar-crop-viewport" id="avatarCropViewport">
+      <img id="avatarCropImg" src="" alt="Pangkas foto" draggable="false" />
+    </div>
+    <div class="avatar-crop-hint">Geser untuk memposisikan, gunakan slider untuk zoom</div>
+    <div class="avatar-crop-controls">
+      <span>🔍</span>
+      <input type="range" id="avatarCropZoom" min="100" max="300" value="100" oninput="onAvatarCropZoom(this.value)" />
+    </div>
+    <div class="avatar-crop-actions">
+      <button class="avatar-crop-cancel" onclick="cancelAvatarCrop()">Batal</button>
+      <button class="avatar-crop-confirm" onclick="confirmAvatarCrop()">✅ Gunakan Foto</button>
+    </div>
   </div>
 </div>
 
@@ -3661,15 +3785,28 @@
     const display  = document.getElementById('accountAvatarDisplay');
     const btnInner = document.getElementById('accountBtnInner');
     const removeBtn = document.getElementById('avatarRemoveBtn');
+    const wrap = document.getElementById('accountAvatarWrap');
 
     if (avatarUrl) {
       display.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Avatar" />`;
       btnInner.innerHTML = `<img src="${avatarUrl}" class="account-avatar-btn" alt="Profil" />`;
       if (removeBtn) removeBtn.style.display = 'inline-block';
+      if (wrap) wrap.title = 'Lihat foto profil';
     } else {
       display.textContent = '👤';
       btnInner.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
       if (removeBtn) removeBtn.style.display = 'none';
+      if (wrap) wrap.title = 'Unggah foto profil';
+    }
+  }
+
+  /** Klik foto profil — zoom jika sudah ada foto, atau buka dialog upload jika belum ada. */
+  function handleAvatarClick() {
+    const session = getSession();
+    if (session && session.avatar_url) {
+      openImageLightbox(session.avatar_url, 'Foto Profil');
+    } else {
+      document.getElementById('avatarUploadInput').click();
     }
   }
 
@@ -3768,22 +3905,171 @@
   /* ══════════════════════════════════════════════
      AVATAR UPLOAD & HAPUS (Supabase Storage)
   ══════════════════════════════════════════════ */
-  async function handleAvatarUpload(event) {
-    const session = getSession();
-    if (!session) return;
+  const AVATAR_CROP_SIZE   = 240;   // ukuran viewport pangkas (px), harus sama dengan CSS .avatar-crop-viewport
+  const AVATAR_OUTPUT_SIZE = 480;   // resolusi akhir foto profil setelah dipangkas
+  let _avatarCropState = null;
+  let _avatarCropDragInit = false;
+
+  /** Dipanggil saat user memilih file dari dialog upload — buka modal pangkas dulu, belum upload. */
+  function handleAvatarFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('❌ File harus berupa gambar.');
+      event.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => openAvatarCrop(e.target.result);
+    reader.onerror = () => showToast('❌ Gagal membaca file.');
+    reader.readAsDataURL(file);
+  }
+
+  function openAvatarCrop(dataUrl) {
+    const overlay = document.getElementById('avatarCropOverlay');
+    const img     = document.getElementById('avatarCropImg');
+    const zoomEl  = document.getElementById('avatarCropZoom');
+    zoomEl.value = 100;
+
+    img.onload = () => {
+      const natW = img.naturalWidth, natH = img.naturalHeight;
+      // skala dasar agar foto selalu menutupi (cover) seluruh area pangkas
+      const baseScale = Math.max(AVATAR_CROP_SIZE / natW, AVATAR_CROP_SIZE / natH);
+      _avatarCropState = {
+        natW, natH, baseScale, zoom: 1,
+        offsetX: 0, offsetY: 0,
+        dragging: false, startX: 0, startY: 0, startOffX: 0, startOffY: 0
+      };
+      centerAvatarCrop();
+      applyAvatarCropTransform();
+      initAvatarCropDrag();
+    };
+    img.src = dataUrl;
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function centerAvatarCrop() {
+    const st = _avatarCropState;
+    const scale = st.baseScale * st.zoom;
+    st.offsetX = (AVATAR_CROP_SIZE - st.natW * scale) / 2;
+    st.offsetY = (AVATAR_CROP_SIZE - st.natH * scale) / 2;
+  }
+
+  /** Pastikan foto selalu menutupi penuh area lingkaran pangkas (tidak ada celah kosong). */
+  function clampAvatarCropOffset() {
+    const st = _avatarCropState;
+    const scale = st.baseScale * st.zoom;
+    const minX = AVATAR_CROP_SIZE - st.natW * scale;
+    const minY = AVATAR_CROP_SIZE - st.natH * scale;
+    st.offsetX = Math.min(0, Math.max(minX, st.offsetX));
+    st.offsetY = Math.min(0, Math.max(minY, st.offsetY));
+  }
+
+  function applyAvatarCropTransform() {
+    const st = _avatarCropState;
+    if (!st) return;
+    const scale = st.baseScale * st.zoom;
+    const img = document.getElementById('avatarCropImg');
+    img.style.transform = `translate(${st.offsetX}px, ${st.offsetY}px) scale(${scale})`;
+    img.style.transformOrigin = 'top left';
+  }
+
+  function onAvatarCropZoom(val) {
+    if (!_avatarCropState) return;
+    _avatarCropState.zoom = Number(val) / 100;
+    clampAvatarCropOffset();
+    applyAvatarCropTransform();
+  }
+
+  /** Geser foto di dalam area pangkas (mouse & sentuhan, lewat Pointer Events). */
+  function initAvatarCropDrag() {
+    if (_avatarCropDragInit) return; // listener cukup dipasang sekali
+    _avatarCropDragInit = true;
+    const viewport = document.getElementById('avatarCropViewport');
+
+    viewport.addEventListener('pointerdown', e => {
+      const st = _avatarCropState;
+      if (!st) return;
+      st.dragging = true;
+      st.startX = e.clientX;
+      st.startY = e.clientY;
+      st.startOffX = st.offsetX;
+      st.startOffY = st.offsetY;
+      viewport.classList.add('dragging');
+      try { viewport.setPointerCapture(e.pointerId); } catch {}
+    });
+    viewport.addEventListener('pointermove', e => {
+      const st = _avatarCropState;
+      if (!st || !st.dragging) return;
+      st.offsetX = st.startOffX + (e.clientX - st.startX);
+      st.offsetY = st.startOffY + (e.clientY - st.startY);
+      clampAvatarCropOffset();
+      applyAvatarCropTransform();
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+      viewport.addEventListener(evt, () => {
+        if (_avatarCropState) _avatarCropState.dragging = false;
+        viewport.classList.remove('dragging');
+      });
+    });
+  }
+
+  function handleAvatarCropOverlayClick(e) {
+    if (e.target.id === 'avatarCropOverlay') cancelAvatarCrop();
+  }
+
+  function cancelAvatarCrop() {
+    closeAvatarCrop();
+    document.getElementById('avatarUploadInput').value = '';
+  }
+
+  function closeAvatarCrop() {
+    document.getElementById('avatarCropOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+    _avatarCropState = null;
+  }
+
+  /** Render hasil pangkasan ke canvas persegi, lalu upload sebagai foto profil. */
+  function confirmAvatarCrop() {
+    const st = _avatarCropState;
+    if (!st) return;
+    const img = document.getElementById('avatarCropImg');
+    const scale = st.baseScale * st.zoom;
+
+    // Petakan area lingkaran pangkas balik ke koordinat asli foto
+    const sx    = -st.offsetX / scale;
+    const sy    = -st.offsetY / scale;
+    const sSize = AVATAR_CROP_SIZE / scale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = AVATAR_OUTPUT_SIZE;
+    canvas.height = AVATAR_OUTPUT_SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE);
+
+    canvas.toBlob(blob => {
+      if (!blob) { showToast('❌ Gagal memproses foto.'); return; }
+      closeAvatarCrop();
+      document.getElementById('avatarUploadInput').value = '';
+      uploadAvatarBlob(blob);
+    }, 'image/jpeg', 0.92);
+  }
+
+  /** Upload foto profil (sudah dipangkas persegi) ke Supabase Storage. */
+  async function uploadAvatarBlob(blob) {
+    const session = getSession();
+    if (!session) return;
 
     // Preview lokal langsung agar terasa instan
-    const reader = new FileReader();
-    reader.onload = e => updateAvatarUI(e.target.result);
-    reader.readAsDataURL(file);
+    const previewUrl = URL.createObjectURL(blob);
+    updateAvatarUI(previewUrl);
 
     showToast('⏳ Mengupload foto...');
 
     try {
-      const ext      = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const filePath = `avatars/${session.id}.${ext}`;
+      const filePath = `avatars/${session.id}.jpg`;
       const uploadRes = await fetch(
         SUPABASE_URL + '/storage/v1/object/avatars/' + filePath,
         {
@@ -3791,10 +4077,10 @@
           headers: {
             'apikey': SUPABASE_KEY,
             'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': file.type,
+            'Content-Type': 'image/jpeg',
             'x-upsert': 'true',
           },
-          body: file
+          body: blob
         }
       );
 
@@ -3819,9 +4105,9 @@
       }
     } catch {
       showToast('⚠️ Foto ditampilkan lokal saja, gagal upload ke server.');
+    } finally {
+      URL.revokeObjectURL(previewUrl);
     }
-
-    event.target.value = '';
   }
 
   async function removeAvatar(event) {
