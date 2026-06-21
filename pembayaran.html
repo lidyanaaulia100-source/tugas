@@ -997,7 +997,8 @@ let appliedVoucher = null; // { id, code, type, target, value, max_discount }
    CART — SUPABASE HELPERS
 ══════════════════════════════════════ */
 async function loadCartFromServer() {
-  // 1) Coba dari Supabase
+  // 1) Coba dari Supabase — kalau baris ditemukan, ini sumber kebenaran,
+  //    TERMASUK jika isinya kosong (jangan fallback ke localStorage basi).
   try {
     const res = await fetch(
       API_BASE + '/keranjang?user_id=eq.' + session.id + '&select=items',
@@ -1005,13 +1006,14 @@ async function loadCartFromServer() {
     );
     if (res.ok) {
       const rows = await res.json();
-      if (rows && rows[0] && Array.isArray(rows[0].items) && rows[0].items.length > 0) {
+      if (rows && rows[0] && Array.isArray(rows[0].items)) {
         return rows[0].items;
       }
     }
-  } catch (_) { /* fallback ke localStorage */ }
+  } catch (_) { /* fallback ke localStorage hanya jika request gagal total */ }
 
-  // 2) Fallback: baca dari localStorage
+  // 2) Fallback: baca dari localStorage (hanya kalau request ke server gagal,
+  //    bukan kalau server menjawab dengan baris kosong)
   try {
     const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
     if (Array.isArray(local) && local.length > 0) return local;
@@ -1021,10 +1023,23 @@ async function loadCartFromServer() {
 }
 
 async function deleteCartFromServer() {
+  // PENTING: jangan DELETE baris keranjang, tapi kosongkan isinya (items: []).
+  // Jika baris dihapus total, perangkat lain yang masih punya cache lama di
+  // localStorage akan menganggap "belum pernah ada baris keranjang di server"
+  // lalu migrasi ulang cart basi dari localStorage-nya sendiri ke server —
+  // ini yang menyebabkan keranjang "hidup lagi" setelah checkout di device lain.
+  // Dengan PATCH items:[] baris tetap ada, sehingga device lain akan membaca
+  // keranjang kosong sebagai sumber kebenaran dan tidak melakukan migrasi.
   try {
     await fetch(API_BASE + '/keranjang?user_id=eq.' + session.id, {
-      method: 'DELETE',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ items: [], updated_at: new Date().toISOString() })
     });
   } catch (_) { /* abaikan */ }
   localStorage.removeItem('nf_cart');
