@@ -1058,7 +1058,7 @@
 
     /* inner content constrained for readability on wide screens */
     .modal-inner {
-      max-width: 860px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
@@ -1066,35 +1066,35 @@
     @media (min-width: 680px) {
       .modal-body-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 55% 1fr;
         gap: 0 40px;
-        padding: 0 32px;
+        padding: 0 40px;
         align-items: start;
       }
       .modal-col-left {}
       .modal-col-right {
         display: flex;
         flex-direction: column;
-        padding-top: 36px;
+        padding-top: 0;
       }
       .modal-image {
         width: 100% !important;
-        margin: 8px 0 0 !important;
+        margin: 0 !important;
         border-radius: 16px;
       }
       .modal-info-row {
         padding: 0 !important;
       }
-      .modal-divider { margin: 16px 0 !important; }
+      .modal-divider { margin: 14px 0 !important; }
       .modal-meta { padding: 0 !important; }
-      .modal-qty-section { padding: 16px 0 0 !important; }
+      .modal-qty-section { padding: 14px 0 0 !important; }
       .modal-order-btn {
         width: 100% !important;
-        margin: 20px 0 !important;
+        margin: 16px 0 !important;
       }
-      .modal-desc-section { padding: 0 32px 8px !important; }
-      .modal-ask { padding: 0 32px 28px !important; }
-      .modal-breadcrumb { padding: 8px 0 0 !important; }
+      .modal-desc-section { padding: 0 40px 8px !important; }
+      .modal-ask { padding: 0 40px 28px !important; }
+      .modal-breadcrumb { padding: 8px 40px 4px !important; }
     }
 
     /* drag handle */
@@ -1146,7 +1146,7 @@
       width: calc(100% - 48px);
       margin: 14px 24px 0;
       border-radius: 12px;
-      aspect-ratio: 1/1;
+      aspect-ratio: 3/2;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2832,10 +2832,10 @@
     <button class="modal-close" onclick="closeModal()">✕</button>
 
   <div class="modal-inner">
+    <div class="modal-breadcrumb" style="padding: 10px 40px 6px !important;">Home &gt; <span id="mBreadcrumb">Order</span></div>
     <div class="modal-body-grid">
       <!-- LEFT: gambar -->
       <div class="modal-col-left">
-        <div class="modal-breadcrumb">Home &gt; <span id="mBreadcrumb">Order</span></div>
         <div class="modal-image" id="mImage">🍱</div>
       </div>
 
