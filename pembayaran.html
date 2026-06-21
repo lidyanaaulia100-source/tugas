@@ -128,7 +128,6 @@
       .stepper-wrap { padding: 16px 20px; }
       main { padding: 24px 16px; }
       .checkout-wrap { grid-template-columns: 1fr; gap: 18px; }
-      .summary-card { position: static; order: -1; }
     }
 
     @media (max-width: 600px) {
@@ -428,6 +427,106 @@
       background: var(--brown-dark); color: #7a5c3a;
       text-align: center; font-size: 12px; padding: 16px;
     }
+
+    /* ── MOBILE: summary card di bawah tanggal reservasi ── */
+    .summary-card-mobile {
+      display: none;
+      margin-top: 18px;
+    }
+    @media (max-width: 768px) {
+      .summary-card { display: none !important; }
+      .summary-card-mobile { display: block; }
+    }
+
+    /* ── VOUCHER LIST POPUP ── */
+    .voucher-see-btn {
+      width: 100%; margin-top: 8px; padding: 9px 14px;
+      background: transparent; color: var(--brown-mid);
+      border: 1.5px dashed var(--amber); border-radius: 8px;
+      font-family: inherit; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: background .2s, color .2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .voucher-see-btn:hover { background: #fff8ee; color: var(--amber-dark); }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(30,10,0,.45); z-index: 1000;
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--white); border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(60,20,0,.18);
+      width: 100%; max-width: 400px;
+      max-height: 90vh; display: flex; flex-direction: column;
+      overflow: hidden; animation: modalIn .22s ease;
+    }
+    @keyframes modalIn { from { opacity:0; transform:scale(.95) translateY(10px); } to { opacity:1; transform:none; } }
+    .modal-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; font-weight: 700; color: var(--brown-dark);
+    }
+    .modal-close {
+      background: none; border: none; font-size: 20px; cursor: pointer;
+      color: var(--text-muted); line-height: 1; padding: 2px 4px;
+      border-radius: 6px; transition: color .2s, background .2s;
+    }
+    .modal-close:hover { color: var(--red); background: #fff0f0; }
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .voucher-list { display: flex; flex-direction: column; gap: 10px; }
+    .voucher-item {
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+      background: var(--cream); transition: border-color .2s, background .2s;
+    }
+    .voucher-item:hover { border-color: var(--amber); background: #fff9f0; }
+    .voucher-item-icon {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: #fff8ee; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .voucher-item-info { flex: 1; min-width: 0; }
+    .voucher-item-code {
+      font-size: 13px; font-weight: 700; color: var(--brown-dark);
+      background: #f5e8cc; display: inline-block; padding: 2px 8px;
+      border-radius: 5px; letter-spacing: .5px; margin-bottom: 3px;
+    }
+    .voucher-item-desc { font-size: 11.5px; color: var(--text-muted); margin-bottom: 2px; }
+    .voucher-item-exp { font-size: 10.5px; color: #b07030; }
+    .voucher-item-used {
+      font-size: 10.5px; color: var(--red); font-weight: 600;
+      background: #fff0f0; padding: 2px 7px; border-radius: 4px;
+      margin-top: 3px; display: inline-block;
+    }
+    .voucher-use-btn {
+      flex-shrink: 0; padding: 8px 14px;
+      background: var(--brown-dark); color: #fff;
+      border: none; border-radius: 8px;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+      white-space: nowrap;
+    }
+    .voucher-use-btn:hover { background: var(--brown-mid); }
+    .voucher-use-btn:disabled {
+      background: #d5c9bb; color: #a09080; cursor: not-allowed;
+    }
+    .modal-loading {
+      text-align: center; padding: 32px 0;
+      color: var(--text-muted); font-size: 13px;
+    }
+    .modal-empty {
+      text-align: center; padding: 32px 16px;
+      color: var(--text-muted); font-size: 13px;
+    }
+    .modal-empty .empty-icon { font-size: 36px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -515,8 +614,57 @@
               <textarea id="resNotes" rows="2" placeholder="Misal: titipkan ke satpam, tanpa sambal, dll."></textarea>
             </div>
 
-            <button class="btn-primary" onclick="goStep2()">Lanjut ke Pembayaran →</button>
           </div>
+        </div>
+
+        <!-- MOBILE: Ringkasan Pesanan di bawah Tanggal Reservasi -->
+        <div class="summary-card-mobile" id="summaryCardMobile">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-header-icon">🧾</div>
+              <div class="card-title">Ringkasan Pesanan</div>
+            </div>
+            <div class="card-body">
+              <div class="order-items" id="summaryItemsMobile">
+                <div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0">
+                  Keranjang kosong
+                </div>
+              </div>
+              <div class="summary-divider"></div>
+
+              <div class="voucher-box" id="voucherBoxMobile">
+                <div class="voucher-input-row" id="voucherInputRowMobile">
+                  <input type="text" id="voucherInputMobile" placeholder="Masukkan kode voucher" maxlength="30"
+                         onkeydown="if(event.key==='Enter'){event.preventDefault();applyVoucherFromInput('mobile');}">
+                  <button class="voucher-apply-btn" id="voucherApplyBtnMobile" onclick="applyVoucherFromInput('mobile')">Pakai</button>
+                </div>
+                <div class="voucher-applied" id="voucherAppliedRowMobile" style="display:none">
+                  <div class="voucher-applied-left">
+                    <span class="voucher-applied-code" id="voucherAppliedCodeMobile">—</span>
+                    <span class="voucher-applied-desc" id="voucherAppliedDescMobile">—</span>
+                  </div>
+                  <button class="voucher-remove-btn" onclick="removeVoucher()" title="Hapus voucher">✕</button>
+                </div>
+                <div class="voucher-msg" id="voucherMsgMobile"></div>
+                <button class="voucher-see-btn" onclick="openVoucherModal()">🎟️ Lihat Kode Voucher yang Tersedia</button>
+              </div>
+
+              <div class="summary-divider"></div>
+              <div class="summary-row"><span class="lbl">Subtotal</span><span id="sumSubtotalMobile">Rp 0</span></div>
+              <div class="summary-row"><span class="lbl">Ongkos Kirim</span><span id="sumShippingMobile">Rp 15.000</span></div>
+              <div class="summary-row discount-row" id="sumDiscountRowMobile" style="display:none"><span class="lbl">Diskon Voucher</span><span id="sumDiscountMobile">-Rp 0</span></div>
+              <div class="summary-divider"></div>
+              <div class="summary-total">
+                <span>Total</span>
+                <span id="sumTotalMobile">Rp 15.000</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Lanjut — paling bawah -->
+        <div style="margin-top:18px">
+          <button class="btn-primary" onclick="goStep2()">Lanjut ke Pembayaran →</button>
         </div>
       </div>
 
@@ -746,6 +894,7 @@
               <button class="voucher-remove-btn" onclick="removeVoucher()" title="Hapus voucher">✕</button>
             </div>
             <div class="voucher-msg" id="voucherMsg"></div>
+              <button class="voucher-see-btn" onclick="openVoucherModal()">🎟️ Lihat Kode Voucher yang Tersedia</button>
           </div>
 
           <div class="summary-divider"></div>
@@ -765,6 +914,21 @@
 </main>
 
 <footer>© 2026 NusantaraFood. All rights reserved.</footer>
+
+<!-- ══ VOUCHER LIST MODAL ══ -->
+<div class="modal-overlay" id="voucherModal" onclick="closeVoucherModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🎟️ Voucher Tersedia</div>
+      <button class="modal-close" onclick="closeVoucherModalForce()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="voucherModalContent">
+        <div class="modal-loading">⏳ Memuat voucher…</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ══════════════════════════════════════
@@ -873,6 +1037,36 @@ async function applyVoucher() {
   btn.textContent = '...';
 
   try {
+    await applyVoucherByCode(code);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Pakai';
+  }
+}
+
+// Wrapper untuk mobile input
+async function applyVoucherFromInput(mode) {
+  if (mode === 'mobile') {
+    const input = document.getElementById('voucherInputMobile');
+    const code  = input.value.trim().toUpperCase();
+    // Sinkronkan ke input desktop lalu apply
+    document.getElementById('voucherInput').value = code;
+    const btn = document.getElementById('voucherApplyBtnMobile');
+    btn.disabled = true; btn.textContent = '...';
+    try { await applyVoucherByCode(code); }
+    finally { btn.disabled = false; btn.textContent = 'Pakai'; }
+  } else {
+    await applyVoucher();
+  }
+}
+
+// Core: apply by code string (dipakai baik dari input maupun dari modal)
+async function applyVoucherByCode(code) {
+  clearVoucherMsg();
+  clearVoucherMsgMobile();
+  if (!code) { showVoucherMsg('Masukkan kode voucher terlebih dahulu', 'error'); showVoucherMsgMobile('Masukkan kode voucher terlebih dahulu', 'error'); return; }
+
+  try {
     const { subtotal } = calcTotals();
 
     const res = await fetch(
@@ -883,48 +1077,77 @@ async function applyVoucher() {
     const rows = await res.json();
     const v = rows && rows[0];
 
-    if (!v) { showVoucherMsg('Kode voucher tidak ditemukan', 'error'); return; }
-    if (!v.is_active) { showVoucherMsg('Voucher ini sudah tidak aktif', 'error'); return; }
+    if (!v) { showVoucherMsg('Kode voucher tidak ditemukan', 'error'); showVoucherMsgMobile('Kode voucher tidak ditemukan', 'error'); return; }
+    if (!v.is_active) { showVoucherMsg('Voucher ini sudah tidak aktif', 'error'); showVoucherMsgMobile('Voucher ini sudah tidak aktif', 'error'); return; }
     if (v.valid_until && new Date(v.valid_until) < new Date()) {
-      showVoucherMsg('Voucher ini sudah kedaluwarsa', 'error'); return;
+      showVoucherMsg('Voucher ini sudah kedaluwarsa', 'error'); showVoucherMsgMobile('Voucher ini sudah kedaluwarsa', 'error'); return;
     }
     if (v.usage_limit != null && v.usage_count >= v.usage_limit) {
-      showVoucherMsg('Voucher ini sudah mencapai batas pemakaian', 'error'); return;
+      showVoucherMsg('Voucher ini sudah mencapai batas pemakaian', 'error'); showVoucherMsgMobile('Voucher ini sudah mencapai batas pemakaian', 'error'); return;
     }
     if (v.min_purchase && subtotal < v.min_purchase) {
-      showVoucherMsg('Minimum belanja Rp ' + v.min_purchase.toLocaleString('id-ID') + ' untuk pakai voucher ini', 'error');
-      return;
+      const msg = 'Minimum belanja Rp ' + v.min_purchase.toLocaleString('id-ID') + ' untuk pakai voucher ini';
+      showVoucherMsg(msg, 'error'); showVoucherMsgMobile(msg, 'error'); return;
     }
+
+    // ── CEK: apakah user ini sudah pernah pakai voucher ini ──
+    // Cek lewat tabel pesanan (hindari voucher_usage yang butuh RLS)
+    try {
+      const orderRes = await fetch(
+        API_BASE + '/pesanan?user_id=eq.' + session.id + '&voucher_code=eq.' + encodeURIComponent(v.code) + '&select=id&limit=1',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (orderRes.ok) {
+        const orderRows = await orderRes.json();
+        if (Array.isArray(orderRows) && orderRows.length > 0) {
+          const msg = 'Voucher ini sudah pernah kamu gunakan sebelumnya';
+          showVoucherMsg(msg, 'error'); showVoucherMsgMobile(msg, 'error'); return;
+        }
+      }
+    } catch (e) { /* abaikan, lanjut */ }
 
     appliedVoucher = {
       id: v.id, code: v.code, type: v.type, target: v.target,
       value: v.value, max_discount: v.max_discount
     };
 
+    // Update desktop UI
     document.getElementById('voucherInputRow').style.display = 'none';
     const appliedRow = document.getElementById('voucherAppliedRow');
     appliedRow.style.display = '';
     document.getElementById('voucherAppliedCode').textContent = v.code;
     document.getElementById('voucherAppliedDesc').textContent = voucherDescText(v);
-
     showVoucherMsg('Voucher berhasil dipakai 🎉', 'success');
+
+    // Update mobile UI
+    document.getElementById('voucherInputRowMobile').style.display = 'none';
+    document.getElementById('voucherAppliedRowMobile').style.display = '';
+    document.getElementById('voucherAppliedCodeMobile').textContent = v.code;
+    document.getElementById('voucherAppliedDescMobile').textContent = voucherDescText(v);
+    showVoucherMsgMobile('Voucher berhasil dipakai 🎉', 'success');
+
     renderSummary();
     if (currentStep === 3) renderReview();
   } catch (err) {
     console.error(err);
     showVoucherMsg('Gagal memeriksa voucher, coba lagi', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Pakai';
+    showVoucherMsgMobile('Gagal memeriksa voucher, coba lagi', 'error');
   }
 }
 
 function removeVoucher() {
   appliedVoucher = null;
+  // Desktop
   document.getElementById('voucherInput').value = '';
   document.getElementById('voucherInputRow').style.display = '';
   document.getElementById('voucherAppliedRow').style.display = 'none';
   clearVoucherMsg();
+  // Mobile
+  document.getElementById('voucherInputMobile').value = '';
+  document.getElementById('voucherInputRowMobile').style.display = '';
+  document.getElementById('voucherAppliedRowMobile').style.display = 'none';
+  clearVoucherMsgMobile();
+
   renderSummary();
   if (currentStep === 3) renderReview();
 }
@@ -940,7 +1163,120 @@ function clearVoucherMsg() {
   el.className = 'voucher-msg';
 }
 
+function showVoucherMsgMobile(msg, type) {
+  const el = document.getElementById('voucherMsgMobile');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'voucher-msg ' + type;
+}
+function clearVoucherMsgMobile() {
+  const el = document.getElementById('voucherMsgMobile');
+  if (!el) return;
+  el.textContent = '';
+  el.className = 'voucher-msg';
+}
+
+/* ══════════════════════════════════════
+   VOUCHER MODAL
+══════════════════════════════════════ */
+async function openVoucherModal() {
+  document.getElementById('voucherModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await loadVoucherList();
+}
+
+function closeVoucherModal(e) {
+  if (e.target === document.getElementById('voucherModal')) {
+    closeVoucherModalForce();
+  }
+}
+function closeVoucherModalForce() {
+  document.getElementById('voucherModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function loadVoucherList() {
+  const content = document.getElementById('voucherModalContent');
+  content.innerHTML = '<div class="modal-loading">⏳ Memuat voucher…</div>';
+
+  try {
+    // Ambil semua voucher aktif
+    const res = await fetch(
+      API_BASE + '/voucher?is_active=eq.true&order=created_at.desc&select=*',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) throw new Error('Gagal memuat voucher');
+    const vouchers = await res.json();
+
+    // Cek voucher yang sudah pernah dipakai user ini lewat tabel pesanan
+    let usedCodes = new Set();
+    if (session && session.id) {
+      try {
+        const uRes = await fetch(
+          API_BASE + '/pesanan?user_id=eq.' + session.id + '&voucher_code=neq.null&select=voucher_code',
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+        );
+        if (uRes.ok) {
+          const uRows = await uRes.json();
+          uRows.forEach(r => { if (r.voucher_code) usedCodes.add(r.voucher_code.toUpperCase()); });
+        }
+      } catch (e) { /* abaikan */ }
+    }
+
+    const now = new Date();
+    const valid = vouchers.filter(v => {
+      if (!v.is_active) return false;
+      if (v.valid_until && new Date(v.valid_until) < now) return false;
+      if (v.usage_limit != null && v.usage_count >= v.usage_limit) return false;
+      return true;
+    });
+
+    if (!valid.length) {
+      content.innerHTML = `<div class="modal-empty"><div class="empty-icon">🎟️</div><div>Belum ada voucher yang tersedia saat ini.</div></div>`;
+      return;
+    }
+
+    const items = valid.map(v => {
+      const isUsed = usedCodes.has((v.code || '').toUpperCase());
+      const isApplied = appliedVoucher && appliedVoucher.id === v.id;
+      const valTxt = v.type === 'percent' ? v.value + '%' : 'Rp ' + Number(v.value).toLocaleString('id-ID');
+      const targetTxt = v.target === 'ongkir' ? 'ongkos kirim' : 'belanja';
+      const desc = 'Diskon ' + valTxt + ' untuk ' + targetTxt
+        + (v.min_purchase ? ' • Min. Rp ' + Number(v.min_purchase).toLocaleString('id-ID') : '')
+        + (v.max_discount && v.type === 'percent' ? ' • Maks. Rp ' + Number(v.max_discount).toLocaleString('id-ID') : '');
+      const expTxt = v.valid_until ? 'Berlaku s/d ' + new Date(v.valid_until).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : 'Tidak ada batas waktu';
+      const btnLabel = isApplied ? '✓ Dipakai' : isUsed ? 'Sudah Dipakai' : 'Gunakan';
+      const btnDisabled = isApplied || isUsed ? 'disabled' : '';
+      return `
+        <div class="voucher-item">
+          <div class="voucher-item-icon">🏷️</div>
+          <div class="voucher-item-info">
+            <div class="voucher-item-code">${esc(v.code)}</div>
+            <div class="voucher-item-desc">${esc(desc)}</div>
+            <div class="voucher-item-exp">${esc(expTxt)}</div>
+            ${isUsed ? '<div class="voucher-item-used">Sudah kamu gunakan</div>' : ''}
+          </div>
+          <button class="voucher-use-btn" ${btnDisabled} onclick="useVoucherFromModal('${esc(v.code)}')">${btnLabel}</button>
+        </div>`;
+    }).join('');
+
+    content.innerHTML = `<div class="voucher-list">${items}</div>`;
+  } catch (err) {
+    console.error(err);
+    content.innerHTML = `<div class="modal-empty"><div class="empty-icon">⚠️</div><div>Gagal memuat voucher. Silakan coba lagi.</div></div>`;
+  }
+}
+
+async function useVoucherFromModal(code) {
+  // Isi input dan tutup modal
+  document.getElementById('voucherInput').value = code;
+  document.getElementById('voucherInputMobile').value = code;
+  closeVoucherModalForce();
+  await applyVoucherByCode(code);
+}
+
 async function bumpVoucherUsage(voucherId) {
+  // 1) Tambah usage_count di tabel voucher
   const res = await fetch(
     API_BASE + '/voucher?id=eq.' + voucherId + '&select=usage_count',
     { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
@@ -958,6 +1294,8 @@ async function bumpVoucherUsage(voucherId) {
     },
     body: JSON.stringify({ usage_count: current + 1 })
   });
+
+  // Pemakaian per akun dicatat otomatis lewat kolom voucher_code di tabel pesanan
 }
 
 /* ══════════════════════════════════════
@@ -1008,32 +1346,37 @@ window.addEventListener('DOMContentLoaded', async () => {
    RENDER SUMMARY (sticky right)
 ══════════════════════════════════════ */
 function renderSummary() {
-  const container = document.getElementById('summaryItems');
-  if (!cart.length) {
-    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0">Keranjang kosong</div>';
-    return;
-  }
+  const itemHtml = cart.length
+    ? cart.map(item => {
+        const lineTotal = item.price * item.qty;
+        const imgEl = item.image_url
+          ? `<img class="order-item-img" src="${esc(item.image_url)}" alt="${esc(item.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            + `<div class="order-item-emoji" style="display:none">${item.emoji || '🍱'}</div>`
+          : `<div class="order-item-emoji">${item.emoji || '🍱'}</div>`;
+        return `
+          <div class="order-item">
+            ${imgEl}
+            <div class="order-item-info">
+              <div class="order-item-name">${esc(item.name)}</div>
+              <div class="order-item-meta">${item.qty}x × Rp ${item.price.toLocaleString('id-ID')}</div>
+            </div>
+            <div class="order-item-price">Rp ${lineTotal.toLocaleString('id-ID')}</div>
+          </div>`;
+      }).join('')
+    : '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px 0">Keranjang kosong</div>';
 
-  container.innerHTML = cart.map(item => {
-    const lineTotal = item.price * item.qty;
-    const imgEl = item.image_url
-      ? `<img class="order-item-img" src="${esc(item.image_url)}" alt="${esc(item.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-        + `<div class="order-item-emoji" style="display:none">${item.emoji || '🍱'}</div>`
-      : `<div class="order-item-emoji">${item.emoji || '🍱'}</div>`;
-    return `
-      <div class="order-item">
-        ${imgEl}
-        <div class="order-item-info">
-          <div class="order-item-name">${esc(item.name)}</div>
-          <div class="order-item-meta">${item.qty}x × Rp ${item.price.toLocaleString('id-ID')}</div>
-        </div>
-        <div class="order-item-price">Rp ${lineTotal.toLocaleString('id-ID')}</div>
-      </div>`;
-  }).join('');
+  // Desktop
+  document.getElementById('summaryItems').innerHTML = itemHtml;
+  // Mobile
+  const mob = document.getElementById('summaryItemsMobile');
+  if (mob) mob.innerHTML = itemHtml;
 
   const { subtotal, shippingFee, discount, total } = calcTotals();
+  const shippingTxt = shippingFee > 0 ? 'Rp ' + shippingFee.toLocaleString('id-ID') : 'GRATIS';
+
+  // Desktop totals
   document.getElementById('sumSubtotal').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
-  document.getElementById('sumShipping').textContent = shippingFee > 0 ? 'Rp ' + shippingFee.toLocaleString('id-ID') : 'GRATIS';
+  document.getElementById('sumShipping').textContent = shippingTxt;
   const discRow = document.getElementById('sumDiscountRow');
   if (discount > 0) {
     discRow.style.display = '';
@@ -1042,6 +1385,20 @@ function renderSummary() {
     discRow.style.display = 'none';
   }
   document.getElementById('sumTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+
+  // Mobile totals
+  const mSub = document.getElementById('sumSubtotalMobile');
+  const mShip = document.getElementById('sumShippingMobile');
+  const mDiscRow = document.getElementById('sumDiscountRowMobile');
+  const mDisc = document.getElementById('sumDiscountMobile');
+  const mTotal = document.getElementById('sumTotalMobile');
+  if (mSub) mSub.textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+  if (mShip) mShip.textContent = shippingTxt;
+  if (mDiscRow) {
+    mDiscRow.style.display = discount > 0 ? '' : 'none';
+    if (mDisc) mDisc.textContent = '-Rp ' + discount.toLocaleString('id-ID');
+  }
+  if (mTotal) mTotal.textContent = 'Rp ' + total.toLocaleString('id-ID');
 }
 
 /* ══════════════════════════════════════
