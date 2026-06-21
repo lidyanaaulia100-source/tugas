@@ -3276,6 +3276,59 @@
   let allMenus = [];
   const _menuRatings = {};
 
+  /* ══════════════════════════════════════════════
+     IMAGE CACHE — simpan objek Image yang sudah
+     selesai dimuat agar modal & lightbox langsung
+     tampil tanpa request ulang ke server.
+     Key: URL gambar (sudah termasuk transform params)
+  ══════════════════════════════════════════════ */
+  const _imgCache = new Map();
+
+  function _cacheUrl(rawUrl, w) {
+    if (!rawUrl) return null;
+    const sep = rawUrl.includes('?') ? '&' : '?';
+    return rawUrl + sep + 'width=' + w + '&quality=80&format=webp';
+  }
+
+  /** Preload satu gambar ke cache. Tidak blocking — resolve segera. */
+  function _preloadOne(url) {
+    if (!url || _imgCache.has(url)) return;
+    const img = new Image();
+    img.onload  = () => _imgCache.set(url, img);
+    img.onerror = () => {};
+    img.src = url;
+    _imgCache.set(url, img);
+  }
+
+  /**
+   * Preload semua gambar menu di background setelah halaman render.
+   * Dibatasi agar tidak membanjiri bandwidth: muat bertahap per-batch.
+   */
+  function preloadMenuImages(menus) {
+    const MODAL_W = 600;
+    const urls = menus
+      .filter(m => m.image_url)
+      .map(m => _cacheUrl(m.image_url, MODAL_W));
+
+    const BATCH = 3;
+    const DELAY = 400;
+
+    let i = 0;
+    function loadBatch() {
+      const slice = urls.slice(i, i + BATCH);
+      if (!slice.length) return;
+      slice.forEach(_preloadOne);
+      i += BATCH;
+      if (i < urls.length) setTimeout(loadBatch, DELAY);
+    }
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => loadBatch(), { timeout: 2000 });
+    } else {
+      setTimeout(loadBatch, 1500);
+    }
+  }
+
   async function loadMenus() {
     try {
       const res = await fetch(API_BASE + '/menus?order=created_at.asc', {
@@ -3291,6 +3344,8 @@
       renderMenus(data);
       buildHeroSlider(data);
       loadMenuRatings();
+      // Preload semua gambar modal di background setelah render selesai
+      preloadMenuImages(data);
     } catch (err) {
       console.error(err);
       document.getElementById('extraSections').innerHTML = '<div style="color:#e05050;font-size:13px;padding:20px 24px;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
@@ -3702,8 +3757,22 @@
       mImage.innerHTML = '';
       mImage.style.background = '#f5f0eb';
       const imgStyle = isOutModal ? 'width:100%;height:100%;object-fit:cover;filter:grayscale(.6);opacity:.6;' : 'width:100%;height:100%;object-fit:cover;';
-      const _mUrl = data.image_url + (data.image_url.includes('?') ? '&' : '?') + 'width=600&quality=80&format=webp';
-      mImage.innerHTML = `<img src="${_mUrl}" alt="${data.name}" loading="lazy" decoding="async" style="${imgStyle}" />${modalDiscBadge}${modalHabisBadge}`;
+      const _mUrl = _cacheUrl(data.image_url, 600);
+
+      // Cek apakah gambar sudah ada di memory cache
+      const _cached = _imgCache.get(_mUrl);
+      const _imgEl = (_cached && _cached.complete && _cached.naturalWidth > 0)
+        ? (() => { const el = new Image(); el.src = _mUrl; return el; })()
+        : (() => { const el = new Image(); el.src = _mUrl; _preloadOne(_mUrl); return el; })();
+
+      _imgEl.alt   = data.name;
+      _imgEl.style.cssText = imgStyle;
+      _imgEl.decoding = 'async';
+
+      mImage.appendChild(_imgEl);
+      if (modalDiscBadge) mImage.insertAdjacentHTML('beforeend', modalDiscBadge);
+      if (modalHabisBadge) mImage.insertAdjacentHTML('beforeend', modalHabisBadge);
+
       mImage.classList.add('has-photo');
       mImage.onclick = () => openImageLightbox(data.image_url, data.name);
     } else {
@@ -3796,11 +3865,23 @@
   function openImageLightbox(src, alt) {
     if (!src) return;
     const img = document.getElementById('lightboxImg');
-    // Kosongkan src dulu agar gambar lama tidak sekilat muncul
-    img.src = '';
-    img.src = src;
-    img.alt = alt || '';
     img.classList.remove('zoomed');
+
+    // Gunakan URL fullsize (tanpa transform) untuk lightbox
+    // tapi juga preload ke cache jika belum ada
+    const lightboxUrl = src;
+    const _cached = _imgCache.get(lightboxUrl);
+    if (_cached && _cached.complete && _cached.naturalWidth > 0) {
+      // Sudah di cache — set langsung, tidak ada flash
+      img.src = lightboxUrl;
+    } else {
+      // Belum di cache — kosongkan dulu agar tidak flash gambar lama
+      img.src = '';
+      img.src = lightboxUrl;
+      _preloadOne(lightboxUrl);
+    }
+
+    img.alt = alt || '';
     document.getElementById('imageLightboxOverlay').classList.add('active');
   }
   function closeImageLightbox() {
