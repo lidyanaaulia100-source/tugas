@@ -902,7 +902,7 @@
           <div class="upload-area" id="uploadArea">
             <input type="file" id="f_image" accept="image/*" onchange="previewImage(event)">
             <div class="upload-icon">📷</div>
-            <p>Klik untuk upload foto menu<br><small>PNG, JPG, WebP — maks. 2 MB, akan dipotong 3:2</small></p>
+            <p>Klik untuk upload foto menu<br><small>PNG, JPG, WebP — maks. 2 MB, akan dipotong 3:2 &amp; dikompres otomatis ke AVIF</small></p>
           </div>
           <img id="imagePreview" class="upload-preview" alt="Preview">
         </div>
@@ -1643,8 +1643,11 @@ function resetForm() {
   document.getElementById('f_availability').value = 'in_stock';
   document.getElementById('f_image').value = '';
   croppedImageFile = null;
+  originalImageSize = 0; originalImageType = '';
   const prev = document.getElementById('imagePreview');
   prev.src = ''; prev.style.display = 'none';
+  const infoEl = document.getElementById('imageSizeCompare');
+  if (infoEl) infoEl.remove();
   tagData = { includes: [], delivery: [], categories: [] };
   renderTags('includes'); renderTags('delivery'); renderCatTags();
 }
@@ -1716,6 +1719,8 @@ function renderTags(key) {
 let croppedImageFile = null;   // hasil akhir foto yang sudah dipotong 3:2, dipakai saat saveMenu()
 let cropMimeType      = 'image/jpeg';
 let cropImageNatural  = { width: 0, height: 0 };
+let originalImageSize = 0;     // ukuran file asli (bytes) sebelum kompresi, untuk perbandingan
+let originalImageType = '';    // mime type file asli
 let cropState = { scale: 1, baseScale: 1, offsetX: 0, offsetY: 0, dragging: false, startX: 0, startY: 0, startOffsetX: 0, startOffsetY: 0 };
 
 function previewImage(e) {
@@ -1724,6 +1729,8 @@ function previewImage(e) {
     showToast('Format foto harus PNG, JPG, atau WebP', 'error'); e.target.value=''; return;
   }
   if (file.size > 2*1024*1024) { showToast('Ukuran foto maksimal 2 MB', 'error'); e.target.value=''; return; }
+  originalImageSize = file.size;
+  originalImageType = file.type;
   const reader = new FileReader();
   reader.onload = (ev) => openCropper(ev.target.result, file.type);
   reader.readAsDataURL(file);
@@ -1809,7 +1816,27 @@ function cancelCrop() {
   document.getElementById('cropImg').src = '';
 }
 
-function confirmCrop() {
+/* ── Cek dukungan encode AVIF di canvas (sekali saja, di-cache) ── */
+let _avifSupportPromise = null;
+function checkAvifEncodeSupport() {
+  if (_avifSupportPromise) return _avifSupportPromise;
+  _avifSupportPromise = new Promise((resolve) => {
+    try {
+      const c = document.createElement('canvas');
+      c.width = 2; c.height = 2;
+      c.getContext('2d').fillRect(0, 0, 2, 2);
+      c.toBlob((blob) => resolve(!!(blob && blob.type === 'image/avif')), 'image/avif', 0.8);
+    } catch { resolve(false); }
+  });
+  return _avifSupportPromise;
+}
+
+/* ── toBlob dibungkus jadi Promise, dengan fallback otomatis kalau format tidak didukung ── */
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+async function confirmCrop() {
   const stage = document.getElementById('cropStage');
   const stageW = stage.clientWidth, stageH = stage.clientHeight;
   const totalScale = cropState.baseScale * cropState.scale;
@@ -1823,24 +1850,69 @@ function confirmCrop() {
   const canvas = document.createElement('canvas');
   canvas.width = outputWidth; canvas.height = outputHeight;
   const ctx = canvas.getContext('2d');
-  if (cropMimeType === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, outputWidth, outputHeight); }
+  // Latar putih dulu (untuk transparansi PNG yang dikonversi ke format tanpa alpha-channel optimal / JPEG)
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, outputWidth, outputHeight);
   ctx.drawImage(document.getElementById('cropImg'), sx, sy, sWidth, sHeight, 0, 0, outputWidth, outputHeight);
 
-  canvas.toBlob((blob) => {
+  const confirmBtn = document.querySelector('.crop-modal .btn-primary');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ Mengompres…'; }
+
+  try {
+    let blob = null;
+    let finalType = 'image/jpeg';
+    const avifSupported = await checkAvifEncodeSupport();
+
+    if (avifSupported) {
+      blob = await canvasToBlob(canvas, 'image/avif', 0.65);
+      if (blob) finalType = 'image/avif';
+    }
+    // Fallback kalau AVIF tidak didukung / gagal: coba WebP, lalu JPEG
+    if (!blob) {
+      blob = await canvasToBlob(canvas, 'image/webp', 0.8);
+      if (blob) finalType = 'image/webp';
+    }
+    if (!blob) {
+      blob = await canvasToBlob(canvas, 'image/jpeg', 0.85);
+      finalType = 'image/jpeg';
+    }
     if (!blob) { showToast('Gagal memproses foto', 'error'); return; }
-    const ext = cropMimeType === 'image/png' ? 'png' : cropMimeType === 'image/webp' ? 'webp' : 'jpg';
-    croppedImageFile = new File([blob], `menu-photo-${Date.now()}.${ext}`, { type: cropMimeType });
+
+    const ext = finalType === 'image/avif' ? 'avif' : finalType === 'image/webp' ? 'webp' : 'jpg';
+    croppedImageFile = new File([blob], `menu-photo-${Date.now()}.${ext}`, { type: finalType });
     const prev = document.getElementById('imagePreview');
     prev.src = URL.createObjectURL(blob);
     prev.style.display = 'block';
     document.getElementById('cropModalOverlay').classList.remove('open');
-    showToast('Foto berhasil dipotong 3:2 ✅', 'success');
-  }, cropMimeType, 0.92);
+
+    const fmtKB = (bytes) => (bytes / 1024).toFixed(0) + ' KB';
+    const beforeLabel = (originalImageType.split('/')[1] || '?').toUpperCase();
+    const afterLabel  = finalType === 'image/avif' ? 'AVIF' : finalType === 'image/webp' ? 'WEBP' : 'JPEG';
+    const reduction = originalImageSize > 0
+      ? Math.round((1 - blob.size / originalImageSize) * 100)
+      : null;
+
+    // Info perbandingan ukuran di bawah preview (tetap terlihat, tidak hilang seperti toast)
+    let infoEl = document.getElementById('imageSizeCompare');
+    if (!infoEl) {
+      infoEl = document.createElement('div');
+      infoEl.id = 'imageSizeCompare';
+      infoEl.style.cssText = 'font-size:.76rem;color:var(--ink-soft);margin-top:6px;line-height:1.5';
+      prev.insertAdjacentElement('afterend', infoEl);
+    }
+    infoEl.innerHTML =
+      '<strong>' + beforeLabel + '</strong> ' + fmtKB(originalImageSize) +
+      ' &rarr; <strong>' + afterLabel + '</strong> ' + fmtKB(blob.size) +
+      (reduction !== null && reduction > 0 ? ' <span style="color:var(--leaf);font-weight:700">(-' + reduction + '%)</span>' : '');
+
+    showToast(`Dikompres ke ${afterLabel}: ${fmtKB(originalImageSize)} → ${fmtKB(blob.size)}` + (reduction > 0 ? ` (-${reduction}%)` : ''), 'success');
+  } finally {
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '✔️ Gunakan Foto Ini'; }
+  }
 }
 
 async function uploadImage(file) {
-  if (!['image/png','image/jpeg','image/jpg','image/webp'].includes(file.type))
-    throw new Error('Format foto harus PNG, JPG, atau WebP');
+  if (!['image/png','image/jpeg','image/jpg','image/webp','image/avif'].includes(file.type))
+    throw new Error('Format foto harus PNG, JPG, WebP, atau AVIF');
   if (file.size > 2*1024*1024) throw new Error('Ukuran foto maksimal 2 MB');
   const ext = (file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
   const name = `menu-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
