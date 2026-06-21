@@ -217,6 +217,13 @@
 
     /* ── PAYMENT METHOD ── */
     .payment-options { display: flex; flex-direction: column; gap: 10px; }
+    @keyframes payBounce {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.03); }
+      60%  { transform: scale(0.98); }
+      100% { transform: scale(1); }
+    }
+    .payment-option.bounce { animation: payBounce .35s ease; }
     .payment-option {
       display: flex; align-items: center; gap: 14px;
       padding: 14px 16px;
@@ -251,12 +258,24 @@
 
     /* Bank detail box */
     .bank-detail {
-      display: none; margin-top: 12px;
+      display: grid;
+      grid-template-rows: 0fr;
+      overflow: hidden;
+      margin-top: 0;
       background: #fff8ee;
       border: 1.5px solid #f0d8a0;
-      border-radius: 9px; padding: 14px 16px;
+      border-radius: 9px;
+      transition: grid-template-rows .32s ease, margin-top .32s ease, padding .32s ease;
+      padding: 0 16px;
     }
-    .bank-detail.visible { display: block; }
+    .bank-detail > .bank-detail-inner {
+      overflow: hidden;
+    }
+    .bank-detail.visible {
+      grid-template-rows: 1fr;
+      margin-top: 12px;
+      padding: 14px 16px;
+    }
     .bank-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
     .bank-row:last-child { margin-bottom: 0; }
     .bank-label { font-size: 11px; color: var(--text-muted); }
@@ -399,6 +418,18 @@
       vertical-align: middle; margin-right: 6px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CONFETTI ── */
+    #confettiCanvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 9999;
+    }
+    @keyframes successPop {
+      0%   { opacity: 0; transform: scale(.85) translateY(20px); }
+      60%  { transform: scale(1.04) translateY(-4px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .success-state.animate { animation: successPop .5s ease forwards; }
 
     /* ── SUCCESS STATE ── */
     .success-state {
@@ -689,20 +720,22 @@
                 <div class="pay-check"></div>
               </label>
               <div class="bank-detail" id="detail_transfer_bca">
-                <div class="bank-row">
-                  <span class="bank-label">Bank</span>
-                  <span class="bank-value">BCA</span>
-                </div>
-                <div class="bank-row">
-                  <span class="bank-label">No. Rekening</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span class="bank-value">1234 5678 90</span>
-                    <button class="copy-btn" onclick="copyText('1234567890')">Salin</button>
+                <div class="bank-detail-inner">
+                  <div class="bank-row">
+                    <span class="bank-label">Bank</span>
+                    <span class="bank-value">BCA</span>
                   </div>
-                </div>
-                <div class="bank-row">
-                  <span class="bank-label">Atas Nama</span>
-                  <span class="bank-value">NusantaraFood</span>
+                  <div class="bank-row">
+                    <span class="bank-label">No. Rekening</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span class="bank-value">1234 5678 90</span>
+                      <button class="copy-btn" onclick="copyText('1234567890')">Salin</button>
+                    </div>
+                  </div>
+                  <div class="bank-row">
+                    <span class="bank-label">Atas Nama</span>
+                    <span class="bank-value">NusantaraFood</span>
+                  </div>
                 </div>
               </div>
 
@@ -716,20 +749,22 @@
                 <div class="pay-check"></div>
               </label>
               <div class="bank-detail" id="detail_transfer_mandiri">
-                <div class="bank-row">
-                  <span class="bank-label">Bank</span>
-                  <span class="bank-value">Mandiri</span>
-                </div>
-                <div class="bank-row">
-                  <span class="bank-label">No. Rekening</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span class="bank-value">1100 0987 6543</span>
-                    <button class="copy-btn" onclick="copyText('110009876543')">Salin</button>
+                <div class="bank-detail-inner">
+                  <div class="bank-row">
+                    <span class="bank-label">Bank</span>
+                    <span class="bank-value">Mandiri</span>
                   </div>
-                </div>
-                <div class="bank-row">
-                  <span class="bank-label">Atas Nama</span>
-                  <span class="bank-value">NusantaraFood</span>
+                  <div class="bank-row">
+                    <span class="bank-label">No. Rekening</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span class="bank-value">1100 0987 6543</span>
+                      <button class="copy-btn" onclick="copyText('110009876543')">Salin</button>
+                    </div>
+                  </div>
+                  <div class="bank-row">
+                    <span class="bank-label">Atas Nama</span>
+                    <span class="bank-value">NusantaraFood</span>
+                  </div>
                 </div>
               </div>
 
@@ -743,10 +778,12 @@
                 <div class="pay-check"></div>
               </label>
               <div class="bank-detail" id="detail_qris">
-                <div style="text-align:center;padding:8px 0">
-                  <div style="font-size:48px;margin-bottom:4px">▦</div>
-                  <div style="font-size:12px;color:var(--text-muted)">Scan QRIS dengan aplikasi e-wallet Anda</div>
-                  <div style="font-size:11px;color:var(--amber-dark);font-weight:600;margin-top:4px">a/n NusantaraFood</div>
+                <div class="bank-detail-inner">
+                  <div style="text-align:center;padding:8px 0">
+                    <div style="font-size:48px;margin-bottom:4px">▦</div>
+                    <div style="font-size:12px;color:var(--text-muted)">Scan QRIS dengan aplikasi e-wallet Anda</div>
+                    <div style="font-size:11px;color:var(--amber-dark);font-weight:600;margin-top:4px">a/n NusantaraFood</div>
+                  </div>
                 </div>
               </div>
 
@@ -853,7 +890,7 @@
         <div class="card" id="successCard" style="display:none; margin-top: 0;">
           <div class="success-state" style="display:block">
             <div class="big-icon">🎉</div>
-            <h2>Pesanan Berhasil Dikirim!</h2>
+            <h2>Pesanan Berhasil!</h2>
             <p>Terima kasih telah memesan di NusantaraFood. Pesanan Anda sedang menunggu konfirmasi dari penjual.</p>
             <div class="order-id-box" id="successOrderId"></div>
             <button class="btn-primary" onclick="window.location.href='index.html'" style="max-width:280px;margin:0 auto">
@@ -913,6 +950,7 @@
   </div>
 </main>
 
+<canvas id="confettiCanvas" style="display:none"></canvas>
 <footer>© 2026 NusantaraFood. All rights reserved.</footer>
 
 <!-- ══ VOUCHER LIST MODAL ══ -->
@@ -1524,11 +1562,19 @@ function renderReview() {
 ══════════════════════════════════════ */
 function selectPay(el, value) {
   // Deselect all
-  document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+  document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.classList.remove('selected');
+    opt.classList.remove('bounce');
+  });
   document.querySelectorAll('.bank-detail').forEach(d => d.classList.remove('visible'));
 
-  // Select
+  // Select with bounce
   el.classList.add('selected');
+  // Trigger bounce (remove then re-add to re-run animation)
+  void el.offsetWidth;
+  el.classList.add('bounce');
+  el.addEventListener('animationend', () => el.classList.remove('bounce'), { once: true });
+
   el.querySelector('input[type="radio"]').checked = true;
   selectedPayment = value;
 
@@ -1620,6 +1666,11 @@ async function submitOrder() {
     document.getElementById('summaryCard').style.display = 'none';
     updateStepper(3);
 
+    // Animasi success pop + confetti
+    const successEl = document.querySelector('#successCard .success-state');
+    successEl.classList.add('animate');
+    setTimeout(launchConfetti, 200);
+
   } catch (err) {
     console.error(err);
     showMsg('step3Msg', '❌ ' + err.message, 'error');
@@ -1654,6 +1705,117 @@ function esc(s) {
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════ */
+let confettiFired = false;
+function launchConfetti() {
+  if (confettiFired) return;   // hanya sekali
+  confettiFired = true;
+
+  const canvas = document.getElementById('confettiCanvas');
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COLORS = [
+    '#e8a020','#c8880e','#ffd700','#ff6b6b','#4ecdc4',
+    '#a78bfa','#34d399','#f472b6','#60a5fa','#fff'
+  ];
+  const SHAPES = ['rect', 'ribbon', 'circle', 'triangle'];
+  const COUNT  = 280;  // banyak partikel
+
+  const W = canvas.width;
+  const H = canvas.height;
+
+  const pieces = Array.from({ length: COUNT }, (_, i) => {
+    // Spawn dari bawah, tersebar di seluruh lebar
+    const side = Math.random();
+    return {
+      x:        W * (0.1 + Math.random() * 0.8),
+      y:        H + 10 + Math.random() * 60,
+      vx:       (Math.random() - .5) * 6,
+      // kecepatan ke atas lebih tinggi agar sampai atas layar
+      vy:       -(Math.random() * 18 + 14),
+      gravity:  0.18 + Math.random() * 0.12,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - .5) * 0.22,
+      size:     7 + Math.random() * 11,
+      color:    COLORS[Math.floor(Math.random() * COLORS.length)],
+      shape:    SHAPES[Math.floor(Math.random() * SHAPES.length)],
+      opacity:  1,
+      delay:    Math.floor(i * 2.5),   // stagger lebih rapat
+    };
+  });
+
+  let frame = 0;
+  let raf;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frame++;
+
+    let allGone = true;
+
+    pieces.forEach(p => {
+      if (frame < p.delay) { allGone = false; return; }
+
+      p.vy += p.gravity;
+      p.vx *= 0.993;
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.rotation += p.rotSpeed;
+
+      // Fade saat jatuh ke bawah 85% layar
+      if (p.y > canvas.height * 0.85) {
+        p.opacity = Math.max(0, p.opacity - 0.03);
+      }
+
+      if (p.opacity > 0 && p.y < canvas.height + 80) allGone = false;
+
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      } else if (p.shape === 'ribbon') {
+        // pita panjang tipis
+        ctx.fillRect(-p.size * .7, -p.size / 6, p.size * 1.4, p.size / 3);
+      } else if (p.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size / 2);
+        ctx.lineTo(p.size / 2, p.size / 2);
+        ctx.lineTo(-p.size / 2, p.size / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+
+    if (!allGone) {
+      raf = requestAnimationFrame(draw);
+    } else {
+      canvas.style.display = 'none';
+      window.removeEventListener('resize', resize);
+    }
+  }
+
+  raf = requestAnimationFrame(draw);
 }
 
 let toastTimeout;
