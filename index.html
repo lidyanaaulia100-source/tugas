@@ -588,7 +588,7 @@
     .price-badge {
       display: inline-block;
       background: none;
-      color: var(--brown-dark);
+      color: var(--amber);
       font-size: 18px;
       font-weight: 700;
       padding: 0;
@@ -596,7 +596,7 @@
       margin-bottom: 4px;
       letter-spacing: .3px;
     }
-    .price-badge.promo { background: none; color: var(--amber-dark); }
+    .price-badge.promo { background: none; color: var(--amber); }
     .price-original {
       font-size: 13px;
       font-weight: 500;
@@ -1317,7 +1317,7 @@
       font-family: 'Inter', sans-serif;
       font-size: 26px;
       font-weight: 800;
-      color: #000000;
+      color: var(--amber);
       letter-spacing: -.3px;
       margin-top: 0;
       line-height: 1.2;
@@ -3820,9 +3820,9 @@
       ratingRowEl.style.display = 'none';
     }
 
-    // Warna harga: kuning jika kategori Promo, hitam jika tidak
-    const priceEl = document.getElementById('mPrice');
-    priceEl.style.color = ((data.category||'').split(',').map(s=>s.trim()).includes('Promo')) ? '#e8a020' : '#000000';
+    // Warna harga selalu kuning (dikontrol oleh CSS .modal-price)
+    // — hapus override inline agar CSS tetap jadi sumber kebenaran
+    document.getElementById('mPrice').style.color = '';
     document.getElementById('qtyInput').value = currentMinOrder;
     updateModalPrice(currentMinOrder);
 
