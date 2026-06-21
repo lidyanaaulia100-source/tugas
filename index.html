@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Catering Nusantara</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://rrcgjwnllrdszypdtljq.supabase.co" />
+  <link rel="dns-prefetch" href="https://rrcgjwnllrdszypdtljq.supabase.co" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2956,6 +2960,8 @@
       const img = document.createElement('img');
       img.src = m.image_url;
       img.alt = m.name;
+      img.decoding = 'async';
+      if (i === 0) img.setAttribute('fetchpriority', 'high');
       slide.appendChild(img);
 
       // Label — kiri atas, font besar
@@ -3019,17 +3025,23 @@
     clearInterval(_heroTimer);
   }
 
+  let _heroDragRAF = null;
   function heroSliderDragMove(e) {
     if (_heroDragStartX === null) return;
     const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
     _heroDragDelta = x - _heroDragStartX;
     if (Math.abs(_heroDragDelta) > 5) _heroDragging = true;
-    const track = document.getElementById('heroSliderTrack');
-    if (track) track.style.transform = `translateX(calc(-${_heroIdx * 100}% + ${_heroDragDelta}px))`;
+    if (_heroDragRAF !== null) return;
+    _heroDragRAF = requestAnimationFrame(() => {
+      _heroDragRAF = null;
+      const track = document.getElementById('heroSliderTrack');
+      if (track) track.style.transform = `translateX(calc(-${_heroIdx * 100}% + ${_heroDragDelta}px))`;
+    });
   }
 
   function heroSliderDragEnd() {
     if (_heroDragStartX === null) return;
+    if (_heroDragRAF !== null) { cancelAnimationFrame(_heroDragRAF); _heroDragRAF = null; }
     const track = document.getElementById('heroSliderTrack');
     if (track) track.classList.remove('is-dragging');
     if (Math.abs(_heroDragDelta) > 60) {
@@ -3133,15 +3145,18 @@
   async function loadMenus() {
     try {
       const res = await fetch(API_BASE + '/menus?order=created_at.asc', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+        priority: 'high'
       });
       if (!res.ok) throw new Error('Gagal memuat menu');
       const data = await res.json();
       allMenus = data;
-      // Muat rating dulu baru render kartu
-      await loadMenuRatings();
+      // Render kartu menu segera agar halaman terasa cepat;
+      // rating dimuat di belakang layar dan akan otomatis
+      // me-render ulang kartu begitu selesai (lihat loadMenuRatings).
       renderMenus(data);
       buildHeroSlider(data);
+      loadMenuRatings();
     } catch (err) {
       console.error(err);
       document.getElementById('extraSections').innerHTML = '<div style="color:#e05050;font-size:13px;padding:20px 24px;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
@@ -3191,7 +3206,7 @@
   function buildCard(m, inPromoSection = false) {
     const d = menuToModalData(m);
     const imgContent = d.image_url
-      ? `<img src="${d.image_url}" alt="${d.name}" style="width:100%;height:100%;object-fit:cover;" />`
+      ? `<img src="${d.image_url}" alt="${d.name}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;" />`
       : `<span style="font-size:36px">${d.emoji}</span>`;
     const imgBg = d.image_url ? '#f5f0eb' : '';
     const isOut = d.availability === 'out_of_stock';
@@ -3251,7 +3266,7 @@
     try {
       const res = await fetch(
         API_BASE + '/ulasan?select=menu_id,menu_name,rating',
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }, priority: 'low' }
       );
       if (!res.ok) { console.warn('loadMenuRatings: fetch gagal', res.status); return; }
       const rows = await res.json();
@@ -3526,7 +3541,7 @@
     if (data.image_url) {
       mImage.style.background = '#f5f0eb';
       const imgStyle = isOutModal ? 'width:100%;height:100%;object-fit:cover;filter:grayscale(.6);opacity:.6;' : 'width:100%;height:100%;object-fit:cover;';
-      mImage.innerHTML = `<img src="${data.image_url}" alt="${data.name}" style="${imgStyle}" />${modalDiscBadge}${modalHabisBadge}`;
+      mImage.innerHTML = `<img src="${data.image_url}" alt="${data.name}" decoding="async" style="${imgStyle}" />${modalDiscBadge}${modalHabisBadge}`;
       mImage.classList.add('has-photo');
       mImage.onclick = () => openImageLightbox(data.image_url, data.name);
     } else {
@@ -3743,7 +3758,7 @@
 
     itemsEl.innerHTML = cart.map((item, idx) => {
       const iconContent = item.image_url
-        ? `<img src="${item.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
+        ? `<img src="${item.image_url}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`
         : item.emoji;
       const iconBg = item.image_url ? '#f5f0eb' : item.bg;
       return `
@@ -3901,10 +3916,16 @@
     return text.replace(re, '<mark>$1</mark>');
   }
 
+  let _searchDebounceTimer = null;
   function doSearch(val) {
+    clearTimeout(_searchDebounceTimer);
     const clear = document.getElementById('searchClear');
-    const results = document.getElementById('searchResults');
     clear.style.display = val ? 'inline-block' : 'none';
+    _searchDebounceTimer = setTimeout(() => _doSearchNow(val), 120);
+  }
+
+  function _doSearchNow(val) {
+    const results = document.getElementById('searchResults');
 
     if (!val.trim()) {
       results.innerHTML = '<div class="search-hint">Ketik nama menu yang ingin dicari 🔍</div>';
@@ -3923,7 +3944,7 @@
       const idx = menuData.indexOf(m);
       return `
         <div class="search-result-item" onclick="closeSearch(); setTimeout(()=>openModal(menuData[${idx}]), 150);">
-          <div class="search-result-icon" style="background:${m.bg}">${m.image_url ? `<img src="${m.image_url}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />` : m.emoji}</div>
+          <div class="search-result-icon" style="background:${m.bg}">${m.image_url ? `<img src="${m.image_url}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />` : m.emoji}</div>
           <div class="search-result-info">
             <div class="search-result-name">${highlightMatch(m.name, val.trim())}</div>
             <div class="search-result-price">${m.price}</div>
@@ -4185,6 +4206,7 @@
   const AVATAR_OUTPUT_SIZE = 480;   // resolusi akhir foto profil setelah dipangkas
   let _avatarCropState = null;
   let _avatarCropDragInit = false;
+  let _avatarCropRAF = null;
 
   /** Dipanggil saat user memilih file dari dialog upload — buka modal pangkas dulu, belum upload. */
   function handleAvatarFileSelect(event) {
@@ -4281,12 +4303,17 @@
       if (!st || !st.dragging) return;
       st.offsetX = st.startOffX + (e.clientX - st.startX);
       st.offsetY = st.startOffY + (e.clientY - st.startY);
-      clampAvatarCropOffset();
-      applyAvatarCropTransform();
+      if (_avatarCropRAF !== null) return;
+      _avatarCropRAF = requestAnimationFrame(() => {
+        _avatarCropRAF = null;
+        clampAvatarCropOffset();
+        applyAvatarCropTransform();
+      });
     });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
       viewport.addEventListener(evt, () => {
         if (_avatarCropState) _avatarCropState.dragging = false;
+        if (_avatarCropRAF !== null) { cancelAnimationFrame(_avatarCropRAF); _avatarCropRAF = null; }
         viewport.classList.remove('dragging');
       });
     });
@@ -4757,7 +4784,7 @@
           }
 
           const thumbHtml = resolvedImg
-            ? '<img src="' + resolvedImg + '" alt="' + itemName + '" onerror="this.parentElement.innerHTML=\'' + emoji + '\'" />'
+            ? '<img src="' + resolvedImg + '" alt="' + itemName + '" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML=\'' + emoji + '\'" />'
             : emoji;
 
           // Rating HTML hanya muncul jika status selesai
@@ -5047,7 +5074,7 @@
     }
   }
 
-  setInterval(() => {
+  function updateNotifBadge() {
     const session = getSession();
     if (!session || _notifOpen) return;
     fetch(
@@ -5068,31 +5095,12 @@
         badge.classList.remove('show');
       }
     }).catch(() => {});
-  }, 60000);
+  }
+
+  setInterval(updateNotifBadge, 60000);
 
   // Load badge on init (after a short delay)
-  setTimeout(() => {
-    const session = getSession();
-    if (!session) return;
-    fetch(
-      API_BASE + '/pesanan?user_id=eq.' + session.id
-      + '&status=in.(dikonfirmasi,menunggu_konfirmasi,dikirim)&select=id',
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-    ).then(r => r.json()).then(data => {
-      let readIds = [];
-      try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
-      const unread = (data || []).filter(o => !readIds.includes(o.id));
-      const count = unread.length;
-      const badge = document.getElementById('notifBadgeDot');
-      if (count > 0) {
-        badge.textContent = count > 9 ? '9+' : count;
-        badge.classList.add('show');
-      } else {
-        badge.textContent = '';
-        badge.classList.remove('show');
-      }
-    }).catch(() => {});
-  }, 1200);
+  setTimeout(updateNotifBadge, 1200);
 
 </script>
 </body>
