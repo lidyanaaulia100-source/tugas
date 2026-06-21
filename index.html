@@ -1146,7 +1146,7 @@
       width: calc(100% - 48px);
       margin: 14px 24px 0;
       border-radius: 12px;
-      aspect-ratio: 4/3;
+      aspect-ratio: 1/1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1215,21 +1215,26 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      padding: 20px 24px 0;
-      gap: 4px;
+      padding: 18px 24px 0;
+      gap: 0;
     }
     .modal-price {
       font-family: 'Inter', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 26px;
+      font-weight: 800;
       color: #000000;
+      letter-spacing: -.3px;
+      margin-top: 0;
+      line-height: 1.2;
     }
     .modal-price-original {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
       color: #b0a090;
       text-decoration: line-through;
-      line-height: 1.3;
+      line-height: 1.2;
+      margin-top: 10px;
+      margin-bottom: 1px;
     }
     .modal-name {
       font-family: 'Inter', sans-serif;
@@ -1243,14 +1248,14 @@
     .modal-divider {
       height: 1px;
       background: #f0ece8;
-      margin: 16px 24px;
+      margin: 14px 24px;
     }
 
     .modal-meta {
       padding: 0 24px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
     .modal-meta-row {
       font-size: 13px;
@@ -1272,13 +1277,13 @@
 
     /* quantity */
     .modal-qty-section {
-      padding: 16px 24px 0;
+      padding: 14px 24px 0;
     }
     .modal-qty-label {
       font-size: 13px;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .modal-qty-control {
       display: flex;
@@ -1329,9 +1334,11 @@
 
     /* order btn */
     .modal-order-btn {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: calc(100% - 48px);
-      margin: 20px 24px;
+      margin: 16px 24px;
       padding: 14px;
       background: var(--brown-dark);
       color: var(--white);
@@ -2388,7 +2395,8 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-top: 4px;
+      margin-top: 6px;
+      margin-bottom: 2px;
     }
     .modal-rating-stars {
       color: #f5a623;
@@ -2407,6 +2415,12 @@
       border-radius: 12px; padding: 8px 12px;
       border: 1.5px solid #f0ece8;
       box-shadow: 0 1px 4px rgba(60,20,0,.05);
+      transition: background .15s, border-color .15s, box-shadow .15s;
+    }
+    .order-item-row:hover {
+      background: #fdf6ee;
+      border-color: var(--amber);
+      box-shadow: 0 2px 10px rgba(60,20,0,.10);
     }
     .order-item-thumb {
       width: 64px; height: 64px;
@@ -2591,7 +2605,7 @@
 <div class="cart-overlay" id="cartOverlay" onclick="handleCartOverlay(event)">
   <div class="cart-panel" id="cartPanel">
     <div class="cart-header">
-      <span class="cart-title"><span class="cart-title-icon" id="cartTitleIcon">🛒</span> Keranjang</span>
+      <span class="cart-title"><span class="cart-title-icon" id="cartTitleIcon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a1200" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span> Keranjang</span>
       <span class="cart-save-indicator" id="cartSaveIndicator"></span>
       <button class="cart-close" onclick="toggleCart()">✕</button>
     </div>
@@ -2850,7 +2864,7 @@
           <div class="qty-min-note" id="mMinNote">Jumlah Minimal 5 Item</div>
         </div>
 
-        <button class="modal-order-btn" onclick="addToCart()">ORDER</button>
+        <button class="modal-order-btn" onclick="addToCart()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Masuk ke Keranjang</button>
       </div>
     </div>
 
@@ -3617,12 +3631,12 @@
     const orderBtn = document.querySelector('.modal-order-btn');
     if (data.availability === 'out_of_stock') {
       orderBtn.disabled = true;
-      orderBtn.textContent = 'Habis';
+      orderBtn.innerHTML = 'Habis';
       orderBtn.style.opacity = '.5';
       orderBtn.style.cursor = 'not-allowed';
     } else {
       orderBtn.disabled = false;
-      orderBtn.textContent = 'ORDER';
+      orderBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:8px;flex-shrink:0"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Masuk ke Keranjang';
       orderBtn.style.opacity = '';
       orderBtn.style.cursor = '';
     }
@@ -3782,7 +3796,7 @@
               <button onclick="cartChangeQty(${idx}, 1)">+</button>
             </div>
           </div>
-          <button class="cart-item-delete" onclick="removeFromCart(${idx})" title="Hapus">🗑</button>
+          <button class="cart-item-delete" onclick="removeFromCart(${idx})" title="Hapus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e05050" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>`;
     }).join('');
   }
@@ -3825,15 +3839,6 @@
       if (!requireLogin('index.html')) return;
       overlay.classList.add('active');
       document.body.style.overflow = 'hidden';
-      const icon = document.getElementById('cartTitleIcon');
-      icon.classList.remove('bounce');
-      void icon.offsetWidth;
-      icon.classList.add('bounce');
-      const header = overlay.querySelector('.cart-header');
-      header.classList.remove('shimmer');
-      void header.offsetWidth;
-      header.classList.add('shimmer');
-      setTimeout(() => header.classList.remove('shimmer'), 800);
       // Tarik ulang keranjang terbaru dari Supabase setiap kali panel dibuka,
       // supaya perubahan yang dilakukan dari perangkat lain langsung terlihat.
       loadCartFromServer();
@@ -4816,7 +4821,7 @@
 
           }
 
-          return '<div class="order-item-row">'
+          return '<div class="order-item-row order-item-clickable" data-menu-id-nav="' + (menuId||'').replace(/"/g,'&quot;') + '" data-menu-name-nav="' + itemName.replace(/"/g,'&quot;') + '" style="cursor:pointer;" title="Lihat detail menu">'
             + '<div class="order-item-thumb">' + thumbHtml + '</div>'
             + '<div class="order-item-info">'
             + '<div class="order-item-name">' + itemName + '</div>'
@@ -4861,6 +4866,17 @@
 
       + '<button class="order-modal-dismiss-btn" onclick="closeOrderDetail()">Tutup</button>';
 
+    // Event delegation untuk klik item pesanan → buka modal menu
+    document.getElementById('orderDetailBody').addEventListener('click', function(e) {
+      const row = e.target.closest('.order-item-clickable');
+      if (!row) return;
+      // Cegah klik pada bintang rating
+      if (e.target.closest('.order-item-rating')) return;
+      const menuIdNav   = row.dataset.menuIdNav || '';
+      const menuNameNav = row.dataset.menuNameNav || '';
+      openMenuFromOrderItem(menuIdNav, menuNameNav);
+    });
+
     const overlay = document.getElementById('orderDetailOverlay');
     overlay.style.display = 'flex';
     requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
@@ -4873,6 +4889,15 @@
         loadSavedRatingsForOrder(orderId, items);
       }));
     }
+  }
+
+  function openMenuFromOrderItem(menuId, menuName) {
+    let menuRaw = null;
+    if (menuId) menuRaw = allMenus.find(m => String(m.id) === String(menuId));
+    if (!menuRaw && menuName) menuRaw = allMenus.find(m => m.name === menuName);
+    if (!menuRaw) { showToast('Menu tidak ditemukan'); return; }
+    closeOrderDetail();
+    setTimeout(() => openModal(menuToModalData(menuRaw)), 300);
   }
 
   function closeOrderDetail() {
