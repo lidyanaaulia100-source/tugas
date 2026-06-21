@@ -405,6 +405,7 @@
   .pill.dibatalkan { background: var(--rose-light); color: var(--rose); }
   .pill.dikirim    { background: #E3F2FD; color: #1565C0; }
   .pill.confirmed  { background: var(--leaf-light); color: var(--leaf); }
+  .pill.masuk      { background: #FFF3E0; color: #B8762B; }
   .history-empty { text-align: center; padding: 32px; color: var(--ink-soft); font-size: .88rem; }
   .history-empty .icon { font-size: 2.2rem; margin-bottom: 7px; }
   .history-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
@@ -615,6 +616,51 @@
     .form-grid .full { grid-column: 1; }
     thead th:nth-child(5), tbody td:nth-child(5) { display: none; }
   }
+
+  /* ── TAB SWITCHER ── */
+  .tab-switcher {
+    display: flex; gap: 4px;
+    background: var(--batik-warm); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 4px;
+    margin-bottom: 18px; width: fit-content;
+  }
+  .tab-btn {
+    padding: 8px 20px; border-radius: 9px; border: none;
+    font-family: inherit; font-size: .88rem; font-weight: 600;
+    cursor: pointer; transition: all .2s; color: var(--ink-soft);
+    background: transparent; display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: #fff; color: var(--batik-dark);
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .tab-btn:hover:not(.active) { color: var(--batik-dark); background: rgba(255,255,255,.5); }
+  .tab-badge {
+    background: var(--batik-gold); color: #fff;
+    font-size: .65rem; font-weight: 700; padding: 1px 6px;
+    border-radius: 10px; min-width: 18px; text-align: center;
+  }
+
+  /* ── TAB CONTENT ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── HISTORI INLINE (bukan overlay lagi) ── */
+  .history-inline-wrap {
+    background: #fff; border: 1.5px solid var(--border); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 2px 16px var(--shadow);
+  }
+  .history-inline-top {
+    padding: 14px 18px 0;
+  }
+  .history-inline-filter {
+    display: flex; gap: 7px; flex-wrap: wrap; padding-bottom: 14px;
+    border-bottom: 1.5px solid var(--border);
+  }
+  .history-inline-table-wrap {
+    overflow-x: auto;
+  }
 </style>
 </head>
 <body>
@@ -626,9 +672,6 @@
     <p>Panel Admin — Manajemen Menu</p>
   </div>
   <div class="header-actions">
-    <button class="btn-header" onclick="openHistory()">
-      🗂️ <span class="btn-header-text">Histori</span>
-    </button>
     <button class="btn-header" onclick="openVoucherManager()">
       🎟️ <span class="btn-header-text">Voucher</span>
     </button>
@@ -654,6 +697,19 @@
 </header>
 
 <div class="container">
+
+  <!-- Tab Switcher -->
+  <div class="tab-switcher">
+    <button class="tab-btn active" id="tabBtnMenu" onclick="switchTab('menu')">
+      🍱 Menu
+    </button>
+    <button class="tab-btn" id="tabBtnHistory" onclick="switchTab('history')">
+      🗂️ Histori Pesanan <span class="tab-badge" id="historyTabBadge" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- ══ TAB: MENU ══ -->
+  <div class="tab-panel active" id="tabMenu">
 
   <!-- Stats -->
   <div class="stats" id="statsBar">
@@ -701,6 +757,67 @@
   <div class="card-list" id="cardList">
     <div class="empty-state"><div class="icon">⏳</div><p>Memuat…</p></div>
   </div>
+
+  </div><!-- end #tabMenu -->
+
+  <!-- ══ TAB: HISTORI PESANAN ══ -->
+  <div class="tab-panel" id="tabHistory">
+
+    <!-- Stats histori -->
+    <div class="stats" id="historyStatsBar">
+      <div class="stat-card">
+        <div class="num" id="hStatAll">—</div>
+        <div class="lbl">Semua Pesanan</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="hStatMasuk" style="color:#B8762B">—</div>
+        <div class="lbl">Pesanan Masuk</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="hStatDiproses" style="color:var(--leaf)">—</div>
+        <div class="lbl">Diproses</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="hStatDikirim" style="color:#1565C0">—</div>
+        <div class="lbl">Dikirim</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="hStatSelesai" style="color:var(--batik-dark)">—</div>
+        <div class="lbl">Selesai</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="hStatBatal" style="color:var(--rose)">—</div>
+        <div class="lbl">Dibatalkan</div>
+      </div>
+    </div>
+
+    <!-- Histori inline -->
+    <div class="history-inline-wrap">
+      <div class="history-inline-top">
+        <div class="history-inline-filter">
+          <button class="history-filter-btn active" onclick="filterHistoryInline('all',this)">Semua</button>
+          <button class="history-filter-btn" onclick="filterHistoryInline('menunggu_konfirmasi',this)">📥 Pesanan Masuk</button>
+          <button class="history-filter-btn" onclick="filterHistoryInline('dikonfirmasi',this)">✅ Diproses</button>
+          <button class="history-filter-btn" onclick="filterHistoryInline('dikirim',this)">🚚 Dikirim</button>
+          <button class="history-filter-btn" onclick="filterHistoryInline('selesai',this)">🎉 Selesai</button>
+          <button class="history-filter-btn" onclick="filterHistoryInline('dibatalkan',this)">❌ Dibatalkan</button>
+          <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="loadHistoryInline()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="history-inline-table-wrap">
+        <table class="history-table" style="min-width:520px">
+          <thead>
+            <tr><th>Pelanggan</th><th>Item</th><th>Total</th><th>Status</th><th>Tgl Pesan</th><th></th></tr>
+          </thead>
+          <tbody id="historyInlineBody">
+            <tr><td colspan="6"><div class="history-empty"><div class="icon">⏳</div>Memuat…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end #tabHistory -->
+
 </div>
 
 <!-- ── FORM MODAL ── -->
@@ -1739,6 +1856,14 @@ function renderNotifications() {
     badge.classList.remove('visible');
   }
 
+  // Update badge di tab histori (pesanan menunggu_konfirmasi)
+  const masukCount = allNotifications.filter(o => o.status === 'menunggu_konfirmasi').length;
+  const tabBadge = document.getElementById('historyTabBadge');
+  if (tabBadge) {
+    if (masukCount > 0) { tabBadge.textContent = masukCount; tabBadge.style.display = 'inline-block'; }
+    else tabBadge.style.display = 'none';
+  }
+
   list.innerHTML = allNotifications.map(order => {
     const isConfirmed = order.status === 'dikonfirmasi';
     const isWaiting   = order.status === 'menunggu_konfirmasi';
@@ -1904,6 +2029,8 @@ async function openOrderDetail(id) {
 function closeOrderDetail() {
   document.getElementById('orderDetailOverlay').classList.remove('open');
   currentOrderId = null;
+  // Refresh histori inline jika sedang di tab histori
+  if (activeTab === 'history') loadHistoryInline();
 }
 
 function renderOrderDetail(order) {
@@ -2084,6 +2211,108 @@ async function confirmDoneOrder() {
     closeDoneOrderConfirm(); closeOrderDetail(); await loadNotifications();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Ya, Selesai'; }
+}
+
+/* ════ TAB SWITCHER ════ */
+let activeTab = 'menu';
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabMenu').classList.toggle('active', tab === 'menu');
+  document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+  document.getElementById('tabBtnMenu').classList.toggle('active', tab === 'menu');
+  document.getElementById('tabBtnHistory').classList.toggle('active', tab === 'history');
+  if (tab === 'history') loadHistoryInline();
+}
+
+/* ════ HISTORI INLINE ════ */
+let historyInlineData = [], historyInlineFilter = 'all';
+
+async function loadHistoryInline() {
+  const tbody = document.getElementById('historyInlineBody');
+  tbody.innerHTML = '<tr><td colspan="6"><div class="history-empty"><div class="icon">⏳</div>Memuat…</div></td></tr>';
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/pesanan?select=id,customer_name,customer_phone,items,total_amount,status,created_at,completed_at,cancelled_at,delivery_confirmed_date,delivery_date&order=created_at.desc&limit=200',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) throw new Error('Gagal memuat histori');
+    historyInlineData = await res.json() || [];
+    updateHistoryStats();
+    renderHistoryInline();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="history-empty"><div class="icon">⚠️</div>' + esc(e.message) + '</div></td></tr>';
+  }
+}
+
+function updateHistoryStats() {
+  const all     = historyInlineData.length;
+  const masuk   = historyInlineData.filter(o => o.status === 'menunggu_konfirmasi').length;
+  const diproses= historyInlineData.filter(o => o.status === 'dikonfirmasi').length;
+  const dikirim = historyInlineData.filter(o => o.status === 'dikirim').length;
+  const selesai = historyInlineData.filter(o => o.status === 'selesai').length;
+  const batal   = historyInlineData.filter(o => o.status === 'dibatalkan').length;
+  document.getElementById('hStatAll').textContent      = all;
+  document.getElementById('hStatMasuk').textContent    = masuk;
+  document.getElementById('hStatDiproses').textContent = diproses;
+  document.getElementById('hStatDikirim').textContent  = dikirim;
+  document.getElementById('hStatSelesai').textContent  = selesai;
+  document.getElementById('hStatBatal').textContent    = batal;
+  // Update badge on tab button
+  const badge = document.getElementById('historyTabBadge');
+  if (masuk > 0) { badge.textContent = masuk; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+}
+
+function filterHistoryInline(filter, btn) {
+  historyInlineFilter = filter;
+  document.querySelectorAll('#tabHistory .history-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistoryInline();
+}
+
+function renderHistoryInline() {
+  const tbody = document.getElementById('historyInlineBody');
+  const filtered = historyInlineFilter === 'all'
+    ? historyInlineData
+    : historyInlineData.filter(o => o.status === historyInlineFilter);
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="history-empty"><div class="icon">📭</div>Tidak ada data</div></td></tr>';
+    return;
+  }
+  let html = '';
+  let lastDay = '';
+  filtered.forEach(order => {
+    const dayKey = order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+    if (dayKey !== lastDay) {
+      html += '<tr><td colspan="6" style="padding:10px 14px 6px;background:var(--batik-warm);border-top:2px solid var(--border)">'
+        + '<span style="font-size:.75rem;font-weight:700;color:var(--batik-dark);text-transform:uppercase;letter-spacing:.05em">📅 ' + dayKey + '</span>'
+        + '</td></tr>';
+      lastDay = dayKey;
+    }
+    const items = Array.isArray(order.items) ? order.items : [];
+    const itemSummary = items.map(i => (i.emoji||'🍱') + ' ' + (i.menu_name||'Item') + ' x' + (i.qty||1)).join(', ');
+    const total = order.total_amount || order.total_price || 0;
+    let pillCls, pillIcon, pillLabel;
+    switch(order.status) {
+      case 'menunggu_konfirmasi': pillCls='masuk';      pillIcon='📥'; pillLabel='Pesanan Masuk'; break;
+      case 'dikonfirmasi':        pillCls='confirmed';   pillIcon='✅'; pillLabel='Diproses';      break;
+      case 'dikirim':             pillCls='dikirim';     pillIcon='🚚'; pillLabel='Dikirim';       break;
+      case 'selesai':             pillCls='selesai';     pillIcon='🎉'; pillLabel='Selesai';       break;
+      case 'dibatalkan':          pillCls='dibatalkan';  pillIcon='❌'; pillLabel='Dibatalkan';    break;
+      default:                    pillCls='';             pillIcon='❓'; pillLabel=order.status||'—';
+    }
+    const timeStr = order.created_at ? new Date(order.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : '';
+    html += '<tr>'
+      + '<td><div style="font-weight:700;font-size:.82rem">' + esc(order.customer_name||'—') + '</div>'
+      + (order.customer_phone ? '<div style="font-size:.72rem;color:var(--ink-soft)">' + esc(order.customer_phone) + '</div>' : '') + '</td>'
+      + '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem;color:var(--ink-soft)">' + esc(itemSummary||'—') + '</td>'
+      + '<td style="font-weight:700;color:var(--leaf);font-size:.82rem">Rp ' + Number(total).toLocaleString('id-ID') + '</td>'
+      + '<td><span class="pill ' + pillCls + '">' + pillIcon + ' ' + pillLabel + '</span></td>'
+      + '<td style="font-size:.75rem;color:var(--ink-soft)">' + timeStr + '</td>'
+      + '<td><button class="btn btn-edit btn-sm" onclick="openOrderDetail(\'' + order.id + '\')">Detail</button></td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
 }
 
 /* ════ HISTORI ════ */
