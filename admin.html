@@ -310,6 +310,32 @@
   .upload-area p { font-size: .78rem; color: var(--ink-soft); }
   .upload-preview { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
 
+  /* ── IMAGE CROP MODAL (3:2) ── */
+  .crop-modal { max-width: 420px; }
+  .crop-modal .modal-body { display: flex; flex-direction: column; align-items: center; }
+  .crop-stage {
+    width: 100%; max-width: 330px; aspect-ratio: 3 / 2;
+    border-radius: 12px; overflow: hidden; position: relative;
+    background: #15100A; cursor: grab; touch-action: none;
+    border: 2px solid var(--batik-gold); box-shadow: 0 4px 16px var(--shadow);
+  }
+  .crop-stage.dragging { cursor: grabbing; }
+  .crop-stage img {
+    position: absolute; top: 0; left: 0; max-width: none; max-height: none;
+    user-select: none; -webkit-user-drag: none; pointer-events: none; will-change: transform;
+  }
+  .crop-grid {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px);
+    background-size: 33.333% 33.333%;
+  }
+  .crop-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; width: 100%; max-width: 330px; }
+  .crop-zoom-row span { font-size: 1rem; flex-shrink: 0; }
+  .crop-zoom-row input[type="range"] { flex: 1; accent-color: var(--batik-gold); }
+  .crop-hint { font-size: .76rem; color: var(--ink-soft); margin-top: 10px; text-align: center; }
+
   /* ── TOAST ── */
   #toast-container {
     position: fixed; bottom: 20px; right: 16px;
@@ -876,7 +902,7 @@
           <div class="upload-area" id="uploadArea">
             <input type="file" id="f_image" accept="image/*" onchange="previewImage(event)">
             <div class="upload-icon">📷</div>
-            <p>Klik untuk upload foto menu<br><small>PNG, JPG, WebP — maks. 2 MB</small></p>
+            <p>Klik untuk upload foto menu<br><small>PNG, JPG, WebP — maks. 2 MB, akan dipotong 3:2</small></p>
           </div>
           <img id="imagePreview" class="upload-preview" alt="Preview">
         </div>
@@ -901,6 +927,31 @@
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeModal()">Batal</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveMenu()">💾 Simpan Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CROP FOTO MODAL (3:2) ── -->
+<div class="modal-overlay" id="cropModalOverlay">
+  <div class="modal crop-modal">
+    <div class="modal-header">
+      <h2>✂️ Sesuaikan Foto (3:2)</h2>
+      <button class="modal-close" onclick="cancelCrop()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="crop-stage" id="cropStage">
+        <img id="cropImg" alt="Crop preview" draggable="false">
+        <div class="crop-grid"></div>
+      </div>
+      <div class="crop-zoom-row">
+        <span>🔍</span>
+        <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" oninput="onCropZoom(this.value)">
+      </div>
+      <p class="crop-hint">Geser foto untuk mengatur posisi, gunakan slider untuk memperbesar/memperkecil. Hasil akan dipotong rasio 3:2.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="cancelCrop()">Batal</button>
+      <button class="btn btn-primary" onclick="confirmCrop()">✔️ Gunakan Foto Ini</button>
     </div>
   </div>
 </div>
@@ -1591,6 +1642,7 @@ function resetForm() {
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('f_availability').value = 'in_stock';
   document.getElementById('f_image').value = '';
+  croppedImageFile = null;
   const prev = document.getElementById('imagePreview');
   prev.src = ''; prev.style.display = 'none';
   tagData = { includes: [], delivery: [], categories: [] };
@@ -1660,16 +1712,132 @@ function renderTags(key) {
   ).join('');
 }
 
-/* ════ IMAGE UPLOAD ════ */
+/* ════ IMAGE UPLOAD + CROP 3:2 ════ */
+let croppedImageFile = null;   // hasil akhir foto yang sudah dipotong 3:2, dipakai saat saveMenu()
+let cropMimeType      = 'image/jpeg';
+let cropImageNatural  = { width: 0, height: 0 };
+let cropState = { scale: 1, baseScale: 1, offsetX: 0, offsetY: 0, dragging: false, startX: 0, startY: 0, startOffsetX: 0, startOffsetY: 0 };
+
 function previewImage(e) {
   const file = e.target.files[0]; if (!file) return;
   if (!['image/png','image/jpeg','image/jpg','image/webp'].includes(file.type)) {
     showToast('Format foto harus PNG, JPG, atau WebP', 'error'); e.target.value=''; return;
   }
   if (file.size > 2*1024*1024) { showToast('Ukuran foto maksimal 2 MB', 'error'); e.target.value=''; return; }
-  const prev = document.getElementById('imagePreview');
-  prev.src = URL.createObjectURL(file); prev.style.display = 'block';
+  const reader = new FileReader();
+  reader.onload = (ev) => openCropper(ev.target.result, file.type);
+  reader.readAsDataURL(file);
+  e.target.value = ''; // reset agar bisa pilih ulang file yang sama nanti
 }
+
+function openCropper(dataUrl, mimeType) {
+  cropMimeType = ['image/png','image/webp'].includes(mimeType) ? mimeType : 'image/jpeg';
+  const img = document.getElementById('cropImg');
+  img.onload = () => {
+    cropImageNatural.width  = img.naturalWidth;
+    cropImageNatural.height = img.naturalHeight;
+    document.getElementById('cropModalOverlay').classList.add('open');
+    requestAnimationFrame(initCropTransform);
+  };
+  img.src = dataUrl;
+}
+
+function initCropTransform() {
+  const stage = document.getElementById('cropStage');
+  const stageW = stage.clientWidth, stageH = stage.clientHeight;
+  const { width: nw, height: nh } = cropImageNatural;
+  cropState.baseScale = Math.max(stageW / nw, stageH / nh);
+  cropState.scale = 1;
+  document.getElementById('cropZoom').value = 1;
+  const dispW = nw * cropState.baseScale;
+  const dispH = nh * cropState.baseScale;
+  cropState.offsetX = (stageW - dispW) / 2;
+  cropState.offsetY = (stageH - dispH) / 2;
+  applyCropTransform();
+}
+
+function clampCropOffset() {
+  const stage = document.getElementById('cropStage');
+  const stageW = stage.clientWidth, stageH = stage.clientHeight;
+  const totalScale = cropState.baseScale * cropState.scale;
+  const dispW = cropImageNatural.width  * totalScale;
+  const dispH = cropImageNatural.height * totalScale;
+  const minX = Math.min(0, stageW - dispW);
+  const minY = Math.min(0, stageH - dispH);
+  cropState.offsetX = Math.max(minX, Math.min(0, cropState.offsetX));
+  cropState.offsetY = Math.max(minY, Math.min(0, cropState.offsetY));
+}
+
+function applyCropTransform() {
+  const img = document.getElementById('cropImg');
+  const totalScale = cropState.baseScale * cropState.scale;
+  img.style.width  = (cropImageNatural.width  * totalScale) + 'px';
+  img.style.height = (cropImageNatural.height * totalScale) + 'px';
+  img.style.transform = `translate(${cropState.offsetX}px, ${cropState.offsetY}px)`;
+}
+
+function onCropZoom(value) {
+  cropState.scale = parseFloat(value);
+  clampCropOffset();
+  applyCropTransform();
+}
+
+function bindCropDrag() {
+  const stage = document.getElementById('cropStage');
+  stage.addEventListener('pointerdown', (e) => {
+    cropState.dragging = true;
+    cropState.startX = e.clientX; cropState.startY = e.clientY;
+    cropState.startOffsetX = cropState.offsetX; cropState.startOffsetY = cropState.offsetY;
+    stage.classList.add('dragging');
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!cropState.dragging) return;
+    cropState.offsetX = cropState.startOffsetX + (e.clientX - cropState.startX);
+    cropState.offsetY = cropState.startOffsetY + (e.clientY - cropState.startY);
+    clampCropOffset();
+    applyCropTransform();
+  });
+  const endDrag = () => { cropState.dragging = false; stage.classList.remove('dragging'); };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('pointerleave', endDrag);
+}
+
+function cancelCrop() {
+  document.getElementById('cropModalOverlay').classList.remove('open');
+  document.getElementById('cropImg').src = '';
+}
+
+function confirmCrop() {
+  const stage = document.getElementById('cropStage');
+  const stageW = stage.clientWidth, stageH = stage.clientHeight;
+  const totalScale = cropState.baseScale * cropState.scale;
+  const sx = -cropState.offsetX / totalScale;
+  const sy = -cropState.offsetY / totalScale;
+  const sWidth  = stageW / totalScale;
+  const sHeight = stageH / totalScale;
+  const outputWidth  = Math.max(600, Math.min(1500, Math.round(sWidth)));
+  const outputHeight = Math.round(outputWidth * 2 / 3); // rasio 3:2
+
+  const canvas = document.createElement('canvas');
+  canvas.width = outputWidth; canvas.height = outputHeight;
+  const ctx = canvas.getContext('2d');
+  if (cropMimeType === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, outputWidth, outputHeight); }
+  ctx.drawImage(document.getElementById('cropImg'), sx, sy, sWidth, sHeight, 0, 0, outputWidth, outputHeight);
+
+  canvas.toBlob((blob) => {
+    if (!blob) { showToast('Gagal memproses foto', 'error'); return; }
+    const ext = cropMimeType === 'image/png' ? 'png' : cropMimeType === 'image/webp' ? 'webp' : 'jpg';
+    croppedImageFile = new File([blob], `menu-photo-${Date.now()}.${ext}`, { type: cropMimeType });
+    const prev = document.getElementById('imagePreview');
+    prev.src = URL.createObjectURL(blob);
+    prev.style.display = 'block';
+    document.getElementById('cropModalOverlay').classList.remove('open');
+    showToast('Foto berhasil dipotong 3:2 ✅', 'success');
+  }, cropMimeType, 0.92);
+}
+
 async function uploadImage(file) {
   if (!['image/png','image/jpeg','image/jpg','image/webp'].includes(file.type))
     throw new Error('Format foto harus PNG, JPG, atau WebP');
@@ -1716,7 +1884,7 @@ async function saveMenu() {
   btn.disabled = true; btn.textContent = '⏳ Menyimpan…';
   try {
     let image_url = null;
-    const imageFile = document.getElementById('f_image').files[0];
+    const imageFile = croppedImageFile;
     if (imageFile) { image_url = await uploadImage(imageFile); }
     else if (editingId) { image_url = allMenus.find(m => m.id === editingId)?.image_url || null; }
     const rawDesc = document.getElementById('f_description').value.trim();
@@ -2388,6 +2556,7 @@ document.getElementById('sendOrderModal').addEventListener('click', function(e) 
 document.getElementById('doneOrderModal').addEventListener('click', function(e) { if (e.target===this) closeDoneOrderConfirm(); });
 document.getElementById('orderDetailOverlay').addEventListener('click', function(e) { if (e.target===this) closeOrderDetail(); });
 document.getElementById('cancelOrderModal').addEventListener('click', function(e) { if (e.target===this) closeCancelOrderConfirm(); });
+bindCropDrag();
 </script>
 </body>
 </html>
