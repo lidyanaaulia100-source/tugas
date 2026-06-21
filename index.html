@@ -3422,6 +3422,12 @@
         if (Array.isArray(rows) && rows.length === 0) {
           // Belum pernah ada baris keranjang untuk user ini di server.
           // Coba migrasi dari localStorage (mis. cart lama sebelum fitur sync ada).
+          // CATATAN: kondisi ini HANYA valid jika tidak ada kode manapun yang
+          // men-DELETE baris keranjang (mis. setelah checkout). Pengosongan
+          // keranjang setelah checkout harus PATCH items:[] (lihat pembayaran.html
+          // deleteCartFromServer), bukan DELETE — kalau di-DELETE, device lain
+          // akan salah mengira baris "belum pernah dibuat" dan migrasi cart
+          // basi dari localStorage-nya sendiri, membuat keranjang hidup lagi.
           try {
             const local = JSON.parse(localStorage.getItem('nf_cart') || '[]');
             cart = Array.isArray(local) ? local : [];
