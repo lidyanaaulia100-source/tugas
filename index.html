@@ -6,11 +6,33 @@
   <title>Catering Nusantara</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://rrcgjwnllrdszypdtljq.supabase.co" />
+  <!-- Preconnect ke Supabase API + Storage CDN untuk mempercepat LCP image -->
+  <link rel="preconnect" href="https://rrcgjwnllrdszypdtljq.supabase.co" crossorigin />
   <link rel="dns-prefetch" href="https://rrcgjwnllrdszypdtljq.supabase.co" />
-  <!-- Load Google Fonts non-blocking to avoid render-blocking request chain -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" /></noscript>
+  <!--
+    font-display:optional → browser TIDAK akan swap ke web font setelah render pertama.
+    Ini menghilangkan CLS dari font shift sepenuhnya.
+    Font tetap dimuat di background; akan aktif pada kunjungan berikutnya (sudah di-cache).
+  -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=optional" rel="stylesheet" /></noscript>
+  <style>
+    /* Fallback font sizing untuk meminimalkan reflow bahkan jika font belum cache */
+    @font-face {
+      font-family: 'Playfair Display';
+      src: local('Georgia'), local('Times New Roman');
+      font-weight: 700 900;
+      font-display: optional;
+      size-adjust: 98%;
+    }
+    @font-face {
+      font-family: 'Inter';
+      src: local('Arial'), local('Helvetica Neue'), local('sans-serif');
+      font-weight: 400 700;
+      font-display: optional;
+      size-adjust: 100%;
+    }
+  </style>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -317,6 +339,9 @@
       color: var(--white);
       line-height: 1.2;
       margin-bottom: 16px;
+      /* Cadangkan ruang minimum agar tidak ada reflow saat font swap */
+      min-height: 3.6em;
+      contain: inline-size;
     }
     .hero-text p {
       color: #c4a07a;
@@ -476,6 +501,54 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
+
+    /* ── SKELETON LOADER — mencadangkan ruang agar welcome banner tidak bergeser ── */
+    #extraSections .loading-placeholder {
+      padding: 52px 48px;
+    }
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .skeleton-card {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f0ece8;
+    }
+    .skeleton-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(90deg, #e8e2db 25%, #f5f0eb 50%, #e8e2db 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.5s infinite;
+    }
+    .skeleton-body {
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skeleton-line {
+      height: 12px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e8e2db 25%, #f5f0eb 50%, #e8e2db 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.5s infinite;
+    }
+    .skeleton-line.short { width: 55%; }
+    .skeleton-title {
+      height: 16px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e8e2db 25%, #f5f0eb 50%, #e8e2db 75%);
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.5s infinite;
+      margin-bottom: 4px;
+    }
+    @keyframes skeleton-shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
     .menu-card {
       background: var(--white);
       border-radius: var(--radius);
@@ -575,10 +648,15 @@
       margin: 0 48px 52px;
       border-radius: 16px;
       overflow: hidden;
+      /* Kunci tinggi agar tidak bergeser saat extraSections di atas berubah ukuran */
+      height: 260px;
       min-height: 260px;
+      max-height: 260px;
       display: flex;
       align-items: center;
       justify-content: center;
+      /* Hindari reflow saat font web dimuat */
+      contain: layout style;
     }
     .welcome-bg {
       position: absolute; inset: 0;
@@ -604,6 +682,8 @@
       letter-spacing: 4px;
       text-transform: uppercase;
       margin-bottom: 10px;
+      /* Cadangkan tinggi agar tidak shift saat Playfair Display dimuat */
+      min-height: 1.3em;
     }
     .welcome-sub {
       font-family: 'Playfair Display', serif;
@@ -611,6 +691,8 @@
       font-weight: 700;
       color: var(--amber);
       line-height: 1.4;
+      /* Cadangkan tinggi untuk 2 baris teks */
+      min-height: 2.8em;
     }
 
     /* ── SECTION PROMO ── */
@@ -2505,8 +2587,6 @@
       .order-modal-header { border-radius: 14px 14px 0 0; }
     }
   </style>
-  <!-- Preload Supabase API to shorten critical request chain -->
-  <link rel="preconnect" href="https://rrcgjwnllrdszypdtljq.supabase.co" crossorigin />
 </head>
 <body>
 
@@ -2777,7 +2857,15 @@
 
 <!-- SECTION KATEGORI (dirender otomatis sesuai kategori dari Supabase) -->
 <div id="extraSections">
-  <div style="color:#bbb;font-size:13px;padding:20px 24px;">Memuat menu...</div>
+  <!-- Skeleton placeholder — cadangkan ruang agar tidak ada CLS saat menu dimuat -->
+  <div class="loading-placeholder">
+    <div class="skeleton-grid">
+      <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-title"></div><div class="skeleton-line short"></div><div class="skeleton-line" style="width:40%"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-title"></div><div class="skeleton-line short"></div><div class="skeleton-line" style="width:40%"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-title"></div><div class="skeleton-line short"></div><div class="skeleton-line" style="width:40%"></div></div></div>
+      <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-title"></div><div class="skeleton-line short"></div><div class="skeleton-line" style="width:40%"></div></div></div>
+    </div>
+  </div>
 </div>
 
 <!-- WELCOME BANNER -->
@@ -2862,7 +2950,7 @@
           <div class="modal-qty-label">Jumlah</div>
           <div class="modal-qty-control">
             <button class="qty-btn" onclick="changeQty(-1)">−</button>
-            <input class="qty-value" id="qtyInput" type="number" value="5" min="1" inputmode="numeric" autocomplete="off" oninput="handleQtyInput(this)" onblur="handleQtyBlur(this)" />
+            <input class="qty-value" id="qtyInput" type="number" value="5" min="1" inputmode="numeric" oninput="handleQtyInput(this)" onblur="handleQtyBlur(this)" />
             <button class="qty-btn" onclick="changeQty(1)">+</button>
           </div>
           <div class="qty-min-note" id="mMinNote">Jumlah Minimal 5 Item</div>
@@ -2979,10 +3067,13 @@
       const img = document.createElement('img');
       img.src = m.image_url;
       img.alt = m.name;
-      img.decoding = 'async';
+      img.decoding = i === 0 ? 'sync' : 'async';
       if (i === 0) {
+        // Gambar LCP: prioritas tinggi, tidak lazy
         img.setAttribute('fetchpriority', 'high');
+        img.loading = 'eager';
       } else {
+        // Slide lain: lazy load agar tidak bersaing bandwidth dengan LCP
         img.loading = 'lazy';
       }
       slide.appendChild(img);
@@ -3570,7 +3661,7 @@
     if (data.image_url) {
       mImage.style.background = '#f5f0eb';
       const imgStyle = isOutModal ? 'width:100%;height:100%;object-fit:cover;filter:grayscale(.6);opacity:.6;' : 'width:100%;height:100%;object-fit:cover;';
-      mImage.innerHTML = `<img src="${data.image_url}" alt="${data.name}" loading="lazy" decoding="async" style="${imgStyle}" />${modalDiscBadge}${modalHabisBadge}`;
+      mImage.innerHTML = `<img src="${data.image_url}" alt="${data.name}" decoding="async" style="${imgStyle}" />${modalDiscBadge}${modalHabisBadge}`;
       mImage.classList.add('has-photo');
       mImage.onclick = () => openImageLightbox(data.image_url, data.name);
     } else {
