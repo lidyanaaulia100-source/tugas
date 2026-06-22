@@ -2,16 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#3d1f0a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Catering Nusantara – Pesan catering terbaik untuk setiap acara." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Catering Nusantara</title>
-  <!-- DNS prefetch untuk mempercepat resolusi domain eksternal -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <link rel="dns-prefetch" href="https://rrcgjwnllrdszypdtljq.supabase.co" />
   <!--
     Hanya 2 preconnect aktif (batas optimal 4):
     – fonts.gstatic.com (crossorigin wajib untuk font CORS)
@@ -65,14 +57,6 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    a, button { -webkit-tap-highlight-color: transparent; }
-    img { max-width: 100%; height: auto; }
-
-    /* Custom scrollbar agar tidak mendominasi di desktop */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(93,45,14,.25); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(93,45,14,.45); }
 
     :root {
       --brown-dark: #3d1f0a;
@@ -418,7 +402,6 @@
       will-change: transform;
       cursor: grab;
       user-select: none;
-      -webkit-user-select: none;
     }
     .hero-slider-track.is-dragging {
       transition: none;
@@ -545,7 +528,6 @@
       transition: transform .2s, box-shadow .2s;
       cursor: pointer;
       position: relative;
-      contain: layout style;
     }
     .menu-card.is-out-of-stock .img-placeholder { filter: grayscale(.6); }
     .menu-card.is-out-of-stock .img-placeholder img,
@@ -1161,8 +1143,6 @@
       transition: transform .38s cubic-bezier(0.32, 0.72, 0, 1);
       position: relative;
       padding-bottom: 8px;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
     }
     .modal-overlay.active .modal-sheet {
       transform: translateY(0);
@@ -1204,7 +1184,6 @@
       .modal-meta { padding: 0 !important; }
       .modal-qty-section { padding: 14px 0 0 !important; }
       .modal-order-btn {
-      touch-action: manipulation;
         width: 100% !important;
         margin: 16px 0 !important;
       }
@@ -1417,7 +1396,6 @@
       color: #555;
       transition: border-color .15s, color .15s;
       user-select: none;
-      touch-action: manipulation;
     }
     .qty-btn:hover { border-color: var(--amber); color: var(--amber); }
     .qty-value {
@@ -1699,8 +1677,6 @@
       flex: 1;
       overflow-y: auto;
       padding: 16px 20px;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
     }
     .cart-empty {
       text-align: center;
@@ -2349,8 +2325,6 @@
       box-shadow: 0 24px 64px rgba(0,0,0,.35);
       transform: scale(.94) translateY(12px);
       transition: transform .28s cubic-bezier(0.22,1,0.36,1);
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
     }
     .order-modal-overlay.active .order-modal-box {
       transform: scale(1) translateY(0);
@@ -2622,47 +2596,6 @@
     @media (max-width: 540px) {
       .order-modal-box { border-radius: 14px; }
       .order-modal-header { border-radius: 14px 14px 0 0; }
-    }
-
-    /* ══ OPTIMASI MOBILE RESPONSIF ══ */
-    @media (max-width: 768px) {
-      nav { padding: 12px 16px; }
-      .nav-links { display: none; }
-      .nav-hamburger { display: flex; }
-      .hero { grid-template-columns: 1fr; min-height: auto; }
-      .hero-text { padding: 32px 20px 24px; text-align: center; }
-      .hero-text p { max-width: 100%; }
-      .hero-image-wrap { height: 260px; }
-      .dots-pattern { display: none; }
-      .section { padding: 32px 16px; }
-      .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .welcome-banner { margin: 0 16px 32px; height: 200px; }
-      footer { padding: 32px 16px 20px; }
-      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
-      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
-      .toast { font-size: 12px; padding: 10px 18px; white-space: normal; max-width: 85vw; text-align: center; }
-    }
-    @media (max-width: 480px) {
-      .menu-grid { gap: 10px; }
-      .menu-card-body { padding: 10px 11px 12px; }
-      .price-badge { font-size: 16px; }
-      .menu-card-name { font-size: 12px; }
-      .hero-slider-arrow { width: 28px; height: 28px; font-size: 20px; }
-      .search-box { border-radius: 10px; }
-    }
-    /* Hentikan hover transform di perangkat touch */
-    @media (hover: none) {
-      .menu-card:hover { transform: none; box-shadow: 0 2px 8px rgba(60,20,0,.08); }
-    }
-    /* Safe area untuk iPhone dengan notch */
-    @supports (padding: env(safe-area-inset-bottom)) {
-      .modal-sheet { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-      .cart-footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-    }
-    /* Kurangi animasi untuk low-end devices */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-      .hero-slider-track { transition: none; }
     }
   </style>
 </head>
@@ -3106,18 +3039,6 @@
   const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
   const API_BASE      = SUPABASE_URL + '/rest/v1';
 
-  /* ── OPTIMASI SCROLL MOBILE: passive listeners ── */
-  document.addEventListener('touchstart', function(){}, {passive: true});
-  document.addEventListener('touchmove', function(){}, {passive: true});
-
-  /* ── OPTIMASI: Fetch dengan AbortController + timeout ── */
-  function fetchWithTimeout(url, options, ms = 10000) {
-    const ctrl = new AbortController();
-    const id = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { ...options, signal: ctrl.signal })
-      .finally(() => clearTimeout(id));
-  }
-
   /* ══════════════════════════════════════════════
      HERO SLIDER — Foto dari Supabase (menus dengan image_url)
   ══════════════════════════════════════════════ */
@@ -3127,17 +3048,6 @@
   let _heroDragStartX = null;
   let _heroDragging   = false;
   let _heroDragDelta  = 0;
-
-  /* ── Connection-aware image quality ── */
-  function getImageQuality() {
-    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (conn) {
-      if (conn.saveData) return 50;
-      if (conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') return 55;
-      if (conn.effectiveType === '3g') return 70;
-    }
-    return 80;
-  }
 
   function buildHeroSlider(menus) {
     // Ambil semua menu yang punya image_url, lalu acak urutannya setiap refresh
@@ -3169,8 +3079,7 @@
 
       const img = document.createElement('img');
       // Supabase Image Transformation untuk hero (lebar tampil ~50vw, max ~750px)
-      const _q = getImageQuality();
-      const supaHero = (url, w) => url + (url.includes('?') ? '&' : '?') + 'width=' + w + '&quality=' + _q + '&format=webp';
+      const supaHero = (url, w) => url + (url.includes('?') ? '&' : '?') + 'width=' + w + '&quality=80&format=webp';
       img.src     = supaHero(m.image_url, 750);
       img.srcset  = [
         supaHero(m.image_url, 400) + ' 400w',
@@ -3355,15 +3264,11 @@
   }
 
   window.addEventListener('resize', () => {
-    clearTimeout(_resizeDebounce);
-    _resizeDebounce = setTimeout(() => {
-      const newPer = getPromoPerPage();
-      if (newPer !== _promoPerPage && _promoTotal > 0) {
-        initPromoSlider(_promoTotal);
-      }
-    }, 150);
+    const newPer = getPromoPerPage();
+    if (newPer !== _promoPerPage && _promoTotal > 0) {
+      initPromoSlider(_promoTotal);
+    }
   });
-  let _resizeDebounce = null;
 
   /* ══════════════════════════════════════════════
      LOAD MENUS FROM SUPABASE
@@ -3426,10 +3331,10 @@
 
   async function loadMenus() {
     try {
-      const res = await fetchWithTimeout(API_BASE + '/menus?order=created_at.asc', {
+      const res = await fetch(API_BASE + '/menus?order=created_at.asc', {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
         priority: 'high'
-      }, 12000);
+      });
       if (!res.ok) throw new Error('Gagal memuat menu');
       const data = await res.json();
       allMenus = data;
@@ -3443,8 +3348,7 @@
       preloadMenuImages(data);
     } catch (err) {
       console.error(err);
-      const errEl = document.getElementById('extraSections');
-      errEl.innerHTML = '<div style="color:#e05050;font-size:14px;padding:32px 24px;text-align:center;"><div style="font-size:32px;margin-bottom:12px;">⚠️</div><b>Gagal memuat menu.</b><br><span style="font-size:12px;color:#999;margin-top:6px;display:block;">Periksa koneksi internet lalu <button onclick="location.reload()" style="color:var(--amber);background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;text-decoration:underline;">muat ulang halaman</button></span></div>';
+      document.getElementById('extraSections').innerHTML = '<div style="color:#e05050;font-size:13px;padding:20px 24px;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
     }
   }
 
@@ -5449,40 +5353,10 @@
     }).catch(() => {});
   }
 
-  // Gunakan Page Visibility API untuk hemat resource saat tab tidak aktif
-  let _notifInterval = setInterval(updateNotifBadge, 60000);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      clearInterval(_notifInterval);
-    } else {
-      _notifInterval = setInterval(updateNotifBadge, 60000);
-      updateNotifBadge();
-    }
-  });
+  setInterval(updateNotifBadge, 60000);
 
   // Load badge on init (after a short delay)
   setTimeout(updateNotifBadge, 1200);
-
-  /* ── OPTIMASI: Gunakan IntersectionObserver untuk lazy image di cards ── */
-  if ('IntersectionObserver' in window) {
-    const imgObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          if (img.dataset.src) {
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-            imgObserver.unobserve(img);
-          }
-        }
-      });
-    }, { rootMargin: '200px 0px' });
-
-    // Observe semua lazy images setelah render
-    document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-      imgObserver.observe(img);
-    });
-  }
 
 </script>
 </body>
