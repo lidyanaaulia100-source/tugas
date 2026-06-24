@@ -705,6 +705,7 @@
     overflow-x: auto;
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -1194,6 +1195,10 @@
 const SUPABASE_URL = 'https://rrcgjwnllrdszypdtljq.supabase.co/rest/v1';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
 const STORAGE_URL  = 'https://rrcgjwnllrdszypdtljq.supabase.co/storage/v1';
+
+// Supabase JS client untuk Realtime (WebSocket)
+const SB_BASE   = 'https://rrcgjwnllrdszypdtljq.supabase.co';
+const _supabase = supabase.createClient(SB_BASE, SUPABASE_KEY);
 
 const HEADERS = {
   'apikey': SUPABASE_KEY,
@@ -2247,21 +2252,6 @@ function markAllRead() {
   }, 350);
 }
 
-// Auto-refresh 60 detik
-setInterval(() => {
-  if (!notifPanelOpen) {
-    fetch(SUPABASE_URL + '/pesanan?select=id,status&or=(status.eq.menunggu_konfirmasi,status.eq.dikonfirmasi,status.eq.dikirim)', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    }).then(r => r.json()).then(data => {
-      const freshUnread = (data||[]).filter(o => !adminDismissedIds.has(o.id));
-      const count = freshUnread.length;
-      const badge = document.getElementById('notifBadge');
-      if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.add('visible'); }
-      else { badge.classList.remove('visible'); }
-    }).catch(() => {});
-  }
-}, 60000);
-
 loadNotifications();
 
 /* ════════════════════════════════════════
@@ -2776,7 +2766,28 @@ async function updateMsgBadge() {
 }
 
 setTimeout(updateMsgBadge, 1500);
-setInterval(updateMsgBadge, 30000);
+
+/* ════════════════════════════════════════
+   SUPABASE REALTIME (WebSocket)
+════════════════════════════════════════ */
+
+// Channel 1: perubahan pada tabel pesanan → perbarui notif, histori, badge
+_supabase
+  .channel('admin-pesanan')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'pesanan' }, () => {
+    loadNotifications();
+    loadHistoryInline();
+    updateMsgBadge();
+  })
+  .subscribe();
+
+// Channel 2: perubahan pada tabel pesan → perbarui badge pesan
+_supabase
+  .channel('admin-pesan')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'pesan' }, () => {
+    updateMsgBadge();
+  })
+  .subscribe();
 </script>
 </body>
 </html>
