@@ -433,6 +433,7 @@
       width:160px;accent-color:var(--amber);
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -579,11 +580,17 @@
 </div>
 
 <script>
-const SB  = 'https://rrcgjwnllrdszypdtljq.supabase.co/rest/v1';
+const SB_URL = 'https://rrcgjwnllrdszypdtljq.supabase.co';
+const SB  = SB_URL + '/rest/v1';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
 const H   = { 'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal' };
 
-let selId=null, selName=null, selAv=null, pollT=null;
+// Supabase JS client untuk Realtime
+const _supabase = supabase.createClient(SB_URL, KEY);
+
+let selId=null, selName=null, selAv=null;
+let _channelList = null;   // channel untuk daftar percakapan
+let _channelChat = null;   // channel untuk chat aktif
 let userProfileCache={};  // cache profil per userId
 
 const ORDER_CARD_PREFIX = '@@ORDER_CARD@@';
@@ -786,8 +793,8 @@ async function selectUser(id,name,av,el){
   // Tandai semua pesan dari user ini sebagai dibaca oleh admin
   markUserMsgRead(id);
   await renderChat();
-  if(pollT) clearInterval(pollT);
-  pollT=setInterval(()=>{ renderChat(true); loadList(); markUserMsgRead(id); },8000);
+  // Subscribe realtime untuk chat aktif
+  subscribeChat(id);
 }
 
 async function markUserMsgRead(userId){
@@ -1343,8 +1350,40 @@ async function saveProfil() {
 }
 
 
+/* ======== SUPABASE REALTIME ======== */
+
+function subscribeList() {
+  if (_channelList) _supabase.removeChannel(_channelList);
+  _channelList = _supabase
+    .channel('pesan-admin-list')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'pesan',
+    }, () => {
+      loadList();
+    })
+    .subscribe();
+}
+
+function subscribeChat(userId) {
+  if (_channelChat) _supabase.removeChannel(_channelChat);
+  _channelChat = _supabase
+    .channel('pesan-admin-chat-' + userId)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'pesan',
+    }, () => {
+      renderChat(true);
+      loadList();
+      markUserMsgRead(userId);
+    })
+    .subscribe();
+}
+
 loadList().then(initFromQuery);
-setInterval(loadList,15000);
+subscribeList();
 // Mobile: langsung tampilkan daftar percakapan saat pertama buka (kecuali datang dari deep link kirim pesan)
 if(window.innerWidth<=580 && !_adaDeepLinkPesan){
   document.getElementById('userList').classList.add('open');
