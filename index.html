@@ -4735,6 +4735,7 @@
      LOGOUT
   ══════════════════════════════════════════════ */
   function doLogout() {
+    destroyRealtime(); // Putus koneksi WebSocket sebelum redirect
     clearSession();
     window.location.href = 'index.html';
   }
@@ -5466,13 +5467,6 @@
     }).catch(() => {});
   }
 
-  setInterval(updateNotifBadge, 60000);
-
-  // Load badge on init (after a short delay)
-  setTimeout(updateNotifBadge, 1200);
-  // Load dismissed IDs dari Supabase untuk sinkronisasi cross-device
-  setTimeout(loadDismissedIds, 1500);
-
   /* ──────────────────────────────
      PESAN (Message) Navigation
   ────────────────────────────── */
@@ -5489,8 +5483,6 @@
   }
 
   /* ── NOTIF PESAN DARI ADMIN ── */
-  let _msgPollTimer = null;
-
   async function updateMsgBadge() {
     const session = getSession();
     const badge = document.getElementById('msgBadgeDot');
@@ -5527,15 +5519,213 @@
           body: JSON.stringify({ is_read: true })
         }
       );
-      // Update badge langsung tanpa tunggu polling
+      // Update badge langsung
       const badge = document.getElementById('msgBadgeDot');
       if (badge) { badge.textContent = ''; badge.classList.remove('show'); }
     } catch(e) {}
   }
 
-  // Polling badge pesan setiap 10 detik
-  setTimeout(updateMsgBadge, 800);
-  _msgPollTimer = setInterval(updateMsgBadge, 10000);
+  /* ══════════════════════════════════════════════
+     SUPABASE REALTIME — Ganti semua polling
+     Menggunakan WebSocket native tanpa library
+  ══════════════════════════════════════════════ */
+
+  /**
+   * Mini Supabase Realtime client menggunakan WebSocket native.
+   * Menangani: join channel, postgres_changes, heartbeat, auto-reconnect.
+   */
+  class SupabaseRealtimeChannel {
+    constructor(wsUrl, channelName) {
+      this._wsUrl    = wsUrl;
+      this._name     = channelName;
+      this._handlers = [];
+      this._ws       = null;
+      this._ref      = 0;
+      this._stopped  = false;
+      this._heartbeatTimer = null;
+      this._connect();
+    }
+
+    _connect() {
+      if (this._stopped) return;
+      try {
+        this._ws = new WebSocket(this._wsUrl);
+      } catch(e) { return; }
+
+      this._ws.onopen = () => {
+        // Join channel di Supabase Realtime
+        this._send({
+          topic: 'realtime:' + this._name,
+          event: 'phx_join',
+          payload: {
+            config: {
+              broadcast: { self: false },
+              presence:  { key: '' },
+              postgres_changes: this._handlers.map(h => ({
+                event:  h.event,
+                schema: h.schema || 'public',
+                table:  h.table,
+                filter: h.filter || ''
+              }))
+            }
+          },
+          ref: this._nextRef()
+        });
+        this._startHeartbeat();
+      };
+
+      this._ws.onmessage = (e) => {
+        let msg;
+        try { msg = JSON.parse(e.data); } catch { return; }
+
+        // Event postgres_changes dari Supabase
+        if (msg.event === 'postgres_changes' || (msg.payload && msg.payload.ids)) {
+          const changes = msg.payload?.data
+            ? [msg.payload.data]
+            : (msg.payload?.changes || []);
+
+          changes.forEach(change => {
+            this._handlers.forEach(h => {
+              const matchEvent  = h.event === '*' || h.event === change.type;
+              const matchTable  = h.table === change.table;
+              const matchFilter = !h.filter || this._matchFilter(h.filter, change.record || change.new);
+              if (matchEvent && matchTable && matchFilter) {
+                try { h.callback(change); } catch {}
+              }
+            });
+          });
+        }
+      };
+
+      this._ws.onerror = () => {};
+
+      this._ws.onclose = () => {
+        this._stopHeartbeat();
+        if (!this._stopped) {
+          // Auto-reconnect setelah 3 detik jika koneksi putus
+          setTimeout(() => this._connect(), 3000);
+        }
+      };
+    }
+
+    on(type, config, callback) {
+      if (type === 'postgres_changes') {
+        this._handlers.push({ ...config, callback });
+      }
+      return this; // chainable
+    }
+
+    subscribe() {
+      return this;
+    }
+
+    unsubscribe() {
+      this._stopped = true;
+      this._stopHeartbeat();
+      if (this._ws) {
+        this._ws.onclose = null; // cegah auto-reconnect
+        this._ws.close();
+        this._ws = null;
+      }
+    }
+
+    _startHeartbeat() {
+      this._stopHeartbeat();
+      this._heartbeatTimer = setInterval(() => {
+        if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+          this._send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: this._nextRef() });
+        }
+      }, 25000);
+    }
+
+    _stopHeartbeat() {
+      if (this._heartbeatTimer) {
+        clearInterval(this._heartbeatTimer);
+        this._heartbeatTimer = null;
+      }
+    }
+
+    // Parse filter sederhana: "user_id=eq.abc123"
+    _matchFilter(filterStr, record) {
+      if (!record) return true;
+      const match = filterStr.match(/^(\w+)=eq\.(.+)$/);
+      if (!match) return true;
+      return String(record[match[1]]) === match[2];
+    }
+
+    _send(payload) {
+      if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+        try { this._ws.send(JSON.stringify(payload)); } catch {}
+      }
+    }
+
+    _nextRef() {
+      return String(++this._ref);
+    }
+  }
+
+  /* ── Inisialisasi & manajemen channel ── */
+  let _realtimeChannel = null;
+
+  function initRealtime() {
+    const session = getSession();
+    if (!session) return;
+
+    // Bersihkan channel lama jika ada
+    if (_realtimeChannel) {
+      _realtimeChannel.unsubscribe();
+      _realtimeChannel = null;
+    }
+
+    const wsUrl = SUPABASE_URL.replace('https://', 'wss://')
+      + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0';
+
+    _realtimeChannel = new SupabaseRealtimeChannel(wsUrl, 'notif_' + session.id);
+
+    _realtimeChannel
+      // Pantau perubahan status pesanan milik user ini
+      .on('postgres_changes', {
+        event:  '*',
+        schema: 'public',
+        table:  'pesanan',
+        filter: 'user_id=eq.' + session.id
+      }, () => {
+        updateNotifBadge();
+      })
+
+      // Pantau pesan masuk dari admin
+      .on('postgres_changes', {
+        event:  'INSERT',
+        schema: 'public',
+        table:  'pesan',
+        filter: 'receiver_id=eq.' + session.id
+      }, () => {
+        updateMsgBadge();
+      })
+
+      .subscribe();
+  }
+
+  function destroyRealtime() {
+    if (_realtimeChannel) {
+      _realtimeChannel.unsubscribe();
+      _realtimeChannel = null;
+    }
+  }
+
+  /* ── Inisialisasi awal ── */
+  (function initBadges() {
+    const session = getSession();
+    if (!session) return;
+
+    // Load badge sekali saat halaman pertama dibuka
+    setTimeout(updateNotifBadge, 1200);
+    setTimeout(updateMsgBadge,   800);
+    // Sinkronisasi dismissed IDs cross-device
+    setTimeout(loadDismissedIds, 1500);
+    // Mulai Realtime — tidak ada polling setelah ini
+    setTimeout(initRealtime, 2000);
+  })();
 
   // Auto-load data pesanan jika redirect dari pesan_konsumen.html dengan open_order
   (function() {
