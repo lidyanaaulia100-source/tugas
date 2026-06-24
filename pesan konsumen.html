@@ -86,6 +86,11 @@
     .msg-time { font-size: 10px; color: var(--muted); }
     .me   .msg-time { text-align: right; }
 
+    /* read receipt */
+    .read-tick { font-size: 11px; margin-left: 3px; }
+    .read-tick.sent     { color: var(--muted); }
+    .read-tick.read     { color: #2196F3; }
+
     /* date separator */
     .date-sep {
       display: flex; align-items: center; gap: 8px; margin: 4px 0;
@@ -157,6 +162,79 @@
       transition: opacity .25s, transform .25s; z-index: 99;
     }
     .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+
+    /* order card */
+    .order-card {
+      display:flex; gap:10px; align-items:center; background:var(--white);
+      border:1.5px solid var(--border); border-radius:14px; padding:9px;
+      cursor:pointer; transition:box-shadow .15s, transform .1s; max-width:240px;
+    }
+    .order-card:hover { box-shadow:0 4px 14px rgba(60,20,0,.18); transform:translateY(-1px); }
+    .order-card-img {
+      width:50px; height:50px; border-radius:10px; flex-shrink:0;
+      background:var(--amber);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; overflow:hidden; color:#fff;
+    }
+    .order-card-img img { width:100%; height:100%; object-fit:cover; }
+    .order-card-body { flex:1; min-width:0; }
+    .order-card-title {
+      font-size:11.5px; font-weight:700; color:#2a1200; margin-bottom:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .order-card-items {
+      font-size:11px; color:var(--muted); line-height:1.4;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .order-card-total { font-size:12px; font-weight:700; color:#b8762b; margin-top:3px; }
+    .order-card-hint {
+      font-size:9px; color:var(--muted); margin-top:4px; opacity:.8;
+      display:flex; align-items:center; gap:3px;
+    }
+
+    /* popup info pemesan */
+    .popup-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.48);
+      z-index:200; display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .22s;
+    }
+    .popup-overlay.show { opacity:1; pointer-events:all; }
+    .popup-card {
+      background:var(--white); border-radius:20px; width:min(320px,90vw);
+      overflow:hidden; transform:translateY(20px) scale(.97);
+      transition:transform .22s cubic-bezier(.22,1,.36,1);
+      box-shadow:0 12px 40px rgba(0,0,0,.25);
+    }
+    .popup-overlay.show .popup-card { transform:none; }
+    .popup-banner {
+      background:linear-gradient(135deg,var(--brown),#7a3e10);
+      padding:26px 20px 20px;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    .popup-av {
+      width:74px; height:74px; border-radius:50%;
+      border:3px solid rgba(255,255,255,.3);
+      background:var(--amber);
+      display:flex; align-items:center; justify-content:center;
+      font-size:30px; overflow:hidden; flex-shrink:0;
+    }
+    .popup-av img { width:100%; height:100%; object-fit:cover; }
+    .popup-uname { font-size:16px; font-weight:700; color:#fff; text-align:center; }
+    .popup-uid   { font-size:11px; color:#d4b896; text-align:center; word-break:break-all; margin-top:-4px; }
+    .popup-body  { padding:14px 20px 4px; display:flex; flex-direction:column; gap:12px; }
+    .popup-row   { display:flex; align-items:flex-start; gap:12px; }
+    .popup-ico   { font-size:17px; flex-shrink:0; margin-top:1px; }
+    .popup-info  { flex:1; min-width:0; }
+    .popup-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    .popup-val   { font-size:13.5px; color:#2a1200; margin-top:2px; word-break:break-word; line-height:1.5; }
+    .popup-val.empty { color:var(--muted); font-style:italic; }
+    .popup-close {
+      margin:14px 20px 18px; padding:10px; background:var(--cream);
+      border:none; border-radius:12px; width:calc(100% - 40px);
+      font-family:inherit; font-size:13.5px; font-weight:600;
+      color:var(--brown); cursor:pointer; transition:background .15s; display:block;
+    }
+    .popup-close:hover { background:#f0e4d0; }
   </style>
 </head>
 <body>
@@ -190,6 +268,34 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Popup info pemesan (untuk kartu pesanan) -->
+<div class="popup-overlay" id="userPopup" onclick="closePopup(event)">
+  <div class="popup-card" id="popupCard">
+    <div class="popup-banner">
+      <div class="popup-av" id="popupAv">👤</div>
+      <div class="popup-uname" id="popupName">—</div>
+      <div class="popup-uid"  id="popupId">—</div>
+    </div>
+    <div class="popup-body">
+      <div class="popup-row">
+        <div class="popup-ico">📞</div>
+        <div class="popup-info">
+          <div class="popup-label">No. Telepon</div>
+          <div class="popup-val" id="popupPhone">—</div>
+        </div>
+      </div>
+      <div class="popup-row">
+        <div class="popup-ico">📍</div>
+        <div class="popup-info">
+          <div class="popup-label">Alamat</div>
+          <div class="popup-val" id="popupAddress">—</div>
+        </div>
+      </div>
+    </div>
+    <button class="popup-close" onclick="closePopupDirect()">Tutup</button>
+  </div>
+</div>
+
 <script>
 const SB   = 'https://rrcgjwnllrdszypdtljq.supabase.co/rest/v1';
 const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
@@ -197,6 +303,99 @@ const H    = { 'apikey': KEY, 'Authorization': 'Bearer '+KEY, 'Content-Type': 'a
 
 let session = null;
 let timer   = null;
+
+const ORDER_CARD_PREFIX = '@@ORDER_CARD@@';
+const MENU_CARD_PREFIX  = '@@MENU_CARD@@';
+let orderCardRegistry = [];
+
+function parseOrderCard(content){
+  if (typeof content !== 'string' || !content.startsWith(ORDER_CARD_PREFIX)) return null;
+  try { return JSON.parse(content.slice(ORDER_CARD_PREFIX.length)); } catch(e) { return null; }
+}
+
+function parseMenuCard(content){
+  if (typeof content !== 'string' || !content.startsWith(MENU_CARD_PREFIX)) return null;
+  try { return JSON.parse(content.slice(MENU_CARD_PREFIX.length)); } catch(e) { return null; }
+}
+
+function renderMenuCardHtml(menu){
+  const img = menu.image_url || null;
+  const imgHtml = img
+    ? `<img src="${esc(img)}" onerror="this.parentElement.innerHTML='<span style=font-size:22px>${esc(menu.emoji||'🍱')}</span>'" alt="">`
+    : `<span style="font-size:22px">${esc(menu.emoji||'🍱')}</span>`;
+  const priceText = menu.price ? 'Rp ' + Number(menu.price).toLocaleString('id-ID') : '';
+  const menuId = menu.id ? encodeURIComponent(menu.id) : '';
+  const menuName = esc(menu.name || '');
+  return `<div class="order-card" onclick="openMenuDetail('${menuId}','${menuName}')" title="Lihat detail menu">
+    <div class="order-card-img" style="background:${esc(menu.bg||'linear-gradient(135deg,#c8a87a,#a0784a)')}">${imgHtml}</div>
+    <div class="order-card-body">
+      <div class="order-card-title">🍽️ ${menuName}</div>
+      ${menu.category ? `<div class="order-card-items">${esc(menu.category)}</div>` : ''}
+      ${priceText ? `<div class="order-card-total">${priceText}</div>` : ''}
+      <div class="order-card-hint">👆 Ketuk untuk lihat detail</div>
+    </div>
+  </div>`;
+}
+
+function openMenuDetail(menuId, menuName){
+  // Simpan ke sessionStorage agar index.html bisa baca setelah halaman load
+  try {
+    sessionStorage.setItem('open_menu', JSON.stringify({
+      menu_id:   decodeURIComponent(menuId),
+      menu_name: menuName
+    }));
+  } catch(e) {}
+  window.location.href = 'index.html';
+}
+function findCardImage(card){
+  const items = card.items || [];
+  for (const it of items) { if (it.image) return it.image; }
+  return null;
+}
+function renderOrderCardHtml(card){
+  const idx = orderCardRegistry.push(card) - 1;
+  const img = findCardImage(card);
+  const imgHtml = img ? `<img src="${esc(img)}" onerror="this.parentElement.innerHTML='<span style=\\'font-size:22px\\'>🍱</span>'" alt="">` : '🍱';
+  const items = card.items || [];
+  const itemNames = items.map(it => `${esc(it.name||'')} x${it.qty||1}`).join(', ');
+  const totalText = 'Rp ' + (Number(card.total)||0).toLocaleString('id-ID');
+  const firstItem = items[0] || {};
+  const firstMenuId   = encodeURIComponent(firstItem.menu_id || '');
+  const firstMenuName = esc(firstItem.name || '');
+  const orderId = esc(String(card.order_id||''));
+  return `<div class="order-card" onclick="openMenuDetail('${firstMenuId}','${firstMenuName}')" title="Ketuk untuk lihat menu">
+    <div class="order-card-img">${imgHtml}</div>
+    <div class="order-card-body">
+      <div class="order-card-title">📋 Pesanan #${orderId}</div>
+      <div class="order-card-items">${itemNames || '—'}</div>
+      <div class="order-card-total">${totalText}</div>
+      <div class="order-card-hint">🍽️ Ketuk untuk lihat menu</div>
+    </div>
+  </div>`;
+}
+function showOrderPopup(idx){
+  const card = orderCardRegistry[idx];
+  if (!card) return;
+  const c = card.customer || {};
+  document.getElementById('popupAv').innerHTML = c.avatar
+    ? `<img src="${esc(c.avatar)}" onerror="this.style.display='none'" alt="">`
+    : '<span style="font-size:30px">👤</span>';
+  document.getElementById('popupName').textContent = c.name || '—';
+  document.getElementById('popupId').textContent = 'Pesanan #' + (card.order_id || '—');
+  const ph = document.getElementById('popupPhone');
+  ph.textContent = c.phone || 'Tidak tersedia';
+  ph.className = 'popup-val' + (c.phone ? '' : ' empty');
+  const ad = document.getElementById('popupAddress');
+  ad.textContent = c.address || 'Tidak tersedia';
+  ad.className = 'popup-val' + (c.address ? '' : ' empty');
+  document.getElementById('userPopup').classList.add('show');
+}
+function closePopup(e){
+  if (e.target === document.getElementById('userPopup')) closePopupDirect();
+}
+function closePopupDirect(){
+  document.getElementById('userPopup').classList.remove('show');
+}
 
 function getSession() {
   try { return JSON.parse(localStorage.getItem('nf_session')||'null'); } catch { return null; }
@@ -258,8 +457,12 @@ async function loadMessages() {
     return;
   }
 
+  // Tandai pesan dari admin sebagai dibaca
+  markAdminMsgRead();
+
   let html = '<div class="chat-area" id="chatArea">';
   let lastDate = '';
+  orderCardRegistry = [];
   rows.forEach(m => {
     const d = fmtDate(m.created_at);
     if (d !== lastDate) {
@@ -271,11 +474,26 @@ async function loadMessages() {
     const av   = isMe
       ? (session.avatar_url ? `<img src="${esc(session.avatar_url)}" onerror="this.style.display='none'" alt="">` : (session.name||'U')[0].toUpperCase())
       : '🍱';
+    const card     = parseOrderCard(m.content);
+    const menuCard = !card ? parseMenuCard(m.content) : null;
+    const bodyHtml = card
+      ? renderOrderCardHtml(card)
+      : menuCard
+        ? renderMenuCardHtml(menuCard)
+        : `<div class="bubble">${esc(m.content)}</div>`;
+
+    // Read tick hanya untuk pesan saya (isMe)
+    let tickHtml = '';
+    if (isMe) {
+      const isRead = m.is_read === true || m.is_read === 'true';
+      tickHtml = `<span class="read-tick ${isRead ? 'read' : 'sent'}" title="${isRead ? 'Dibaca' : 'Terkirim'}">${isRead ? '✓✓' : '✓'}</span>`;
+    }
+
     html += `<div class="msg-row ${cls}">
       <div class="msg-avatar">${av}</div>
       <div class="msg-col">
-        <div class="bubble">${esc(m.content)}</div>
-        <div class="msg-time">${fmt(m.created_at)}</div>
+        ${bodyHtml}
+        <div class="msg-time">${fmt(m.created_at)}${tickHtml}</div>
       </div>
     </div>`;
   });
