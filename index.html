@@ -3121,29 +3121,21 @@
       const img = document.createElement('img');
       // Supabase Image Transformation untuk hero (lebar tampil ~50vw, max ~750px)
       const supaHero = (url, w) => url + (url.includes('?') ? '&' : '?') + 'width=' + w + '&quality=80&format=webp';
-      img.alt     = m.name;
+      img.src     = supaHero(m.image_url, 750);
+      img.srcset  = [
+        supaHero(m.image_url, 400) + ' 400w',
+        supaHero(m.image_url, 750) + ' 750w',
+        supaHero(m.image_url, 1000) + ' 1000w'
+      ].join(', ');
       img.sizes   = '(max-width:768px) 100vw, 50vw';
+      img.alt     = m.name;
       if (i === 0) {
-        // Slide pertama langsung muat — sudah di viewport
-        img.src     = supaHero(m.image_url, 750);
-        img.srcset  = [
-          supaHero(m.image_url, 400) + ' 400w',
-          supaHero(m.image_url, 750) + ' 750w',
-          supaHero(m.image_url, 1000) + ' 1000w'
-        ].join(', ');
         img.decoding = 'sync';
         img.loading  = 'eager';
         img.setAttribute('fetchpriority', 'high');
       } else {
-        // Slide lain lazy — muat saat pengguna geser ke sana
-        img.className = 'lazy-img';
-        img.dataset.src    = supaHero(m.image_url, 750);
-        img.dataset.srcset = [
-          supaHero(m.image_url, 400) + ' 400w',
-          supaHero(m.image_url, 750) + ' 750w',
-          supaHero(m.image_url, 1000) + ' 1000w'
-        ].join(', ');
         img.decoding = 'async';
+        img.loading  = 'lazy';
       }
       slide.appendChild(img);
 
@@ -3163,9 +3155,6 @@
       dot.addEventListener('click', () => heroSliderGoTo(i));
       dotsEl.appendChild(dot);
     });
-
-    // Lazy-load gambar hero slide 1-4
-    _observeLazyImgs(track);
 
     heroSliderGoTo(0);
     heroSliderStartAuto();
@@ -3342,7 +3331,7 @@
     return rawUrl + sep + 'width=' + w + '&quality=80&format=webp';
   }
 
-  /** Preload satu gambar ke cache (dipakai hanya untuk modal saat dibuka). */
+  /** Preload satu gambar ke cache. Tidak blocking — resolve segera. */
   function _preloadOne(url) {
     if (!url || _imgCache.has(url)) return;
     const img = new Image();
@@ -3353,35 +3342,31 @@
   }
 
   /**
-   * IntersectionObserver untuk lazy-load gambar.
-   * Elemen <img> dengan data-src / data-srcset akan dimuat
-   * hanya saat masuk viewport (margin 100px).
+   * Preload semua gambar menu di background setelah halaman render.
+   * Dibatasi agar tidak membanjiri bandwidth: muat bertahap per-batch.
    */
-  const _lazyObserver = ('IntersectionObserver' in window)
-    ? new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          const img = entry.target;
-          if (img.dataset.src)    img.src    = img.dataset.src;
-          if (img.dataset.srcset) img.srcset = img.dataset.srcset;
-          img.removeAttribute('data-src');
-          img.removeAttribute('data-srcset');
-          obs.unobserve(img);
-        });
-      }, { rootMargin: '100px' })
-    : null;
+  function preloadMenuImages(menus) {
+    const MODAL_W = 600;
+    const urls = menus
+      .filter(m => m.image_url)
+      .map(m => _cacheUrl(m.image_url, MODAL_W));
 
-  /** Daftarkan semua .lazy-img yang belum dimuat ke observer. */
-  function _observeLazyImgs(root) {
-    const imgs = (root || document).querySelectorAll('img.lazy-img[data-src]');
-    if (_lazyObserver) {
-      imgs.forEach(img => _lazyObserver.observe(img));
+    const BATCH = 3;
+    const DELAY = 400;
+
+    let i = 0;
+    function loadBatch() {
+      const slice = urls.slice(i, i + BATCH);
+      if (!slice.length) return;
+      slice.forEach(_preloadOne);
+      i += BATCH;
+      if (i < urls.length) setTimeout(loadBatch, DELAY);
+    }
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => loadBatch(), { timeout: 2000 });
     } else {
-      // Fallback: browser tidak support IO => muat langsung
-      imgs.forEach(img => {
-        if (img.dataset.src)    img.src    = img.dataset.src;
-        if (img.dataset.srcset) img.srcset = img.dataset.srcset;
-      });
+      setTimeout(loadBatch, 1500);
     }
   }
 
@@ -3401,6 +3386,7 @@
       buildHeroSlider(data);
       loadMenuRatings();
       // Preload semua gambar modal di background setelah render selesai
+      preloadMenuImages(data);
     } catch (err) {
       console.error(err);
       document.getElementById('extraSections').innerHTML = '<div style="color:#e05050;font-size:13px;padding:20px 24px;">Gagal memuat menu. Periksa koneksi Supabase.</div>';
@@ -3461,13 +3447,13 @@
 
     const imgContent = d.image_url
       ? `<img
-           class="lazy-img"
-           data-src="${supaImgSrc(d.image_url, 400)}"
-           data-srcset="${supaImgSrc(d.image_url, 300)} 300w,
+           src="${supaImgSrc(d.image_url, 400)}"
+           srcset="${supaImgSrc(d.image_url, 300)} 300w,
                    ${supaImgSrc(d.image_url, 400)} 400w,
                    ${supaImgSrc(d.image_url, 600)} 600w"
            sizes="(max-width:540px) calc(50vw - 20px), (max-width:900px) calc(50vw - 60px), calc(25vw - 30px)"
            alt="${d.name}"
+           loading="lazy"
            decoding="async"
            style="width:100%;height:100%;object-fit:cover;" />`
       : `<span style="font-size:36px">${d.emoji}</span>`;
@@ -3648,9 +3634,6 @@
     // Update menuData untuk search
     menuData.length = 0;
     data.forEach(m => menuData.push(menuToModalData(m)));
-
-    // Aktifkan lazy load untuk semua gambar kartu yang baru dirender
-    _observeLazyImgs();
   }
 
   let currentMinOrder = 5;
