@@ -4874,6 +4874,7 @@
       if (!res.ok) throw new Error('Gagal memuat');
       _notifData = (await res.json()) || [];
       renderNotifList();
+      _openOrderFromSession();
     } catch(err) {
       list.innerHTML = '<div class="notif-dd-empty"><div class="ico">⚠️</div><div>' + err.message + '</div></div>';
     }
@@ -5209,6 +5210,25 @@
     setTimeout(() => openModal(menuToModalData(menuRaw)), 150);
   }
 
+  /* ── Buka modal detail pesanan jika diarahkan dari pesan_konsumen.html ── */
+  function _openOrderFromSession() {
+    let stored;
+    try { stored = JSON.parse(sessionStorage.getItem('open_order') || 'null'); } catch(e) { return; }
+    if (!stored || !stored.order_id) return;
+    sessionStorage.removeItem('open_order'); // hapus agar tidak terbuka lagi saat refresh
+    const orderId = stored.order_id;
+    // _notifData mungkin belum terisi, tunggu sebentar lalu coba
+    const tryOpen = (attempts) => {
+      const order = _notifData.find(o => String(o.id) === String(orderId));
+      if (order) {
+        openOrderDetail(order.id);
+      } else if (attempts > 0) {
+        setTimeout(() => tryOpen(attempts - 1), 300);
+      }
+    };
+    setTimeout(() => tryOpen(10), 200);
+  }
+
   function openMenuFromOrderItem(menuId, menuName) {
     let menuRaw = null;
     if (menuId) menuRaw = allMenus.find(m => String(m.id) === String(menuId));
@@ -5516,6 +5536,17 @@
   // Polling badge pesan setiap 10 detik
   setTimeout(updateMsgBadge, 800);
   _msgPollTimer = setInterval(updateMsgBadge, 10000);
+
+  // Auto-load data pesanan jika redirect dari pesan_konsumen.html dengan open_order
+  (function() {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('open_order') || 'null');
+      if (stored && stored.order_id) {
+        // Trigger load data pesanan agar modal bisa dibuka otomatis
+        loadNotifData();
+      }
+    } catch(e) {}
+  })();
 
 </script>
 </body>
