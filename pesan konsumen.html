@@ -602,9 +602,13 @@ async function loadMessages() {
   });
   html += '</div>';
 
+  // Cek posisi scroll sebelum update (apakah user sudah di bawah)
+  const prevArea = document.getElementById('chatArea');
+  const wasAtBottom = !prevArea || (prevArea.scrollHeight - prevArea.scrollTop - prevArea.clientHeight < 120);
+
   root.innerHTML = html;
   const area = document.getElementById('chatArea');
-  if (area) area.scrollTop = area.scrollHeight;
+  if (area && wasAtBottom) area.scrollTop = area.scrollHeight;
 }
 
 async function send() {
