@@ -445,6 +445,14 @@ function openMenuDetail(menuId, menuName){
   } catch(e) {}
   window.location.href = 'index.html';
 }
+
+function openOrderDetailPage(orderId){
+  // Simpan order_id ke sessionStorage, index.html akan buka modal detail pesanan
+  try {
+    sessionStorage.setItem('open_order', JSON.stringify({ order_id: String(orderId) }));
+  } catch(e) {}
+  window.location.href = 'index.html';
+}
 function findCardImage(card){
   const items = card.items || [];
   for (const it of items) { if (it.image) return it.image; }
@@ -461,13 +469,14 @@ function renderOrderCardHtml(card){
   const firstMenuId   = encodeURIComponent(firstItem.menu_id || '');
   const firstMenuName = esc(firstItem.name || '');
   const orderId = esc(String(card.order_id||''));
-  return `<div class="order-card" onclick="openMenuDetail('${firstMenuId}','${firstMenuName}')" title="Ketuk untuk lihat menu">
+  const rawOrderId = esc(String(card.order_id||''));
+  return `<div class="order-card" onclick="openOrderDetailPage('${rawOrderId}')" title="Ketuk untuk lihat detail pesanan">
     <div class="order-card-img">${imgHtml}</div>
     <div class="order-card-body">
       <div class="order-card-title">📋 Pesanan #${orderId}</div>
       <div class="order-card-items">${itemNames || '—'}</div>
       <div class="order-card-total">${totalText}</div>
-      <div class="order-card-hint">🍽️ Ketuk untuk lihat menu</div>
+      <div class="order-card-hint">📄 Ketuk untuk lihat detail pesanan</div>
     </div>
   </div>`;
 }
