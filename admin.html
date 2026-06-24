@@ -478,7 +478,7 @@
   .notif-list { max-height: 380px; overflow-y: auto; }
   .notif-empty { padding: 28px 18px; text-align: center; color: var(--ink-soft); font-size: .85rem; }
   .notif-empty .icon { font-size: 2rem; margin-bottom: 7px; }
-  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--batik-warm); transition: background .15s; cursor: pointer; }
+  .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--batik-warm); transition: background .15s, max-height .3s ease, opacity .25s ease, padding .3s ease; cursor: pointer; overflow: hidden; max-height: 200px; }
   .notif-item:last-child { border-bottom: none; }
   .notif-item.unread { background: #FFF8F0; }
   .notif-item:hover { background: var(--batik-warm); }
@@ -502,6 +502,14 @@
     background: var(--batik-gold); flex-shrink: 0; margin-top: 5px;
   }
   .notif-footer { padding: 9px 16px; border-top: 1px solid var(--border); text-align: center; }
+  .notif-item.dismissing {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+    pointer-events: none;
+  }
   .notif-footer button {
     font-size: .8rem; color: var(--batik-dark); background: none; border: none;
     cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: color .2s;
@@ -2037,12 +2045,50 @@ let allNotifications = [];
 let unreadCount = 0;
 let notifPanelOpen = false;
 
-// Simpan ID pesanan yang sudah di-"tandai dibaca" secara manual
-let manuallyReadIds = new Set();
-try { manuallyReadIds = new Set(JSON.parse(localStorage.getItem('notifReadIds') || '[]')); } catch(e) {}
+// Dismissed IDs — sync via Supabase kolom `admin_dismissed_notif_ids` di tabel settings,
+// atau pakai localStorage saja untuk admin (tidak ada user_id).
+// Admin memakai localStorage key 'adminNotifDismissed'.
+let adminDismissedIds = new Set();
+try {
+  const saved = JSON.parse(localStorage.getItem('adminNotifDismissed') || '[]');
+  saved.forEach(id => adminDismissedIds.add(id));
+} catch(e) {}
 
-function persistReadIds() {
-  try { localStorage.setItem('notifReadIds', JSON.stringify([...manuallyReadIds])); } catch(e) {}
+function persistAdminDismissed() {
+  try { localStorage.setItem('adminNotifDismissed', JSON.stringify([...adminDismissedIds])); } catch(e) {}
+  // Sinkronisasi ke Supabase agar cross-device (simpan di tabel pesanan tidak relevan;
+  // kita simpan di row khusus di tabel settings jika ada, atau skip untuk admin)
+  // Untuk saat ini pakai localStorage saja karena admin biasanya 1 device.
+}
+
+/* ── DISMISS satu item notifikasi (admin) ── */
+function dismissAdminNotifItem(orderId, el) {
+  adminDismissedIds.add(orderId);
+  persistAdminDismissed();
+  el.classList.add('dismissing');
+  setTimeout(() => {
+    el.remove();
+    const list = document.getElementById('notifList');
+    if (list && !list.querySelector('.notif-item')) {
+      list.innerHTML = '<div class="notif-empty"><div class="icon">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+    }
+    // Recalculate badge
+    const remaining = allNotifications.filter(o =>
+      (o.status === 'menunggu_konfirmasi' || o.status === 'dikonfirmasi' || o.status === 'dikirim')
+      && !adminDismissedIds.has(o.id)
+    );
+    unreadCount = remaining.length;
+    const badge = document.getElementById('notifBadge');
+    if (unreadCount > 0) { badge.textContent = unreadCount > 9 ? '9+' : unreadCount; badge.classList.add('visible'); }
+    else { badge.classList.remove('visible'); }
+  }, 320);
+}
+
+/* ── Klik item: dismiss + buka detail ── */
+function handleAdminNotifClick(e, orderId) {
+  const el = e.currentTarget;
+  dismissAdminNotifItem(orderId, el);
+  setTimeout(() => openOrderDetail(orderId), 50);
 }
 
 function toggleNotifPanel() {
@@ -2090,10 +2136,9 @@ function renderNotifications() {
     return;
   }
 
-  // Hitung yang benar-benar "belum dibaca" = aktif DAN belum di-markAllRead
   const activeUnread = allNotifications.filter(o =>
     (o.status === 'menunggu_konfirmasi' || o.status === 'dikonfirmasi' || o.status === 'dikirim')
-    && !manuallyReadIds.has(o.id)
+    && !adminDismissedIds.has(o.id)
   );
   unreadCount = activeUnread.length;
   if (unreadCount > 0) {
@@ -2103,7 +2148,7 @@ function renderNotifications() {
     badge.classList.remove('visible');
   }
 
-  // Update badge di tab histori (pesanan menunggu_konfirmasi)
+  // Update badge tab histori
   const masukCount = allNotifications.filter(o => o.status === 'menunggu_konfirmasi').length;
   const tabBadge = document.getElementById('historyTabBadge');
   if (tabBadge) {
@@ -2116,8 +2161,10 @@ function renderNotifications() {
     const isWaiting   = order.status === 'menunggu_konfirmasi';
     const isDikirim   = order.status === 'dikirim';
     const isSelesai   = order.status === 'selesai';
-    // "unread" hanya kalau aktif DAN belum ditandai dibaca
-    const isActive    = (isWaiting || isConfirmed || isDikirim) && !manuallyReadIds.has(order.id);
+    // "unread" hanya kalau aktif DAN belum di-dismiss
+    const isActive    = (isWaiting || isConfirmed || isDikirim) && !adminDismissedIds.has(order.id);
+    // Sembunyikan item yang sudah di-dismiss
+    if (adminDismissedIds.has(order.id)) return '';
 
     const timeAgo = formatTimeAgo(new Date(order.created_at));
     const items = Array.isArray(order.items)
@@ -2142,7 +2189,7 @@ function renderNotifications() {
     };
     const statusLabel = statusMap[order.status] || order.status;
 
-    return '<div class="notif-item ' + (isActive ? 'unread' : '') + '" onclick="openOrderDetail(\'' + order.id + '\')">'
+    return '<div class="notif-item ' + (isActive ? 'unread' : '') + '" data-id="' + order.id + '" onclick="handleAdminNotifClick(event, \'' + order.id + '\')">'
       + '<div class="notif-item-top">'
       + '<div class="' + iconClass + '">' + icon + '</div>'
       + '<div style="flex:1">'
@@ -2158,7 +2205,11 @@ function renderNotifications() {
           ? '<div style="margin-top:3px"><small style="color:var(--ink-soft);font-size:.72rem">⚠️ Tanggal pengantaran belum diset</small></div>'
           : '')
       + '</div>';
-  }).join('');
+  }).filter(Boolean).join('');
+
+  if (!list.innerHTML.trim()) {
+    list.innerHTML = '<div class="notif-empty"><div class="icon">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+  }
 }
 
 function formatTimeAgo(date) {
@@ -2170,26 +2221,29 @@ function formatTimeAgo(date) {
 }
 
 function markAllRead() {
-  // Tandai semua pesanan aktif sebagai "sudah dibaca" di localStorage
+  // Tandai semua pesanan aktif sebagai sudah dismiss
   allNotifications
     .filter(o => o.status === 'menunggu_konfirmasi' || o.status === 'dikonfirmasi' || o.status === 'dikirim')
-    .forEach(o => manuallyReadIds.add(o.id));
-  persistReadIds();
+    .forEach(o => adminDismissedIds.add(o.id));
+  persistAdminDismissed();
 
-  // Sembunyikan badge & hilangkan highlight unread
+  // Animasi sembunyikan semua
+  document.querySelectorAll('.notif-item').forEach(el => el.classList.add('dismissing'));
   unreadCount = 0;
   document.getElementById('notifBadge').classList.remove('visible');
-  document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
-  document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
+  setTimeout(() => {
+    const list = document.getElementById('notifList');
+    if (list) list.innerHTML = '<div class="notif-empty"><div class="icon">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+  }, 350);
 }
 
-// Auto-refresh 60 detik — badge hanya muncul untuk pesanan BARU yang belum di-read
+// Auto-refresh 60 detik
 setInterval(() => {
   if (!notifPanelOpen) {
     fetch(SUPABASE_URL + '/pesanan?select=id,status&or=(status.eq.menunggu_konfirmasi,status.eq.dikonfirmasi,status.eq.dikirim)', {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     }).then(r => r.json()).then(data => {
-      const freshUnread = (data||[]).filter(o => !manuallyReadIds.has(o.id));
+      const freshUnread = (data||[]).filter(o => !adminDismissedIds.has(o.id));
       const count = freshUnread.length;
       const badge = document.getElementById('notifBadge');
       if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.add('visible'); }
@@ -2395,9 +2449,9 @@ async function submitConfirmOrder() {
       delivery_confirmed_date: date,
       confirmed_at: new Date().toISOString()
     });
-    // Hapus dari readIds supaya pesanan yang baru dikonfirmasi muncul lagi sebagai aktif
-    manuallyReadIds.delete(currentOrderId);
-    persistReadIds();
+    // Hapus dari dismissed supaya pesanan yang baru dikonfirmasi muncul lagi sebagai aktif
+    adminDismissedIds.delete(currentOrderId);
+    persistAdminDismissed();
     showToast('Pesanan dikonfirmasi ✅', 'success');
     closeOrderDetail(); await loadNotifications();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
