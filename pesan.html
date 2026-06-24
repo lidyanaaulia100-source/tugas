@@ -272,6 +272,166 @@
       color:var(--brown);cursor:pointer;transition:background .15s;display:block;
     }
     .popup-close:hover { background:#f0e4d0; }
+    /* === MODAL EDIT PROFIL ADMIN === */
+    .modal-overlay {
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      z-index:300;display:flex;align-items:center;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .22s;
+    }
+    .modal-overlay.show { opacity:1;pointer-events:all; }
+    .modal-box {
+      background:var(--white);border-radius:20px;width:min(380px,94vw);
+      max-height:90dvh;overflow-y:auto;
+      transform:translateY(24px) scale(.97);
+      transition:transform .22s cubic-bezier(.22,1,.36,1);
+      box-shadow:0 14px 44px rgba(0,0,0,.28);
+    }
+    .modal-overlay.show .modal-box { transform:none; }
+    .modal-header {
+      background:linear-gradient(135deg,var(--brown),#7a3e10);
+      padding:18px 20px; display:flex; align-items:center; gap:12px;
+    }
+    .modal-header-av {
+      width:60px;height:60px;border-radius:50%;
+      border:2.5px solid rgba(255,255,255,.3);
+      background:linear-gradient(135deg,#c8a87a,#a0784a);
+      display:flex;align-items:center;justify-content:center;
+      font-size:26px;overflow:hidden;flex-shrink:0;cursor:pointer;
+      position:relative;transition:opacity .15s;
+    }
+    .modal-header-av:hover { opacity:.85; }
+    .modal-header-av img { width:100%;height:100%;object-fit:cover; }
+    .modal-header-av .cam-ico {
+      position:absolute;bottom:0;right:0;
+      background:var(--amber);border-radius:50%;
+      width:20px;height:20px;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .modal-title { font-size:16px;font-weight:700;color:#fff;flex:1; }
+    .modal-sub   { font-size:11px;color:#d4b896;margin-top:2px; }
+    .modal-body  { padding:18px 20px; display:flex;flex-direction:column;gap:14px; }
+    .modal-field label {
+      display:block;font-size:11px;font-weight:700;
+      color:var(--muted);text-transform:uppercase;letter-spacing:.05em;
+      margin-bottom:5px;
+    }
+    .modal-field input, .modal-field textarea {
+      width:100%;border:1.5px solid var(--border);border-radius:10px;
+      padding:9px 12px;font-family:inherit;font-size:14px;
+      color:#2a1200;background:var(--cream);outline:none;
+      transition:border .18s;
+    }
+    .modal-field input:focus, .modal-field textarea:focus { border-color:var(--amber); }
+    .modal-field textarea { resize:vertical;min-height:70px;line-height:1.5; }
+    .modal-foot {
+      padding:0 20px 20px;display:flex;gap:10px;
+    }
+    .btn-cancel {
+      flex:1;padding:11px;background:var(--cream);border:1.5px solid var(--border);
+      border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;
+      color:var(--muted);cursor:pointer;transition:background .15s;
+    }
+    .btn-cancel:hover { background:#f0e4d0; }
+    .btn-save {
+      flex:2;padding:11px;background:var(--brown);border:none;
+      border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;
+      color:#fff;cursor:pointer;transition:background .15s,transform .1s;
+    }
+    .btn-save:hover  { background:var(--amber); }
+    .btn-save:active { transform:scale(.97); }
+    .btn-save:disabled { background:#ccc;cursor:not-allowed; }
+    /* tombol edit profil di nav */
+    .btn-edit-profil {
+      background:rgba(255,255,255,.12);border:none;cursor:pointer;
+      color:#d4b896;padding:7px 11px;border-radius:8px;
+      display:flex;align-items:center;gap:5px;
+      font-size:12px;font-weight:600;font-family:inherit;
+      transition:background .15s;flex-shrink:0;
+    }
+    .btn-edit-profil:hover { background:rgba(255,255,255,.22); }
+    .photo-preview-wrap {
+      display:flex;align-items:center;gap:12px;
+    }
+    .photo-preview-circle {
+      width:52px;height:52px;border-radius:50%;
+      background:linear-gradient(135deg,#c8a87a,#a0784a);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;overflow:hidden;flex-shrink:0;
+      border:2px solid var(--border);
+    }
+    .photo-preview-circle img { width:100%;height:100%;object-fit:cover; }
+    .photo-url-input { flex:1; }
+    /* upload foto */
+    .upload-area {
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .upload-btn-row {
+      display:flex;gap:8px;align-items:center;
+    }
+    .btn-upload-file {
+      display:flex;align-items:center;gap:6px;
+      padding:8px 14px;background:var(--amber);border:none;border-radius:10px;
+      font-family:inherit;font-size:13px;font-weight:600;color:var(--brown);
+      cursor:pointer;transition:background .15s,transform .1s;flex-shrink:0;
+    }
+    .btn-upload-file:hover { background:#d4901a; }
+    .btn-upload-file:active { transform:scale(.96); }
+    #fileInput { display:none; }
+    .or-divider {
+      font-size:11px;color:var(--muted);white-space:nowrap;
+    }
+    .upload-status {
+      font-size:11px;color:var(--muted);min-height:16px;
+    }
+    .upload-status.uploading { color:var(--amber); }
+    .upload-status.ok  { color:#4caf50; }
+    .upload-status.err { color:#e53935; }
+    /* ===== CROP OVERLAY ===== */
+    .crop-overlay {
+      position:fixed;inset:0;background:rgba(0,0,0,.82);
+      z-index:400;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:16px;
+      opacity:0;pointer-events:none;transition:opacity .2s;
+    }
+    .crop-overlay.show { opacity:1;pointer-events:all; }
+    .crop-title { color:#fff;font-size:15px;font-weight:700; }
+    .crop-hint  { color:#d4b896;font-size:12px;margin-top:-10px; }
+    .crop-stage {
+      position:relative;width:min(340px,90vw);height:min(340px,90vw);
+      overflow:hidden;background:#111;border-radius:12px;cursor:grab;
+      touch-action:none;user-select:none;
+    }
+    .crop-stage:active { cursor:grabbing; }
+    .crop-img {
+      position:absolute;transform-origin:0 0;
+      pointer-events:none;
+    }
+    /* circle overlay */
+    .crop-stage::after {
+      content:'';position:absolute;inset:0;
+      border-radius:12px;
+      box-shadow:inset 0 0 0 9999px rgba(0,0,0,.42);
+      /* circle cutout */
+      -webkit-mask:radial-gradient(circle 46% at 50% 50%,transparent 99%,black 100%);
+      mask:radial-gradient(circle 46% at 50% 50%,transparent 99%,black 100%);
+      pointer-events:none;
+    }
+    .crop-actions { display:flex;gap:10px; }
+    .crop-btn {
+      padding:10px 22px;border:none;border-radius:12px;
+      font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+      transition:background .15s,transform .1s;
+    }
+    .crop-btn:active { transform:scale(.96); }
+    .crop-btn.cancel { background:rgba(255,255,255,.12);color:#fff; }
+    .crop-btn.cancel:hover { background:rgba(255,255,255,.22); }
+    .crop-btn.confirm { background:var(--amber);color:var(--brown); }
+    .crop-btn.confirm:hover { background:#d4901a; }
+    .crop-zoom-row { display:flex;align-items:center;gap:10px; }
+    .crop-zoom-row label { color:#d4b896;font-size:12px; }
+    .crop-zoom-row input[type=range] {
+      width:160px;accent-color:var(--amber);
+    }
   </style>
 </head>
 <body>
@@ -291,6 +451,13 @@
     <div class="nav-title">📨 Pesan Masuk</div>
     <div class="nav-sub" id="navSub">Pilih percakapan</div>
   </div>
+  <button class="btn-edit-profil" onclick="openEditProfil()" title="Edit profil admin">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+    Profil
+  </button>
 </nav>
 
 <div class="layout">
@@ -335,6 +502,79 @@
       </div>
     </div>
     <button class="popup-close" onclick="closePopupDirect()">Tutup</button>
+  </div>
+</div>
+
+<!-- Modal Edit Profil Admin -->
+<div class="modal-overlay" id="editProfilModal" onclick="closeEditProfilOnBg(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-av" id="modalAvPreview" onclick="document.getElementById('photoUrlInput').focus()" title="Ganti foto">
+        🍱
+        <div class="cam-ico">📷</div>
+      </div>
+      <div>
+        <div class="modal-title">Edit Profil Admin</div>
+        <div class="modal-sub">Data disimpan di Supabase</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Foto Profil</label>
+        <div class="photo-preview-wrap" style="margin-bottom:10px">
+          <div class="photo-preview-circle" id="photoPreviewCircle">🍱</div>
+          <div class="upload-area" style="flex:1">
+            <div class="upload-btn-row">
+              <button class="btn-upload-file" onclick="document.getElementById('fileInput').click()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Foto
+              </button>
+              <span class="or-divider">atau URL:</span>
+            </div>
+            <div class="upload-status" id="uploadStatus"></div>
+          </div>
+        </div>
+        <input type="url" id="photoUrlInput" class="photo-url-input" placeholder="https://..." oninput="previewPhoto(this.value)" style="width:100%">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(event)">
+      </div>
+      <div class="modal-field">
+        <label>Nama Admin / Toko</label>
+        <input type="text" id="adminNamaInput" placeholder="Catering Nusantara">
+      </div>
+      <div class="modal-field">
+        <label>No. HP / WhatsApp</label>
+        <input type="tel" id="adminHpInput" placeholder="08xxxxxxxxxx">
+      </div>
+      <div class="modal-field">
+        <label>Jam Buka</label>
+        <input type="text" id="adminJamInput" placeholder="08.00 – 21.00 WIB">
+      </div>
+      <div class="modal-field">
+        <label>Alamat</label>
+        <textarea id="adminAlamatInput" placeholder="Jl. Contoh No. 1, Jakarta…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeEditProfil()">Batal</button>
+      <button class="btn-save" id="btnSaveProfil" onclick="saveProfil()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Crop Overlay -->
+<div class="crop-overlay" id="cropOverlay">
+  <div class="crop-title">✂️ Potong Foto Profil</div>
+  <div class="crop-hint">Drag untuk geser • Scroll/slider untuk zoom</div>
+  <div class="crop-stage" id="cropStage">
+    <img class="crop-img" id="cropImg" alt="" draggable="false">
+  </div>
+  <div class="crop-zoom-row">
+    <label>🔍 Zoom</label>
+    <input type="range" id="cropZoom" min="100" max="300" value="100" step="1" oninput="onZoomSlider(this.value)">
+  </div>
+  <div class="crop-actions">
+    <button class="crop-btn cancel"  onclick="cancelCrop()">Batal</button>
+    <button class="crop-btn confirm" onclick="confirmCrop()">✅ Gunakan Foto</button>
   </div>
 </div>
 
@@ -733,6 +973,368 @@ function waitForElement(id, maxMs=3000){
     requestAnimationFrame(tick);
   });
 }
+
+/* ======== EDIT PROFIL ADMIN ======== */
+let _adminProfilCache = null;
+
+async function apiAdminProfil(opts={}) {
+  const r = await fetch(SB + '/admin_profile?id=eq.1&select=*', { headers: H, ...opts });
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+
+async function openEditProfil() {
+  document.getElementById('editProfilModal').classList.add('show');
+  // Load data terkini dari Supabase
+  try {
+    const rows = await apiAdminProfil();
+    const p = rows && rows[0];
+    if (p) {
+      _adminProfilCache = p;
+      document.getElementById('photoUrlInput').value  = p.photo_url  || '';
+      document.getElementById('adminNamaInput').value = p.nama        || '';
+      document.getElementById('adminHpInput').value   = p.no_hp       || '';
+      document.getElementById('adminJamInput').value  = p.jam_buka    || '';
+      document.getElementById('adminAlamatInput').value = p.alamat    || '';
+      previewPhoto(p.photo_url || '');
+    }
+  } catch(e) {}
+}
+
+function closeEditProfil() {
+  document.getElementById('editProfilModal').classList.remove('show');
+}
+function closeEditProfilOnBg(e) {
+  if (e.target === document.getElementById('editProfilModal')) closeEditProfil();
+}
+
+function previewPhoto(url) {
+  const circ = document.getElementById('photoPreviewCircle');
+  const avPrev = document.getElementById('modalAvPreview');
+  if (url && (url.startsWith('http') || url.startsWith('data:'))) {
+    circ.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='🍱'" alt="">`;
+    avPrev.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='🍱'" alt=""><div class="cam-ico">📷</div>`;
+  } else {
+    circ.innerHTML = '🍱';
+    avPrev.innerHTML = '🍱<div class="cam-ico">📷</div>';
+  }
+}
+
+/* Upload foto ke Supabase Storage bucket "admin-photos" */
+const SB_STORAGE = 'https://rrcgjwnllrdszypdtljq.supabase.co/storage/v1';
+
+function setUploadStatus(type, msg) {
+  const el = document.getElementById('uploadStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'upload-status ' + type;
+}
+
+/* ======================================================
+   CROP + WEBP PIPELINE
+   ====================================================== */
+let _cropOrigFile  = null;   // File asli dari input
+let _cropImgEl     = null;   // <img> di dalam stage
+let _cropStageSize = 0;      // ukuran sisi stage (px)
+let _cropScale     = 1;      // zoom (1 = fit, >1 = lebih besar)
+let _cropMinScale  = 1;
+let _cropOffX      = 0;      // offset posisi gambar dalam stage
+let _cropOffY      = 0;
+let _cropDragging  = false;
+let _cropLastX     = 0;
+let _cropLastY     = 0;
+let _cropNatW      = 0;
+let _cropNatH      = 0;
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { setUploadStatus('err','File harus berupa gambar'); return; }
+  if (file.size > 20 * 1024 * 1024)    { setUploadStatus('err','Ukuran maksimal 20 MB');   return; }
+
+  _cropOrigFile = file;
+  const dataUrl = await fileToDataUrl(file);
+  openCrop(dataUrl);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ---------- OPEN CROP ---------- */
+function openCrop(dataUrl) {
+  const stage = document.getElementById('cropStage');
+  const img   = document.getElementById('cropImg');
+  _cropStageSize = stage.offsetWidth || 320;
+
+  img.onload = () => {
+    _cropNatW = img.naturalWidth;
+    _cropNatH = img.naturalHeight;
+
+    // scale minimum: gambar mengisi penuh sisi terpendek stage
+    const shorter = Math.min(_cropNatW, _cropNatH);
+    _cropMinScale = _cropStageSize / shorter;
+    _cropScale    = _cropMinScale;
+
+    // posisi awal: tengah
+    _cropOffX = (_cropStageSize - _cropNatW * _cropScale) / 2;
+    _cropOffY = (_cropStageSize - _cropNatH * _cropScale) / 2;
+
+    document.getElementById('cropZoom').value = 100;
+    applyCropTransform();
+  };
+  img.src = dataUrl;
+  _cropImgEl = img;
+
+  document.getElementById('cropOverlay').classList.add('show');
+  setupCropEvents();
+}
+
+function cancelCrop() {
+  document.getElementById('cropOverlay').classList.remove('show');
+  _cropOrigFile = null;
+}
+
+/* ---------- DRAG ---------- */
+function setupCropEvents() {
+  const stage = document.getElementById('cropStage');
+  // bersihkan listener lama
+  stage.onmousedown  = startDrag;
+  stage.ontouchstart = startDragTouch;
+  window.onmousemove = moveDrag;
+  window.ontouchmove = moveDragTouch;
+  window.onmouseup   = endDrag;
+  window.ontouchend  = endDrag;
+  stage.onwheel      = onWheel;
+}
+
+function startDrag(e)      { _cropDragging=true; _cropLastX=e.clientX; _cropLastY=e.clientY; }
+function startDragTouch(e) { if(!e.touches[0])return; _cropDragging=true; _cropLastX=e.touches[0].clientX; _cropLastY=e.touches[0].clientY; }
+function endDrag()         { _cropDragging=false; }
+
+function moveDrag(e) {
+  if (!_cropDragging) return;
+  const dx = e.clientX - _cropLastX, dy = e.clientY - _cropLastY;
+  _cropLastX = e.clientX; _cropLastY = e.clientY;
+  nudge(dx, dy);
+}
+function moveDragTouch(e) {
+  if (!_cropDragging || !e.touches[0]) return;
+  e.preventDefault();
+  const dx = e.touches[0].clientX - _cropLastX, dy = e.touches[0].clientY - _cropLastY;
+  _cropLastX = e.touches[0].clientX; _cropLastY = e.touches[0].clientY;
+  nudge(dx, dy);
+}
+
+function nudge(dx, dy) {
+  _cropOffX += dx; _cropOffY += dy;
+  clampOffset();
+  applyCropTransform();
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.05 : 0.05;
+  setZoomRelative(delta);
+}
+
+function onZoomSlider(val) {
+  // slider 100-300 → scale dari minScale hingga minScale*3
+  const t = (val - 100) / 200;   // 0..1
+  _cropScale = _cropMinScale * (1 + t * 2);
+  clampOffset();
+  applyCropTransform();
+}
+
+function setZoomRelative(delta) {
+  const oldScale = _cropScale;
+  _cropScale = Math.max(_cropMinScale, Math.min(_cropMinScale * 3, _cropScale + delta * _cropMinScale));
+  // Adjust offset agar zoom dari tengah stage
+  const cx = _cropStageSize / 2;
+  const cy = _cropStageSize / 2;
+  _cropOffX = cx - (cx - _cropOffX) * (_cropScale / oldScale);
+  _cropOffY = cy - (cy - _cropOffY) * (_cropScale / oldScale);
+  // Sync slider
+  const t = (_cropScale - _cropMinScale) / (_cropMinScale * 2);
+  document.getElementById('cropZoom').value = Math.round(100 + t * 200);
+  clampOffset();
+  applyCropTransform();
+}
+
+function clampOffset() {
+  const w = _cropNatW * _cropScale;
+  const h = _cropNatH * _cropScale;
+  // gambar tidak boleh meninggalkan tepi stage
+  _cropOffX = Math.min(0, Math.max(_cropStageSize - w, _cropOffX));
+  _cropOffY = Math.min(0, Math.max(_cropStageSize - h, _cropOffY));
+}
+
+function applyCropTransform() {
+  if (!_cropImgEl) return;
+  _cropImgEl.style.width     = (_cropNatW * _cropScale) + 'px';
+  _cropImgEl.style.height    = (_cropNatH * _cropScale) + 'px';
+  _cropImgEl.style.left      = _cropOffX + 'px';
+  _cropImgEl.style.top       = _cropOffY + 'px';
+}
+
+/* ---------- CONFIRM CROP → WebP ---------- */
+async function confirmCrop() {
+  setUploadStatus('uploading', '⏳ Memproses foto…');
+  document.getElementById('cropOverlay').classList.remove('show');
+
+  try {
+    const webpDataUrl = await cropToWebP(512, 0.82);
+    previewPhoto(webpDataUrl);
+    document.getElementById('photoUrlInput').value = webpDataUrl;
+    setUploadStatus('uploading', '⏫ Mengupload ke Supabase…');
+
+    // Konversi data URL → Blob untuk upload
+    const blob = dataUrlToBlob(webpDataUrl);
+    const path  = `admin/profil_${Date.now()}.webp`;
+    const upRes = await fetch(`${SB_STORAGE}/object/admin-photos/${path}`, {
+      method : 'POST',
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY,
+                 'Content-Type': 'image/webp', 'x-upsert': 'true' },
+      body   : blob
+    });
+
+    if (upRes.ok) {
+      const publicUrl = `${SB_STORAGE}/object/public/admin-photos/${path}`;
+      document.getElementById('photoUrlInput').value = publicUrl;
+      previewPhoto(publicUrl);
+      setUploadStatus('ok', '✅ Upload berhasil! (WebP)');
+    } else {
+      const errText = await upRes.text();
+      console.warn('Storage upload gagal:', upRes.status, errText);
+      // Fallback: simpan data URL, upload ke storage gagal tapi tetap bisa simpan
+      setUploadStatus('ok', '✅ Foto siap (simpan untuk menyimpan)');
+    }
+  } catch(e) {
+    console.error('confirmCrop error:', e);
+    setUploadStatus('err', 'Gagal memproses foto');
+  }
+}
+
+/* Crop posisi sekarang → canvas 1:1 → WebP data URL */
+function cropToWebP(outputSize, quality) {
+  return new Promise((resolve, reject) => {
+    const img    = _cropImgEl;
+    const canvas = document.createElement('canvas');
+    canvas.width  = outputSize;
+    canvas.height = outputSize;
+    const ctx = canvas.getContext('2d');
+
+    // Hitung area sumber (dalam koordinat gambar asli)
+    // _cropOffX/_cropOffY adalah posisi pojok kiri-atas gambar relatif stage
+    // Kita ingin area stage 0,0 → stageSize,stageSize
+    const srcX = (-_cropOffX) / _cropScale;
+    const srcY = (-_cropOffY) / _cropScale;
+    const srcW =  _cropStageSize / _cropScale;
+    const srcH =  _cropStageSize / _cropScale;
+
+    // Gambar background putih agar tidak transparan
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, outputSize, outputSize);
+
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outputSize, outputSize);
+
+    const webpUrl = canvas.toDataURL('image/webp', quality);
+    // Fallback jika browser tidak support WebP output (sangat jarang)
+    resolve(webpUrl.startsWith('data:image/webp') ? webpUrl : canvas.toDataURL('image/jpeg', quality));
+  });
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, b64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(b64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+/* Compress gambar base64 (dipakai saat saveProfil untuk data URL fallback) */
+function compressImageDataUrl(dataUrl, maxSize = 512, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const size = maxSize;
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // crop center square
+      const s = Math.min(img.width, img.height);
+      const sx = (img.width - s)  / 2;
+      const sy = (img.height - s) / 2;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+      const out = canvas.toDataURL('image/webp', quality);
+      resolve(out.startsWith('data:image/webp') ? out : canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+async function saveProfil() {
+  const btn = document.getElementById('btnSaveProfil');
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+
+  let photoVal = document.getElementById('photoUrlInput').value.trim() || null;
+
+  // Jika foto adalah data URL (base64 dari upload), compress dulu agar tidak terlalu besar
+  if (photoVal && photoVal.startsWith('data:image')) {
+    try {
+      photoVal = await compressImageDataUrl(photoVal, 400, 0.75);
+    } catch(e) { /* pakai apa adanya */ }
+  }
+
+  const payload = {
+    id       : 1,
+    photo_url: photoVal,
+    nama     : document.getElementById('adminNamaInput').value.trim()   || null,
+    no_hp    : document.getElementById('adminHpInput').value.trim()     || null,
+    jam_buka : document.getElementById('adminJamInput').value.trim()    || null,
+    alamat   : document.getElementById('adminAlamatInput').value.trim() || null,
+  };
+
+  try {
+    // UPSERT — aman untuk insert pertama maupun update berikutnya
+    const res = await fetch(SB + '/admin_profile', {
+      method : 'POST',
+      headers: { ...H, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body   : JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Supabase error:', res.status, errText);
+      toast('Gagal simpan: ' + res.status + ' — ' + errText.slice(0,80));
+      return;
+    }
+
+    // Update tampilan nav langsung tanpa reload
+    if (payload.photo_url) {
+      const avEl = document.getElementById('modalAvPreview');
+      // (nav di pesan.html tidak ada, tapi foto preview modal sudah terupdate)
+    }
+
+    toast('Profil berhasil disimpan ✅');
+    closeEditProfil();
+  } catch(e) {
+    console.error('saveProfil error:', e);
+    toast('Gagal menyimpan profil ❌ ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '💾 Simpan';
+  }
+}
+
 
 loadList().then(initFromQuery);
 setInterval(loadList,15000);
