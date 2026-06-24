@@ -44,10 +44,69 @@
     .nav-title { font-size: 15px; font-weight: 700; color: #fff; }
     .nav-sub   { font-size: 11px; color: #d4b896; margin-top: 1px; }
     .nav-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--amber);
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg,#c8a87a,#a0784a);
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+      font-size: 18px; flex-shrink: 0; overflow: hidden;
+      border: 2px solid rgba(255,255,255,.25);
+    }
+    .nav-avatar img { width:100%; height:100%; object-fit:cover; }
+    .nav-meta { font-size: 10px; color: #d4b896; margin-top: 1px; }
+    .nav-jam  { font-size: 10px; color: #d4b896; }
+    /* nav clickable */
+    .nav-profile-btn {
+      display:flex;align-items:center;gap:10px;flex:1;min-width:0;
+      background:none;border:none;cursor:pointer;text-align:left;padding:6px 4px;
+      border-radius:10px;transition:background .15s;
+    }
+    .nav-profile-btn:hover { background:rgba(255,255,255,.08); }
+    /* popup profil admin */
+    .admin-popup-overlay {
+      position:fixed;inset:0;background:rgba(0,0,0,.5);
+      z-index:200;display:flex;align-items:flex-end;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .22s;
+    }
+    .admin-popup-overlay.show { opacity:1;pointer-events:all; }
+    .admin-popup-card {
+      background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:480px;
+      overflow:hidden;
+      transform:translateY(40px);
+      transition:transform .28s cubic-bezier(.22,1,.36,1);
+      box-shadow:0 -8px 40px rgba(0,0,0,.2);
+    }
+    .admin-popup-overlay.show .admin-popup-card { transform:translateY(0); }
+    .admin-popup-banner {
+      background:linear-gradient(135deg,var(--brown),#7a3e10);
+      padding:28px 20px 22px;
+      display:flex;flex-direction:column;align-items:center;gap:10px;
+    }
+    .admin-popup-av {
+      width:86px;height:86px;border-radius:50%;
+      border:3px solid rgba(255,255,255,.3);
+      background:linear-gradient(135deg,#c8a87a,#a0784a);
+      display:flex;align-items:center;justify-content:center;
+      font-size:36px;overflow:hidden;flex-shrink:0;
+    }
+    .admin-popup-av img { width:100%;height:100%;object-fit:cover; }
+    .admin-popup-name { font-size:18px;font-weight:700;color:#fff;text-align:center; }
+    .admin-popup-body { padding:18px 20px 4px;display:flex;flex-direction:column;gap:14px; }
+    .admin-popup-row  { display:flex;align-items:flex-start;gap:14px; }
+    .admin-popup-ico  { font-size:20px;flex-shrink:0;margin-top:1px; }
+    .admin-popup-info { flex:1;min-width:0; }
+    .admin-popup-label { font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em; }
+    .admin-popup-val   { font-size:14px;color:#2a1200;margin-top:3px;word-break:break-word;line-height:1.5; }
+    .admin-popup-val.empty { color:var(--muted);font-style:italic; }
+    .admin-popup-close {
+      margin:16px 20px 24px;padding:12px;background:var(--cream);
+      border:none;border-radius:14px;width:calc(100% - 40px);
+      font-family:inherit;font-size:14px;font-weight:700;
+      color:var(--brown);cursor:pointer;transition:background .15s;display:block;
+    }
+    .admin-popup-close:hover { background:#f0e4d0; }
+    /* drag handle */
+    .drag-handle {
+      width:40px;height:4px;background:var(--border);border-radius:2px;
+      margin:10px auto 0;
     }
 
     /* CHAT */
@@ -245,12 +304,51 @@
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </button>
-  <div class="nav-avatar">🍱</div>
-  <div class="nav-info">
-    <div class="nav-title">Admin Catering</div>
-    <div class="nav-sub">NusantaraFood</div>
-  </div>
+  <button class="nav-profile-btn" onclick="openAdminPopup()" title="Lihat profil admin">
+    <div class="nav-avatar" id="navAdminAv">🍱</div>
+    <div class="nav-info">
+      <div class="nav-title" id="navAdminName">Admin Catering</div>
+      <div class="nav-meta">
+        <span class="nav-jam" id="navAdminJam">Catering</span>
+      </div>
+    </div>
+  </button>
 </nav>
+
+<!-- Popup Profil Admin -->
+<div class="admin-popup-overlay" id="adminPopup" onclick="closeAdminPopupBg(event)">
+  <div class="admin-popup-card">
+    <div class="drag-handle"></div>
+    <div class="admin-popup-banner">
+      <div class="admin-popup-av" id="adminPopupAv">🍱</div>
+      <div class="admin-popup-name" id="adminPopupName">Admin Catering</div>
+    </div>
+    <div class="admin-popup-body">
+      <div class="admin-popup-row" id="adminPopupJamRow">
+        <div class="admin-popup-ico">🕐</div>
+        <div class="admin-popup-info">
+          <div class="admin-popup-label">Jam Buka</div>
+          <div class="admin-popup-val" id="adminPopupJam">—</div>
+        </div>
+      </div>
+      <div class="admin-popup-row" id="adminPopupHpRow">
+        <div class="admin-popup-ico">📞</div>
+        <div class="admin-popup-info">
+          <div class="admin-popup-label">No. HP / WhatsApp</div>
+          <div class="admin-popup-val" id="adminPopupHp">—</div>
+        </div>
+      </div>
+      <div class="admin-popup-row" id="adminPopupAlamatRow">
+        <div class="admin-popup-ico">📍</div>
+        <div class="admin-popup-info">
+          <div class="admin-popup-label">Alamat</div>
+          <div class="admin-popup-val" id="adminPopupAlamat">—</div>
+        </div>
+      </div>
+    </div>
+    <button class="admin-popup-close" onclick="closeAdminPopup()">Tutup</button>
+  </div>
+</div>
 
 <div id="root" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
   <div class="state-box"><div class="loading-dots"><span></span><span></span><span></span></div></div>
@@ -471,9 +569,14 @@ async function loadMessages() {
     }
     const isMe = m.sender_id === session.id;
     const cls  = isMe ? 'me' : 'them';
-    const av   = isMe
-      ? (session.avatar_url ? `<img src="${esc(session.avatar_url)}" onerror="this.style.display='none'" alt="">` : (session.name||'U')[0].toUpperCase())
+    // Avatar: user pakai foto sesi, admin pakai foto dari Supabase (sudah dimuat di _adminProfil)
+    const adminPhotoUrl = _adminProfil?.photo_url || '';
+    const adminAvHtml = adminPhotoUrl
+      ? `<img src="${adminPhotoUrl.startsWith('data:') ? adminPhotoUrl : esc(adminPhotoUrl)}" onerror="this.style.display='none';this.parentElement.innerHTML='🍱'" alt="">`
       : '🍱';
+    const av = isMe
+      ? (session.avatar_url ? `<img src="${esc(session.avatar_url)}" onerror="this.style.display='none'" alt="">` : (session.name||'U')[0].toUpperCase())
+      : adminAvHtml;
     const card     = parseOrderCard(m.content);
     const menuCard = !card ? parseMenuCard(m.content) : null;
     const bodyHtml = card
@@ -542,10 +645,12 @@ function init() {
     return;
   }
   document.getElementById('inputRow').style.display = 'flex';
-  // Tandai semua pesan dari admin sebagai dibaca
   markAdminMsgRead();
-  loadMessages();
-  timer = setInterval(loadMessages, 8000);
+  // Muat profil admin dulu agar foto tersedia saat render chat
+  loadAdminProfile().then(() => {
+    loadMessages();
+    timer = setInterval(loadMessages, 8000);
+  });
 }
 
 async function markAdminMsgRead() {
@@ -560,6 +665,59 @@ async function markAdminMsgRead() {
 }
 
 init();
+
+let _adminProfil = null;
+
+async function loadAdminProfile() {
+  try {
+    const rows = await api('/admin_profile?id=eq.1&select=*&limit=1');
+    const p = rows && rows[0];
+    if (!p) return;
+    _adminProfil = p;
+
+    // Avatar nav
+    const avEl = document.getElementById('navAdminAv');
+    if (p.photo_url) {
+      const safeUrl = p.photo_url.startsWith('data:') ? p.photo_url : esc(p.photo_url);
+      avEl.innerHTML = `<img src="${safeUrl}" onerror="this.parentElement.innerHTML='🍱'" alt="">`;
+    }
+    // Nama nav
+    if (p.nama) document.getElementById('navAdminName').textContent = p.nama;
+    // Sub nav
+    const jamEl = document.getElementById('navAdminJam');
+    jamEl.textContent = p.jam_buka ? ('Buka: ' + p.jam_buka) : (p.nama || 'Catering');
+  } catch(e) { console.error('loadAdminProfile error:', e); }
+}
+
+function openAdminPopup() {
+  const p = _adminProfil;
+  // Isi data profil ke popup
+  const avEl = document.getElementById('adminPopupAv');
+  if (p?.photo_url) {
+    const safeUrl = p.photo_url.startsWith('data:') ? p.photo_url : esc(p.photo_url);
+    avEl.innerHTML = `<img src="${safeUrl}" onerror="this.parentElement.innerHTML='🍱'" alt="">`;
+  } else { avEl.innerHTML = '🍱'; }
+
+  document.getElementById('adminPopupName').textContent = p?.nama || 'Admin Catering';
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (val) { el.textContent = val; el.className = 'admin-popup-val'; }
+    else      { el.textContent = 'Tidak tersedia'; el.className = 'admin-popup-val empty'; }
+  };
+  setVal('adminPopupJam',    p?.jam_buka);
+  setVal('adminPopupHp',     p?.no_hp);
+  setVal('adminPopupAlamat', p?.alamat);
+
+  document.getElementById('adminPopup').classList.add('show');
+}
+
+function closeAdminPopup() {
+  document.getElementById('adminPopup').classList.remove('show');
+}
+function closeAdminPopupBg(e) {
+  if (e.target === document.getElementById('adminPopup')) closeAdminPopup();
+}
 </script>
 </body>
 </html>
