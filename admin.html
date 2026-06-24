@@ -560,6 +560,15 @@
     flex: 1; min-width: 140px;
   }
   .order-action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .btn-message-user {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin-top: 12px; padding: 10px 14px;
+    background: var(--leaf-light); color: var(--leaf);
+    border: 1.5px solid var(--leaf); border-radius: 10px;
+    font-family: inherit; font-size: .85rem; font-weight: 600;
+    cursor: pointer; transition: background .15s, color .15s;
+  }
+  .btn-message-user:hover { background: var(--leaf); color: #fff; }
   .cancelled-note { background: var(--rose-light); color: var(--rose); border-radius: 10px; padding: 11px 13px; font-size: .83rem; font-weight: 600; }
 
   /* ── CATEGORY MANAGER ── */
@@ -2258,6 +2267,7 @@ loadNotifications();
    ORDER DETAIL MODAL
 ════════════════════════════════════════ */
 let currentOrderId = null;
+let currentOrderData = null;
 let cancelOrderTargetId = null;
 
 async function patchPesanan(id, payload) {
@@ -2322,6 +2332,7 @@ async function openOrderDetail(id) {
     const rows = await res.json();
     const order = rows && rows[0];
     if (!order) throw new Error('Pesanan tidak ditemukan');
+    currentOrderData = order;
     renderOrderDetail(order);
   } catch(e) {
     body.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>' + esc(e.message) + '</p></div>';
@@ -2330,6 +2341,7 @@ async function openOrderDetail(id) {
 function closeOrderDetail() {
   document.getElementById('orderDetailOverlay').classList.remove('open');
   currentOrderId = null;
+  currentOrderData = null;
   // Refresh histori inline jika sedang di tab histori
   if (activeTab === 'history') loadHistoryInline();
 }
@@ -2410,6 +2422,7 @@ function renderOrderDetail(order) {
       <div class="order-info-row"><div class="ico">💳</div><div class="label">Bayar</div><div class="value">${paymentMethodLabel(order.payment_method)}</div></div>
       <div class="order-info-row"><div class="ico">🗓️</div><div class="label">Dipesan</div><div class="value">${formatDateLong(order.created_at, true)}</div></div>
       ${order.notes ? `<div class="order-info-row"><div class="ico">📝</div><div class="label">Catatan</div><div class="value">${esc(order.notes)}</div></div>` : ''}
+      <button class="btn-message-user" onclick="kirimPesanTentangPesanan()">💬 Kirim Pesan ke Pembeli</button>
     </div>
     <div class="order-section">
       <h4>🍱 Pesanan</h4>
@@ -2433,6 +2446,51 @@ function renderOrderDetail(order) {
     </div>` : ''}
     ${actionHtml}
   `;
+}
+
+/* Ambil kemungkinan kolom user id pada tabel pesanan.
+   Sesuaikan/​tambahkan nama kolom di sini jika nama kolom di Supabase berbeda. */
+function getOrderUserId(order) {
+  return order.user_id || order.customer_id || order.uid || order.buyer_id || order.pembeli_id || '';
+}
+
+function buildOrderCardPayload(order) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const mappedItems = items.map(it => ({
+    name:  it.menu_name || it.name || 'Item',
+    qty:   it.qty || it.quantity || 1,
+    image: it.image_url || it.image || it.foto || it.gambar || it.thumbnail || it.thumb || it.img || null
+  }));
+  return {
+    order_id: order.id,
+    items: mappedItems,
+    total: order.total_amount || order.total_price || 0,
+    customer: {
+      name:    order.customer_name || '',
+      phone:   order.customer_phone || '',
+      address: order.delivery_address || order.customer_address || '',
+      avatar:  order.customer_avatar || order.avatar_url || null
+    }
+  };
+}
+
+function kirimPesanTentangPesanan() {
+  if (!currentOrderData) { showToast('Data pesanan belum siap', 'error'); return; }
+  const order  = currentOrderData;
+  const userId = getOrderUserId(order);
+  if (!userId) {
+    showToast('ID pengguna tidak ditemukan pada data pesanan ini. Cek kolom user_id di tabel pesanan.', 'error');
+    return;
+  }
+  const card = buildOrderCardPayload(order);
+  const note = `Halo ${order.customer_name || ''}, saya admin NusantaraFood ingin menanyakan terkait pesanan Anda di atas 🙏`;
+  const params = new URLSearchParams({
+    to: userId,
+    name: order.customer_name || '',
+    card: JSON.stringify(card),
+    pesan: note
+  });
+  window.location.href = 'pesan.html?' + params.toString();
 }
 
 async function submitConfirmOrder() {
