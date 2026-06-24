@@ -295,6 +295,7 @@
     }
     .popup-close:hover { background:#f0e4d0; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -395,12 +396,16 @@
 </div>
 
 <script>
-const SB   = 'https://rrcgjwnllrdszypdtljq.supabase.co/rest/v1';
-const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
-const H    = { 'apikey': KEY, 'Authorization': 'Bearer '+KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+const SB_URL = 'https://rrcgjwnllrdszypdtljq.supabase.co';
+const SB     = SB_URL + '/rest/v1';
+const KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyY2dqd25sbHJkc3p5cGR0bGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTg5ODMsImV4cCI6MjA5NzM3NDk4M30.nDTdKo7vNQtbDagV_ueK9twBMejj9QCYFYe8Ps_lqco';
+const H      = { 'apikey': KEY, 'Authorization': 'Bearer '+KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
-let session = null;
-let timer   = null;
+// Supabase JS client untuk Realtime
+const _supabase = supabase.createClient(SB_URL, KEY);
+
+let session  = null;
+let _channel = null;
 
 const ORDER_CARD_PREFIX = '@@ORDER_CARD@@';
 const MENU_CARD_PREFIX  = '@@MENU_CARD@@';
@@ -666,8 +671,24 @@ function init() {
   // Muat profil admin dulu agar foto tersedia saat render chat
   loadAdminProfile().then(() => {
     loadMessages();
-    timer = setInterval(loadMessages, 8000);
+    subscribeRealtime();
   });
+}
+
+function subscribeRealtime() {
+  if (_channel) _supabase.removeChannel(_channel);
+
+  _channel = _supabase
+    .channel('pesan-konsumen-' + session.id)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'pesan',
+    }, () => {
+      loadMessages();
+      markAdminMsgRead();
+    })
+    .subscribe();
 }
 
 async function markAdminMsgRead() {
