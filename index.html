@@ -2313,9 +2313,21 @@
     /* ── NOTIF ITEM CLICKABLE ── */
     .notif-dd-item {
       cursor: pointer;
+      overflow: hidden;
+      transition: background .15s, max-height .3s ease, opacity .25s ease, padding .3s ease, margin .3s ease;
+      max-height: 200px;
     }
     .notif-dd-item:hover {
       background: #fdf6ee !important;
+    }
+    /* Dismiss animation */
+    .notif-dd-item.dismissing {
+      max-height: 0 !important;
+      opacity: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border-bottom: none !important;
+      pointer-events: none;
     }
 
     /* ── ORDER DETAIL MODAL ── */
@@ -3546,6 +3558,9 @@
 
       // Perbarui rating di modal yang sedang terbuka (jika ada)
       _refreshModalRating();
+
+      // Buka modal menu jika diarahkan dari pesan_konsumen.html
+      _openMenuFromSession();
     } catch (err) { console.error('loadMenuRatings error:', err); }
   }
 
@@ -4746,6 +4761,80 @@
   ══════════════════════════════════════════════ */
   let _notifOpen = false;
   let _notifData  = [];
+  // Cache dismissed IDs (localStorage + Supabase sync)
+  let _dismissedIds = new Set();
+  try {
+    const local = JSON.parse(localStorage.getItem('nf_notif_read') || '[]');
+    local.forEach(id => _dismissedIds.add(id));
+  } catch {}
+
+  /* ── LOAD dismissed IDs dari Supabase (cross-device sync) ── */
+  async function loadDismissedIds() {
+    const session = getSession();
+    if (!session) return;
+    try {
+      const res = await fetch(
+        API_BASE + '/users?id=eq.' + session.id + '&select=dismissed_notif_ids',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (!res.ok) return;
+      const rows = await res.json();
+      const remoteIds = (rows[0] && rows[0].dismissed_notif_ids) || [];
+      remoteIds.forEach(id => _dismissedIds.add(id));
+      localStorage.setItem('nf_notif_read', JSON.stringify([..._dismissedIds]));
+    } catch {}
+  }
+
+  /* ── SIMPAN dismissed IDs ke Supabase ── */
+  async function saveDismissedIds() {
+    localStorage.setItem('nf_notif_read', JSON.stringify([..._dismissedIds]));
+    const session = getSession();
+    if (!session) return;
+    try {
+      await fetch(API_BASE + '/users?id=eq.' + session.id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ dismissed_notif_ids: [..._dismissedIds] })
+      });
+    } catch {}
+  }
+
+  /* ── Hitung ulang badge ── */
+  function _updateBadgeFromDismissed() {
+    const badge = document.getElementById('notifBadgeDot');
+    if (!badge) return;
+    const unread = _notifData.filter(o =>
+      (o.status === 'dikonfirmasi' || o.status === 'menunggu_konfirmasi' || o.status === 'dikirim')
+      && !_dismissedIds.has(o.id)
+    );
+    if (unread.length > 0) {
+      badge.textContent = unread.length > 9 ? '9+' : unread.length;
+      badge.classList.add('show');
+    } else {
+      badge.textContent = '';
+      badge.classList.remove('show');
+    }
+  }
+
+  /* ── DISMISS satu item dengan animasi slide-out ── */
+  function dismissNotifItem(orderId, el) {
+    _dismissedIds.add(orderId);
+    saveDismissedIds();
+    el.classList.add('dismissing');
+    setTimeout(() => {
+      el.remove();
+      const list = document.getElementById('notifDdList');
+      if (list && !list.querySelector('.notif-dd-item')) {
+        list.innerHTML = '<div class="notif-dd-empty"><div class="ico">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+      }
+      _updateBadgeFromDismissed();
+    }, 320);
+  }
 
   function toggleNotif(e) {
     e.stopPropagation();
@@ -4753,7 +4842,6 @@
     document.getElementById('notifDropdown').classList.toggle('open', _notifOpen);
     if (_notifOpen) {
       loadNotifData();
-      // close on outside click
       setTimeout(() => document.addEventListener('click', _closeNotifOutside), 10);
     } else {
       document.removeEventListener('click', _closeNotifOutside);
@@ -4776,7 +4864,6 @@
       list.innerHTML = '<div class="notif-dd-empty"><div class="ico">🔒</div><div>Masuk untuk melihat notifikasi</div></div>';
       return;
     }
-
     try {
       const res = await fetch(
         API_BASE + '/pesanan?user_id=eq.' + session.id
@@ -4802,29 +4889,23 @@
       return;
     }
 
-    // Cek ID yang sudah dibaca
-    let readIds = [];
-    try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
-
     const unreadItems = _notifData.filter(o =>
       (o.status === 'dikonfirmasi' || o.status === 'menunggu_konfirmasi' || o.status === 'dikirim')
-      && !readIds.includes(o.id)
+      && !_dismissedIds.has(o.id)
     );
-    const unreadCount = unreadItems.length;
-
-    if (unreadCount > 0) {
-      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+    if (unreadItems.length > 0) {
+      badge.textContent = unreadItems.length > 9 ? '9+' : unreadItems.length;
       badge.classList.add('show');
     } else {
       badge.textContent = '';
       badge.classList.remove('show');
     }
 
-    list.innerHTML = _notifData.map(order => {
+    const renderedItems = _notifData.map(order => {
       const isConfirmed = order.status === 'dikonfirmasi';
       const isWaiting   = order.status === 'menunggu_konfirmasi';
       const isDikirim   = order.status === 'dikirim';
-      const isUnread    = (isConfirmed || isWaiting || isDikirim) && !readIds.includes(order.id);
+      const isUnread    = (isConfirmed || isWaiting || isDikirim) && !_dismissedIds.has(order.id);
 
       const iconClass = isConfirmed || isDikirim ? 'notif-dd-icon confirmed' : 'notif-dd-icon';
       const icon = isConfirmed ? '✅' : isDikirim ? '🚚' : isWaiting ? '⏳' : '📦';
@@ -4846,7 +4927,7 @@
         deliveryLine = '<div class="notif-dd-delivery">🚚 Diantar: ' + dStr + '</div>';
       }
 
-      return '<div class="notif-dd-item ' + (isUnread ? 'unread' : '') + '" onclick="openOrderDetail(\'' + order.id + '\')">'
+      return '<div class="notif-dd-item ' + (isUnread ? 'unread' : '') + '" data-id="' + order.id + '" onclick="handleNotifItemClick(event, \'' + order.id + '\')">'
         + '<div class="notif-dd-row">'
         + '<div class="' + iconClass + '">' + icon + '</div>'
         + '<div class="notif-dd-body">'
@@ -4859,40 +4940,35 @@
         + '</div>'
         + '</div>';
     }).join('');
+
+    list.innerHTML = renderedItems || '<div class="notif-dd-empty"><div class="ico">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+  }
+
+  /* ── Klik item: dismiss + buka detail ── */
+  function handleNotifItemClick(e, orderId) {
+    const el = e.currentTarget;
+    dismissNotifItem(orderId, el);
+    setTimeout(() => openOrderDetail(orderId), 50);
   }
 
   function clearNotifRead() {
-    // Tandai semua item sebagai sudah dibaca secara visual
-    document.querySelectorAll('.notif-dd-item.unread').forEach(el => el.classList.remove('unread'));
-    document.querySelectorAll('.notif-dd-unread-dot').forEach(el => el.remove());
-    // Hilangkan badge
+    // Tandai semua item dibaca dengan animasi
+    document.querySelectorAll('.notif-dd-item').forEach(el => {
+      el.classList.add('dismissing');
+    });
+    // Update dismissed set
+    if (_notifData && _notifData.length > 0) {
+      _notifData.forEach(o => _dismissedIds.add(o.id));
+    }
+    saveDismissedIds();
+    // Badge hilang
     const badge = document.getElementById('notifBadgeDot');
     badge.textContent = '';
     badge.classList.remove('show');
-
-    // Simpan semua ID yang ada di _notifData (aktif maupun tidak)
-    // Juga fetch dari server jika _notifData belum ter-load agar IDs lengkap
-    const saveRead = (ids) => {
-      let existing = [];
-      try { existing = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
-      const merged = [...new Set([...existing, ...ids])];
-      localStorage.setItem('nf_notif_read', JSON.stringify(merged));
-    };
-
-    if (_notifData && _notifData.length > 0) {
-      saveRead(_notifData.map(o => o.id));
-    } else {
-      // _notifData belum dimuat — fetch langsung untuk dapat semua ID
-      const session = getSession();
-      if (session) {
-        fetch(
-          API_BASE + '/pesanan?user_id=eq.' + session.id + '&select=id&order=created_at.desc&limit=50',
-          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        ).then(r => r.json()).then(data => {
-          if (Array.isArray(data)) saveRead(data.map(o => o.id));
-        }).catch(() => {});
-      }
-    }
+    setTimeout(() => {
+      const list = document.getElementById('notifDdList');
+      if (list) list.innerHTML = '<div class="notif-dd-empty"><div class="ico">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
+    }, 350);
   }
 
   function _timeAgo(date) {
@@ -4915,36 +4991,10 @@
     document.getElementById('notifDropdown').classList.remove('open');
     document.removeEventListener('click', _closeNotifOutside);
 
-    // Tandai order ini sebagai sudah dibaca
-    let readIds = [];
-    try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
-    if (!readIds.includes(orderId)) {
-      readIds.push(orderId);
-      localStorage.setItem('nf_notif_read', JSON.stringify(readIds));
-    }
-    // Update badge — recalculate unread
-    const unreadNow = _notifData.filter(o =>
-      (o.status === 'dikonfirmasi' || o.status === 'menunggu_konfirmasi' || o.status === 'dikirim')
-      && !readIds.includes(o.id)
-    );
-    const badge = document.getElementById('notifBadgeDot');
-    if (unreadNow.length > 0) {
-      badge.textContent = unreadNow.length > 9 ? '9+' : unreadNow.length;
-      badge.classList.add('show');
-    } else {
-      badge.textContent = '';
-      badge.classList.remove('show');
-    }
-    // Update visual di dropdown juga
-    const itemEls = document.querySelectorAll('.notif-dd-item');
-    _notifData.forEach((o, idx) => {
-      if (o.id === orderId && itemEls[idx]) {
-        itemEls[idx].classList.remove('unread');
-        const dot = itemEls[idx].querySelector('.notif-dd-unread-dot');
-        if (dot) dot.remove();
-      }
-    });
-
+    // Tandai sudah dibaca
+    _dismissedIds.add(orderId);
+    saveDismissedIds();
+    _updateBadgeFromDismissed();
     // Render isi modal
     const statusMap = {
       menunggu_konfirmasi: { label: 'Menunggu Konfirmasi', icon: '⏳', sub: 'Penjual sedang memproses pesananmu' },
@@ -5142,6 +5192,21 @@
         loadSavedRatingsForOrder(orderId, items);
       }));
     }
+  }
+
+  /* ── Buka modal menu dari sessionStorage (redirect dari pesan_konsumen.html) ── */
+  function _openMenuFromSession() {
+    let stored;
+    try { stored = JSON.parse(sessionStorage.getItem('open_menu') || 'null'); } catch(e) { return; }
+    if (!stored) return;
+    sessionStorage.removeItem('open_menu'); // hapus agar tidak terbuka lagi saat refresh
+    const menuId   = stored.menu_id   || '';
+    const menuName = stored.menu_name || '';
+    let menuRaw = null;
+    if (menuId)   menuRaw = allMenus.find(m => String(m.id) === String(menuId));
+    if (!menuRaw && menuName) menuRaw = allMenus.find(m => m.name === menuName);
+    if (!menuRaw) return;
+    setTimeout(() => openModal(menuToModalData(menuRaw)), 150);
   }
 
   function openMenuFromOrderItem(menuId, menuName) {
@@ -5359,6 +5424,7 @@
     }
   }
 
+
   function updateNotifBadge() {
     const session = getSession();
     if (!session || _notifOpen) return;
@@ -5367,9 +5433,7 @@
       + '&status=in.(dikonfirmasi,menunggu_konfirmasi,dikirim)&select=id',
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     ).then(r => r.json()).then(data => {
-      let readIds = [];
-      try { readIds = JSON.parse(localStorage.getItem('nf_notif_read') || '[]'); } catch {}
-      const unread = (data || []).filter(o => !readIds.includes(o.id));
+      const unread = (data || []).filter(o => !_dismissedIds.has(o.id));
       const count = unread.length;
       const badge = document.getElementById('notifBadgeDot');
       if (count > 0) {
@@ -5386,6 +5450,8 @@
 
   // Load badge on init (after a short delay)
   setTimeout(updateNotifBadge, 1200);
+  // Load dismissed IDs dari Supabase untuk sinkronisasi cross-device
+  setTimeout(loadDismissedIds, 1500);
 
   /* ──────────────────────────────
      PESAN (Message) Navigation
