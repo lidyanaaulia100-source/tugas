@@ -2170,6 +2170,28 @@
     }
     .notif-badge-dot.show { display: flex; }
 
+    /* Badge notif pesan dari admin */
+    .msg-badge-dot {
+      position: absolute;
+      top: -4px; right: -6px;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 17px; height: 17px;
+      border-radius: 9px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      pointer-events: none;
+      border: 2px solid var(--brown-dark);
+      font-family: 'Inter', sans-serif;
+      animation: badgePop .3s cubic-bezier(.22,1,.36,1);
+    }
+    .msg-badge-dot.show { display: flex; }
+    @keyframes badgePop { from { transform:scale(0); } to { transform:scale(1); } }
+
     .notif-dropdown {
       display: none;
       position: absolute;
@@ -2652,6 +2674,13 @@
         </div>
       </div>
     </div>
+
+    <button class="nav-icon-btn" id="msgNavBtn" title="Pesan Admin" onclick="goToMessages()" style="position:relative">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="msg-badge-dot" id="msgBadgeDot"></span>
+    </button>
 
     <button class="nav-icon-btn cart-btn" title="Keranjang" onclick="toggleCart()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -5357,6 +5386,70 @@
 
   // Load badge on init (after a short delay)
   setTimeout(updateNotifBadge, 1200);
+
+  /* ──────────────────────────────
+     PESAN (Message) Navigation
+  ────────────────────────────── */
+  function goToMessages() {
+    const session = getSession();
+    if (!session) {
+      showToast('Login dulu untuk mengirim pesan 🔒');
+      openLoginPrompt();
+      return;
+    }
+    // Tandai semua pesan dari admin sebagai dibaca di Supabase
+    markMsgRead(session.id);
+    window.location.href = 'pesan konsumen.html';
+  }
+
+  /* ── NOTIF PESAN DARI ADMIN ── */
+  let _msgPollTimer = null;
+
+  async function updateMsgBadge() {
+    const session = getSession();
+    const badge = document.getElementById('msgBadgeDot');
+    if (!session || !badge) return;
+    try {
+      const r = await fetch(
+        API_BASE + '/pesan?sender_id=eq.admin&receiver_id=eq.' + encodeURIComponent(session.id) + '&is_read=eq.false&select=id',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const data = await r.json();
+      const count = (data || []).length;
+      if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.classList.add('show');
+      } else {
+        badge.textContent = '';
+        badge.classList.remove('show');
+      }
+    } catch(e) {}
+  }
+
+  async function markMsgRead(userId) {
+    try {
+      await fetch(
+        API_BASE + '/pesan?sender_id=eq.admin&receiver_id=eq.' + encodeURIComponent(userId) + '&is_read=eq.false',
+        {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ is_read: true })
+        }
+      );
+      // Update badge langsung tanpa tunggu polling
+      const badge = document.getElementById('msgBadgeDot');
+      if (badge) { badge.textContent = ''; badge.classList.remove('show'); }
+    } catch(e) {}
+  }
+
+  // Polling badge pesan setiap 10 detik
+  setTimeout(updateMsgBadge, 800);
+  _msgPollTimer = setInterval(updateMsgBadge, 10000);
 
 </script>
 </body>
