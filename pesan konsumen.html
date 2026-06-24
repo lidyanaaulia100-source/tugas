@@ -558,13 +558,13 @@ async function loadMessages() {
   // Tandai pesan dari admin sebagai dibaca
   markAdminMsgRead();
 
-  let html = '<div class="chat-area" id="chatArea">';
+  let innerHtml = '';
   let lastDate = '';
   orderCardRegistry = [];
   rows.forEach(m => {
     const d = fmtDate(m.created_at);
     if (d !== lastDate) {
-      html += `<div class="date-sep"><span>${esc(d)}</span></div>`;
+      innerHtml += `<div class="date-sep"><span>${esc(d)}</span></div>`;
       lastDate = d;
     }
     const isMe = m.sender_id === session.id;
@@ -592,7 +592,7 @@ async function loadMessages() {
       tickHtml = `<span class="read-tick ${isRead ? 'read' : 'sent'}" title="${isRead ? 'Dibaca' : 'Terkirim'}">${isRead ? '✓✓' : '✓'}</span>`;
     }
 
-    html += `<div class="msg-row ${cls}">
+    innerHtml += `<div class="msg-row ${cls}">
       <div class="msg-avatar">${av}</div>
       <div class="msg-col">
         ${bodyHtml}
@@ -600,15 +600,19 @@ async function loadMessages() {
       </div>
     </div>`;
   });
-  html += '</div>';
 
-  // Cek posisi scroll sebelum update (apakah user sudah di bawah)
-  const prevArea = document.getElementById('chatArea');
-  const wasAtBottom = !prevArea || (prevArea.scrollHeight - prevArea.scrollTop - prevArea.clientHeight < 120);
-
-  root.innerHTML = html;
-  const area = document.getElementById('chatArea');
-  if (area && wasAtBottom) area.scrollTop = area.scrollHeight;
+  // Kalau chatArea sudah ada (polling), update isinya saja agar scroll position tidak hilang
+  let area = document.getElementById('chatArea');
+  if (area) {
+    const atBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+    area.innerHTML = innerHtml;
+    if (atBottom) area.scrollTop = area.scrollHeight;
+  } else {
+    // Pertama kali load: buat chatArea baru dan scroll ke bawah
+    root.innerHTML = `<div class="chat-area" id="chatArea">${innerHtml}</div>`;
+    area = document.getElementById('chatArea');
+    if (area) area.scrollTop = area.scrollHeight;
+  }
 }
 
 async function send() {
