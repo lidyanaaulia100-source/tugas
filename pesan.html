@@ -77,6 +77,13 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
     }
     .user-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+    .unread-badge {
+      background: var(--amber); color: var(--brown);
+      border-radius: 50%; width: 18px; height: 18px;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-left: 4px;
+    }
     .list-empty {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; gap: 8px; padding: 40px 16px;
@@ -121,6 +128,11 @@
     .them .bubble { background:var(--white);color:#2a1200;border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(60,20,0,.1); }
     .msg-time { font-size:10px;color:var(--muted); }
     .me .msg-time { text-align:right; }
+
+    /* read receipt */
+    .read-tick { font-size: 11px; margin-left: 3px; }
+    .read-tick.sent { color: var(--muted); }
+    .read-tick.read { color: #2196F3; }
     .date-sep { display:flex;align-items:center;gap:8px;margin:4px 0; }
     .date-sep::before,.date-sep::after { content:'';flex:1;height:1px;background:var(--border); }
     .date-sep span { font-size:11px;color:var(--muted);white-space:nowrap; }
@@ -162,6 +174,33 @@
       transition:opacity .25s,transform .25s;z-index:99;
     }
     .toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+    .order-card {
+      display:flex;gap:10px;align-items:center;background:var(--white);
+      border:1.5px solid var(--border);border-radius:14px;padding:9px;
+      cursor:pointer;transition:box-shadow .15s,transform .1s;max-width:240px;
+    }
+    .order-card:hover { box-shadow:0 4px 14px rgba(60,20,0,.18);transform:translateY(-1px); }
+    .order-card-img {
+      width:50px;height:50px;border-radius:10px;flex-shrink:0;
+      background:linear-gradient(135deg,#c8a87a,#a0784a);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;overflow:hidden;color:#fff;
+    }
+    .order-card-img img { width:100%;height:100%;object-fit:cover; }
+    .order-card-body { flex:1;min-width:0; }
+    .order-card-title {
+      font-size:11.5px;font-weight:700;color:#2a1200;margin-bottom:2px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .order-card-items {
+      font-size:11px;color:var(--muted);line-height:1.4;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .order-card-total { font-size:12px;font-weight:700;color:#b8762b;margin-top:3px; }
+    .order-card-hint {
+      font-size:9px;color:var(--muted);margin-top:4px;opacity:.8;
+      display:flex;align-items:center;gap:3px;
+    }
     .loading-dots span {
       display:inline-block;width:8px;height:8px;
       border-radius:50%;background:var(--amber);margin:0 3px;
@@ -307,6 +346,54 @@ const H   = { 'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'applica
 let selId=null, selName=null, selAv=null, pollT=null;
 let userProfileCache={};  // cache profil per userId
 
+const ORDER_CARD_PREFIX = '@@ORDER_CARD@@';
+let orderCardRegistry = [];
+
+function parseOrderCard(content){
+  if (typeof content !== 'string' || !content.startsWith(ORDER_CARD_PREFIX)) return null;
+  try { return JSON.parse(content.slice(ORDER_CARD_PREFIX.length)); } catch(e) { return null; }
+}
+function findCardImage(card){
+  const items = card.items || [];
+  for (const it of items) { if (it.image) return it.image; }
+  return null;
+}
+function renderOrderCardHtml(card){
+  const idx = orderCardRegistry.push(card) - 1;
+  const img = findCardImage(card);
+  const imgHtml = img ? `<img src="${esc(img)}" onerror="this.parentElement.innerHTML='<span style=\\'font-size:22px\\'>🍱</span>'" alt="">` : '🍱';
+  const items = card.items || [];
+  const itemNames = items.map(it => `${esc(it.name||'')} x${it.qty||1}`).join(', ');
+  const totalText = 'Rp ' + (Number(card.total)||0).toLocaleString('id-ID');
+  const orderId = esc(String(card.order_id||''));
+  return `<div class="order-card" onclick="showOrderPopup(${idx})">
+    <div class="order-card-img">${imgHtml}</div>
+    <div class="order-card-body">
+      <div class="order-card-title">📋 Pesanan #${orderId}</div>
+      <div class="order-card-items">${itemNames || '—'}</div>
+      <div class="order-card-total">${totalText}</div>
+      <div class="order-card-hint">👤 Ketuk untuk info pemesan</div>
+    </div>
+  </div>`;
+}
+function showOrderPopup(idx){
+  const card = orderCardRegistry[idx];
+  if (!card) return;
+  const c = card.customer || {};
+  document.getElementById('popupAv').innerHTML = c.avatar
+    ? `<img src="${esc(c.avatar)}" onerror="this.style.display='none'" alt="">`
+    : '<span style="font-size:34px">👤</span>';
+  document.getElementById('popupName').textContent = c.name || '—';
+  document.getElementById('popupId').textContent = 'Pesanan #' + (card.order_id || '—');
+  const ph = document.getElementById('popupPhone');
+  ph.textContent = c.phone || 'Tidak tersedia';
+  ph.className = 'popup-val' + (c.phone ? '' : ' empty');
+  const ad = document.getElementById('popupAddress');
+  ad.textContent = c.address || 'Tidak tersedia';
+  ad.className = 'popup-val' + (c.address ? '' : ' empty');
+  document.getElementById('userPopup').classList.add('show');
+}
+
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
 function fmt(iso){ if(!iso)return''; return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
@@ -378,13 +465,44 @@ function closePopupDirect(){
 }
 
 async function loadList(){
-  let rows; try{ rows=await api('/pesan?receiver_id=eq.admin&order=created_at.desc&limit=500'); }catch(e){ rows=null; }
+  // Ambil semua pesan yang melibatkan admin (baik sebagai pengirim maupun penerima)
+  let rowsIn=[], rowsOut=[];
+  try{ rowsIn  = await api('/pesan?receiver_id=eq.admin&order=created_at.desc&limit=500') || []; }catch(e){}
+  try{ rowsOut = await api('/pesan?sender_id=eq.admin&order=created_at.desc&limit=500')   || []; }catch(e){}
+
   const body=document.getElementById('userListBody');
-  if(rows===null){ body.innerHTML='<div class="list-empty"><div class="ico">⚙️</div><p>Tabel pesan belum ada</p></div>'; return; }
-  if(!rows.length){ body.innerHTML='<div class="list-empty"><div class="ico">📭</div><p>Belum ada pesan masuk</p></div>'; return; }
-  const map={};
-  rows.forEach(m=>{ if(!map[m.sender_id]) map[m.sender_id]=m; });
-  const convs=Object.values(map);
+
+  // Gabungkan dan bentuk map percakapan per user (bukan admin)
+  const convMap={};   // userId -> pesan terbaru
+  const unreadMap={}; // userId -> jumlah belum dibaca (pesan dari user ke admin)
+
+  rowsIn.forEach(m=>{
+    // Pesan dari user ke admin
+    const uid = m.sender_id;
+    if(!convMap[uid] || new Date(m.created_at) > new Date(convMap[uid].created_at)){
+      convMap[uid] = m;
+    }
+    if(m.is_read===false||m.is_read==='false'){
+      unreadMap[uid]=(unreadMap[uid]||0)+1;
+    }
+  });
+
+  rowsOut.forEach(m=>{
+    // Pesan dari admin ke user
+    const uid = m.receiver_id;
+    if(!uid || uid==='admin') return;
+    if(!convMap[uid] || new Date(m.created_at) > new Date(convMap[uid].created_at)){
+      // Simpan dengan sender_id = uid agar item list tetap konsisten
+      convMap[uid] = { ...m, sender_id: uid, sender_name: m.receiver_name||uid, sender_avatar: null };
+    }
+  });
+
+  const convs = Object.values(convMap).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+  if(!convs.length){
+    body.innerHTML='<div class="list-empty"><div class="ico">📭</div><p>Belum ada percakapan</p></div>';
+    return;
+  }
 
   // Fetch profil untuk semua user sekaligus
   const ids=convs.map(u=>u.sender_id);
@@ -403,13 +521,18 @@ async function loadList(){
     // update cache
     if(p) userProfileCache[u.sender_id]=p;
     const active=u.sender_id===selId?' active':'';
+    const unread=unreadMap[u.sender_id]||0;
+    const badgeHtml=unread>0?`<div class="unread-badge">${unread>9?'9+':unread}</div>`:'';
     return `<div class="user-item${active}" onclick="selectUser('${esc(u.sender_id)}','${esc(name)}','${esc(p?.avatar_url||u.sender_avatar||'')}',this)">
       <div class="user-av">${av}</div>
       <div class="user-meta">
         <div class="user-name">${esc(name)}</div>
         <div class="user-preview">${esc((u.content||'').substring(0,38))}${(u.content||'').length>38?'…':''}</div>
       </div>
-      <div class="user-time">${fmt(u.created_at)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+        <div class="user-time">${fmt(u.created_at)}</div>
+        ${badgeHtml}
+      </div>
     </div>`;
   }).join('');
 }
@@ -420,9 +543,22 @@ async function selectUser(id,name,av,el){
   if(el) el.classList.add('active');
   document.getElementById('navSub').textContent=name;
   document.getElementById('userList').classList.remove('open');
+  // Tandai semua pesan dari user ini sebagai dibaca oleh admin
+  markUserMsgRead(id);
   await renderChat();
   if(pollT) clearInterval(pollT);
-  pollT=setInterval(()=>{ renderChat(true); loadList(); },8000);
+  pollT=setInterval(()=>{ renderChat(true); loadList(); markUserMsgRead(id); },8000);
+}
+
+async function markUserMsgRead(userId){
+  if(!userId) return;
+  try{
+    await fetch(`${SB}/pesan?sender_id=eq.${encodeURIComponent(userId)}&receiver_id=eq.admin&is_read=eq.false`,{
+      method:'PATCH',
+      headers:{...H,'Prefer':'return=minimal'},
+      body:JSON.stringify({is_read:true})
+    });
+  }catch(e){}
 }
 
 async function renderChat(silent=false){
@@ -469,6 +605,7 @@ async function renderChat(silent=false){
   if(rows===null){ area.innerHTML='<div class="state-box"><div class="ico">⚙️</div><p>Tabel pesan belum ada</p></div>'; return; }
   if(!rows.length){ area.innerHTML='<div class="state-box"><div class="ico">💬</div><p>Belum ada pesan<br>dari user ini</p></div>'; return; }
   let html=''; let lastDate='';
+  orderCardRegistry = [];
   rows.forEach(m=>{
     const d=fmtDate(m.created_at);
     if(d!==lastDate){ html+=`<div class="date-sep"><span>${esc(d)}</span></div>`; lastDate=d; }
@@ -476,12 +613,22 @@ async function renderChat(silent=false){
     // Untuk pesan dari user: gunakan foto dari profil DB, fallback sender_avatar
     const userAvUrl=dispAv||(m.sender_avatar||'');
     const av=isMe?'🍱':(userAvUrl?`<img src="${esc(userAvUrl)}" onerror="this.style.display='none'" alt="">`:'👤');
+    const card=parseOrderCard(m.content);
+    const bodyHtml = card ? renderOrderCardHtml(card) : `<div class="bubble">${esc(m.content)}</div>`;
+
+    // Read tick untuk pesan admin (isMe)
+    let tickHtml = '';
+    if (isMe) {
+      const isRead = m.is_read === true || m.is_read === 'true';
+      tickHtml = `<span class="read-tick ${isRead ? 'read' : 'sent'}" title="${isRead ? 'Dibaca' : 'Terkirim'}">${isRead ? '✓✓' : '✓'}</span>`;
+    }
+
     html+=`<div class="msg-row ${isMe?'me':'them'}">
       <div class="msg-av">${av}</div>
       <div class="msg-col">
         ${!isMe?`<div class="sender-name">${esc(dispName)}</div>`:''}
-        <div class="bubble">${esc(m.content)}</div>
-        <div class="msg-time">${fmt(m.created_at)}</div>
+        ${bodyHtml}
+        <div class="msg-time">${fmt(m.created_at)}${tickHtml}</div>
       </div>
     </div>`;
   });
@@ -508,10 +655,89 @@ async function send(){
 }
 
 localStorage.setItem('nf_admin_logged_in','1');
-loadList();
+
+const _qsAwal = new URLSearchParams(window.location.search);
+const _adaDeepLinkPesan = _qsAwal.has('to');
+
+/* Jika dibuka dari tombol "Kirim Pesan" di detail pesanan admin.html,
+   URL akan berisi ?to=<id_user>&name=<nama>&pesan=<isi_pesanan>&card=<json>.
+   Maka langsung buka percakapan user tersebut, kirim card + note ke Supabase,
+   lalu render ulang chat agar langsung tampil. */
+async function initFromQuery(){
+  const params = new URLSearchParams(window.location.search);
+  const to = params.get('to');
+  if (!to) return;
+
+  // Bersihkan query string DULU agar tidak terulang saat reload
+  history.replaceState({}, '', window.location.pathname);
+
+  const name      = params.get('name') || to;
+  const pesanText = params.get('pesan') || '';
+  const cardRaw   = params.get('card')  || '';
+
+  // Buka percakapan (render panel + pasang polling)
+  await selectUser(to, name, null, null);
+
+  // Tunggu hingga panel + input benar-benar ada di DOM
+  await waitForElement('msgInput', 3000);
+
+  // Kirim order card ke Supabase lalu render ulang
+  if (cardRaw) {
+    try {
+      JSON.parse(cardRaw); // validasi JSON sebelum kirim
+      await api('/pesan', { method:'POST', body: JSON.stringify({
+        sender_id:    'admin',
+        sender_name:  'Admin',
+        sender_avatar: null,
+        receiver_id:  to,
+        receiver_name: name,
+        content:      ORDER_CARD_PREFIX + cardRaw,
+        created_at:   new Date().toISOString(),
+        is_read:      false
+      })});
+    } catch(e) { toast('Gagal mengirim kartu pesanan ❌'); }
+  }
+
+  // Kirim teks sapaan sebagai pesan biasa (auto-send, bukan hanya mengisi input)
+  if (pesanText) {
+    try {
+      await api('/pesan', { method:'POST', body: JSON.stringify({
+        sender_id:    'admin',
+        sender_name:  'Admin',
+        sender_avatar: null,
+        receiver_id:  to,
+        receiver_name: name,
+        content:      pesanText,
+        created_at:   new Date().toISOString(),
+        is_read:      false
+      })});
+    } catch(e) { toast('Gagal mengirim pesan sapaan ❌'); }
+  }
+
+  // Render ulang chat agar card + note langsung muncul di percakapan
+  if (cardRaw || pesanText) {
+    await renderChat(true);
+    await loadList();
+  }
+}
+
+/* Tunggu elemen dengan id tertentu muncul di DOM (maksimal maxMs milidetik) */
+function waitForElement(id, maxMs=3000){
+  return new Promise(resolve=>{
+    if(document.getElementById(id)){ resolve(); return; }
+    const t0=Date.now();
+    const tick=()=>{
+      if(document.getElementById(id)||Date.now()-t0>maxMs){ resolve(); return; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+loadList().then(initFromQuery);
 setInterval(loadList,15000);
-// Mobile: langsung tampilkan daftar percakapan saat pertama buka
-if(window.innerWidth<=580){
+// Mobile: langsung tampilkan daftar percakapan saat pertama buka (kecuali datang dari deep link kirim pesan)
+if(window.innerWidth<=580 && !_adaDeepLinkPesan){
   document.getElementById('userList').classList.add('open');
 }
 </script>
