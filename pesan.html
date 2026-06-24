@@ -801,6 +801,12 @@ async function markUserMsgRead(userId){
   }catch(e){}
 }
 
+function shouldAutoScroll(area){
+  if(!area) return true;
+  // Scroll ke bawah hanya jika user sudah dekat bawah (dalam 120px)
+  return area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+}
+
 async function renderChat(silent=false){
   const panel=document.getElementById('chatPanel');
 
@@ -842,6 +848,7 @@ async function renderChat(silent=false){
   let rows; try{ rows=await api(`/pesan?or=(and(sender_id.eq.${encodeURIComponent(selId)},receiver_id.eq.admin),and(sender_id.eq.admin,receiver_id.eq.${encodeURIComponent(selId)}))&order=created_at.asc&limit=200`); }catch(e){ rows=null; }
   const area=document.getElementById('chatArea');
   if(!area)return;
+  const _willScroll = !silent || shouldAutoScroll(area);
   if(rows===null){ area.innerHTML='<div class="state-box"><div class="ico">⚙️</div><p>Tabel pesan belum ada</p></div>'; return; }
   if(!rows.length){ area.innerHTML='<div class="state-box"><div class="ico">💬</div><p>Belum ada pesan<br>dari user ini</p></div>'; return; }
   let html=''; let lastDate='';
@@ -873,7 +880,7 @@ async function renderChat(silent=false){
     </div>`;
   });
   area.innerHTML=html;
-  area.scrollTop=area.scrollHeight;
+  if(_willScroll) area.scrollTop=area.scrollHeight;
 }
 
 async function send(){
