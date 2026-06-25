@@ -132,86 +132,7 @@
     .nav-icon-btn:hover { background: rgba(255,255,255,.1); }
     .nav-icon-btn svg { display: block; flex-shrink: 0; }
 
-    /* ── NAV HAMBURGER (mobile) ── */
-    .nav-hamburger {
-      display: none;
-      background: none; border: none; cursor: pointer;
-      width: 38px; height: 38px;
-      align-items: center; justify-content: center;
-      border-radius: 8px;
-      transition: background .18s;
-      flex-shrink: 0;
-    }
-    .nav-hamburger:hover { background: rgba(255,255,255,.1); }
-    .nav-hamburger span {
-      display: block;
-      width: 20px; height: 2px;
-      background: var(--white);
-      border-radius: 2px;
-      position: relative;
-      transition: transform .25s ease, opacity .2s ease;
-    }
-    .nav-hamburger span::before,
-    .nav-hamburger span::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      width: 20px; height: 2px;
-      background: var(--white);
-      border-radius: 2px;
-      transition: transform .25s ease, top .25s ease;
-    }
-    .nav-hamburger span::before { top: -6px; }
-    .nav-hamburger span::after  { top: 6px; }
-    .nav-hamburger.active span { background: transparent; }
-    .nav-hamburger.active span::before { top: 0; transform: rotate(45deg); }
-    .nav-hamburger.active span::after  { top: 0; transform: rotate(-45deg); }
 
-    /* ── MOBILE NAV DRAWER ── */
-    .mobile-nav-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(20,8,0,.5);
-      z-index: 997;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .25s ease;
-    }
-    .mobile-nav-overlay.active { opacity: 1; pointer-events: all; }
-    .mobile-nav-drawer {
-      position: fixed;
-      top: 0; left: 0;
-      height: 100%;
-      width: 78%;
-      max-width: 300px;
-      background: var(--brown-dark);
-      z-index: 998;
-      padding: 20px;
-      transform: translateX(-100%);
-      transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .mobile-nav-overlay.active .mobile-nav-drawer { transform: translateX(0); }
-    .mobile-nav-drawer-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,.1);
-    }
-    .mobile-nav-drawer a {
-      display: block;
-      color: #d4b896;
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 500;
-      padding: 13px 10px;
-      border-radius: 8px;
-      transition: background .15s, color .15s;
-    }
-    .mobile-nav-drawer a:hover,
-    .mobile-nav-drawer a:active { background: rgba(255,255,255,.08); color: var(--amber); }
 
     /* ── SEARCH OVERLAY ── */
     .search-overlay {
@@ -2563,9 +2484,6 @@
 
 <!-- NAV -->
 <nav>
-  <button class="nav-hamburger" id="navHamburger" title="Menu" onclick="toggleMobileNav()" aria-label="Buka menu navigasi">
-    <span></span>
-  </button>
   <a href="#" class="nav-logo">
     <span>NusantaraFood</span>
   </a>
@@ -2622,20 +2540,6 @@
     </button>
   </div>
 </nav>
-
-<!-- MOBILE NAV DRAWER -->
-<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="handleMobileNavOverlay(event)">
-  <div class="mobile-nav-drawer" id="mobileNavDrawer">
-    <div class="mobile-nav-drawer-header">
-      <div class="nav-logo" style="display:flex;align-items:center;gap:10px;">
-        <div class="nav-logo-icon">🍱</div>
-        <span style="font-family:'Playfair Display', serif; font-size:16px; color:var(--white);">NusantaraFood</span>
-      </div>
-      <button class="account-panel-close" onclick="toggleMobileNav()" aria-label="Tutup menu">✕</button>
-    </div>
-
-  </div>
-</div>
 
 <!-- SEARCH OVERLAY -->
 <div class="search-overlay" id="searchOverlay" onclick="handleSearchOverlay(event)">
@@ -4030,25 +3934,6 @@
     if (e.target === document.getElementById('cartOverlay')) closeCart();
   }
 
-  /* ── MOBILE NAV DRAWER ── */
-  function toggleMobileNav() {
-    const overlay = document.getElementById('mobileNavOverlay');
-    const btn = document.getElementById('navHamburger');
-    const isOpen = overlay.classList.contains('active');
-    if (isOpen) {
-      overlay.classList.remove('active');
-      btn.classList.remove('active');
-      document.body.style.overflow = '';
-    } else {
-      overlay.classList.add('active');
-      btn.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function handleMobileNavOverlay(e) {
-    if (e.target === document.getElementById('mobileNavOverlay')) toggleMobileNav();
-  }
 
   /* ── SCROLL KE SECTION PROMO ── */
   function scrollToPromo(e) {
