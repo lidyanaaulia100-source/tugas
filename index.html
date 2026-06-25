@@ -656,56 +656,6 @@
     }
 
     /* ── WELCOME BANNER ── */
-    .welcome-banner {
-      position: relative;
-      margin: 0 48px 52px;
-      border-radius: 16px;
-      overflow: hidden;
-      /* Kunci tinggi eksplisit — mencegah pergeseran saat extraSections di atas
-         berubah ukuran dari skeleton → konten nyata */
-      height: 260px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      /* contain:layout mengisolasi elemen ini dari reflow di sekitarnya */
-      contain: layout style;
-    }
-    .welcome-bg {
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, #3d1f0a 0%, #6b3510 50%, #2a1200 100%);
-    }
-    .welcome-bg::after {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        radial-gradient(circle at 20% 50%, rgba(232,160,32,.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 30%, rgba(232,160,32,.1) 0%, transparent 40%);
-    }
-    .welcome-content {
-      position: relative; z-index: 1;
-      text-align: center;
-      padding: 40px 24px;
-    }
-    .welcome-label {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(20px, 4vw, 36px);
-      font-weight: 900;
-      color: var(--white);
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      min-height: 1.4em; /* cadangkan tinggi 1 baris agar tidak shift */
-    }
-    .welcome-sub {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(14px, 2vw, 22px);
-      font-weight: 700;
-      color: var(--amber);
-      line-height: 1.4;
-      min-height: 2.8em; /* cadangkan tinggi 2 baris */
-    }
-
     /* ── SECTION PROMO ── */
     .section-promo {
       background: #e8a020;
@@ -1512,7 +1462,6 @@
       .section { padding: 36px 20px; }
       .section-title { font-size: 22px; margin-bottom: 20px; }
       .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-      .welcome-banner { margin: 0 20px 36px; min-height: 200px; }
       .footer-grid { grid-template-columns: 1fr; gap: 28px; }
       footer { padding: 36px 20px 20px; }
       .footer-bottom { flex-direction: column; gap: 14px; text-align: center; }
@@ -1526,8 +1475,6 @@
       .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .menu-card-name { font-size: 12px; }
       .price-badge { font-size: 14px; padding: 0; }
-      .welcome-banner { margin: 0 12px 28px; border-radius: 12px; min-height: 170px; }
-      .welcome-content { padding: 28px 16px; }
       .section { padding: 28px 12px; }
       footer { padding: 28px 12px 16px; }
     }
@@ -2232,14 +2179,6 @@
       font-weight: 700;
       color: #fff; font-size: .95rem;
     }
-    .notif-dd-clear {
-      font-size: 11px; color: var(--amber);
-      background: none; border: none; cursor: pointer;
-      font-family: 'Inter', sans-serif; font-weight: 600;
-      padding: 0; transition: color .2s;
-    }
-    .notif-dd-clear:hover { color: #fff; }
-
     .notif-dd-list {
       max-height: 380px;
       overflow-y: auto;
@@ -2293,19 +2232,6 @@
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--amber); flex-shrink: 0; margin-top: 7px;
     }
-
-    .notif-dd-footer {
-      padding: 10px 18px;
-      border-top: 1px solid #f0ece8;
-      text-align: center;
-    }
-    .notif-dd-refresh {
-      font-size: .78rem; color: var(--text-muted);
-      background: none; border: none; cursor: pointer;
-      font-family: 'Inter', sans-serif; font-weight: 600;
-      transition: color .2s;
-    }
-    .notif-dd-refresh:hover { color: var(--amber); }
 
     /* wrapper notif-wrap needs position:relative */
     .notif-wrap { position: relative; }
@@ -2644,10 +2570,6 @@
     <span>NusantaraFood</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#">Menu</a></li>
-    <li><a href="#">About Us</a></li>
-    <li><a href="#">Contact</a></li>
-    <li><a href="#" onclick="return scrollToPromo(event)">Promo</a></li>
   </ul>
   <div class="nav-actions">
     <button class="nav-icon-btn" title="Cari" onclick="toggleSearch()">
@@ -2656,13 +2578,6 @@
       </svg>
     </button>
 
-    <button class="nav-icon-btn" id="accountBtn" title="Akun" onclick="toggleAccountPanel()">
-      <span id="accountBtnInner">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-      </span>
-    </button>
     <div class="nav-icon-btn notif-btn notif-wrap" id="notifWrap" title="Notifikasi Pesanan">
       <button class="nav-icon-btn" style="background:none;border:none;cursor:pointer;padding:0;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .18s" id="notifBell" onclick="toggleNotif(event)" title="Notifikasi">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2676,13 +2591,9 @@
       <div class="notif-dropdown" id="notifDropdown">
         <div class="notif-dd-header">
           <div class="notif-dd-title">🔔 Notifikasi Pesanan</div>
-          <button class="notif-dd-clear" onclick="clearNotifRead()">Tandai dibaca</button>
         </div>
         <div class="notif-dd-list" id="notifDdList">
           <div class="notif-dd-empty"><div class="ico">⏳</div><div>Memuat…</div></div>
-        </div>
-        <div class="notif-dd-footer">
-          <button class="notif-dd-refresh" onclick="loadNotifData()">🔄 Refresh</button>
         </div>
       </div>
     </div>
@@ -2701,6 +2612,14 @@
       </svg>
       <span class="cart-badge" id="cartBadge" style="display:none">0</span>
     </button>
+
+    <button class="nav-icon-btn" id="accountBtn" title="Akun" onclick="toggleAccountPanel()" style="margin-left:6px">
+      <span id="accountBtnInner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </span>
+    </button>
   </div>
 </nav>
 
@@ -2714,10 +2633,7 @@
       </div>
       <button class="account-panel-close" onclick="toggleMobileNav()" aria-label="Tutup menu">✕</button>
     </div>
-    <a href="#" onclick="toggleMobileNav()">Menu</a>
-    <a href="#" onclick="toggleMobileNav()">About Us</a>
-    <a href="#" onclick="toggleMobileNav()">Contact</a>
-    <a href="#" onclick="toggleMobileNav(); scrollToPromo(event)">Promo</a>
+
   </div>
 </div>
 
@@ -2923,15 +2839,6 @@
 </div>
 
 <!-- WELCOME BANNER -->
-<div class="welcome-banner">
-  <div class="welcome-bg"></div>
-  <div style="position:absolute;left:0;top:0;bottom:0;width:180px;background:linear-gradient(135deg,#6b3510,#4a2008);opacity:.6;display:flex;align-items:center;justify-content:center;font-size:64px;">🍜</div>
-  <div style="position:absolute;right:0;top:0;bottom:0;width:180px;background:linear-gradient(135deg,#4a2008,#6b3510);opacity:.6;display:flex;align-items:center;justify-content:center;font-size:64px;">🥘</div>
-  <div class="welcome-content">
-    <div class="welcome-label">WELCOME!</div>
-    <div class="welcome-sub">Hidangan Lezat untuk<br>Setiap Acara</div>
-  </div>
-</div>
 
 <!-- FOOTER -->
 <footer>
@@ -4951,26 +4858,6 @@
     const el = e.currentTarget;
     dismissNotifItem(orderId, el);
     setTimeout(() => openOrderDetail(orderId), 50);
-  }
-
-  function clearNotifRead() {
-    // Tandai semua item dibaca dengan animasi
-    document.querySelectorAll('.notif-dd-item').forEach(el => {
-      el.classList.add('dismissing');
-    });
-    // Update dismissed set
-    if (_notifData && _notifData.length > 0) {
-      _notifData.forEach(o => _dismissedIds.add(o.id));
-    }
-    saveDismissedIds();
-    // Badge hilang
-    const badge = document.getElementById('notifBadgeDot');
-    badge.textContent = '';
-    badge.classList.remove('show');
-    setTimeout(() => {
-      const list = document.getElementById('notifDdList');
-      if (list) list.innerHTML = '<div class="notif-dd-empty"><div class="ico">📭</div><div>Semua notifikasi sudah dibaca</div></div>';
-    }, 350);
   }
 
   function _timeAgo(date) {
