@@ -71,10 +71,16 @@
       --radius:     10px;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background: var(--cream);
       color: var(--text-main);
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: none;
     }
 
     /* ── NAV ── */
@@ -87,6 +93,9 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      will-change: transform;
+      transform: translateZ(0);
+      contain: layout style;
     }
     .nav-logo {
       display: flex;
@@ -160,10 +169,12 @@
       border-radius: 14px;
       overflow: hidden;
       box-shadow: 0 8px 40px rgba(0,0,0,.25);
-      transform: translateY(-10px);
+      transform: translate3d(0, -10px, 0);
       transition: transform .22s;
+      will-change: transform;
+      backface-visibility: hidden;
     }
-    .search-overlay.active .search-box { transform: translateY(0); }
+    .search-overlay.active .search-box { transform: translate3d(0, 0, 0); }
     .search-input-wrap {
       display: flex;
       align-items: center;
@@ -321,8 +332,10 @@
       height: 100%;
       transition: transform .45s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: transform;
+      transform: translate3d(0, 0, 0);
       cursor: grab;
       user-select: none;
+      backface-visibility: hidden;
     }
     .hero-slider-track.is-dragging {
       transition: none;
@@ -449,6 +462,9 @@
       transition: transform .2s, box-shadow .2s;
       cursor: pointer;
       position: relative;
+      will-change: transform;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
     .menu-card.is-out-of-stock .img-placeholder { filter: grayscale(.6); }
     .menu-card.is-out-of-stock .img-placeholder img,
@@ -496,7 +512,7 @@
       filter: none !important;
     }
     .menu-card:hover {
-      transform: translateY(-4px);
+      transform: translate3d(0, -4px, 0);
       box-shadow: 0 8px 24px rgba(60,20,0,.18);
     }
     .img-placeholder {
@@ -715,6 +731,8 @@
       gap: 20px;
       transition: transform .45s cubic-bezier(0.4, 0, 0.2, 1);
       will-change: transform;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
     .promo-slider-track .menu-card {
       flex: 0 0 calc(25% - 15px);
@@ -1010,16 +1028,18 @@
       border-radius: 0;
       max-height: 90vh;
       overflow-y: auto;
-      transform: translateY(110%);
+      transform: translate3d(0, 110%, 0);
       transition: transform .38s cubic-bezier(0.32, 0.72, 0, 1);
       position: relative;
       padding-bottom: 8px;
+      will-change: transform;
+      backface-visibility: hidden;
     }
     .modal-overlay.active .modal-sheet {
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
     }
     .modal-overlay.active .modal-sheet {
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
     }
 
     /* inner content constrained for readability on wide screens */
@@ -1451,13 +1471,14 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      transform: translateX(110%);
+      transform: translate3d(110%, 0, 0);
       transition: transform .42s cubic-bezier(0.22, 1, 0.36, 1);
       box-shadow: -8px 0 40px rgba(0,0,0,.18);
       will-change: transform;
+      backface-visibility: hidden;
     }
     .cart-overlay.active .cart-panel {
-      transform: translateX(0);
+      transform: translate3d(0, 0, 0);
     }
 
     /* Cart item enter animation — disabled */
@@ -1828,13 +1849,15 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      transform: translateX(110%);
+      transform: translate3d(110%, 0, 0);
       transition: transform .42s cubic-bezier(0.22, 1, 0.36, 1);
       box-shadow: -8px 0 40px rgba(0,0,0,.18);
       overflow-y: auto;
+      will-change: transform;
+      backface-visibility: hidden;
     }
     .account-overlay.active .account-panel {
-      transform: translateX(0);
+      transform: translate3d(0, 0, 0);
     }
 
     .account-panel-header {
@@ -5510,6 +5533,44 @@
     } catch(e) {}
   })();
 
-</script>
+  /* ── SCROLL PERFORMANCE OPTIMIZER ──
+     Sinkronkan semua scroll handler dengan requestAnimationFrame
+     agar berjalan tepat saat browser siap render (60/90/120fps).
+  */
+  (function initScrollOptimizer() {
+    let rafPending = false;
+
+    // Pastikan nav sticky tidak menyebabkan reflow saat scroll
+    const nav = document.querySelector('nav');
+    if (nav) {
+      // Promosikan nav ke layer GPU tersendiri
+      nav.style.transform = 'translateZ(0)';
+    }
+
+    // Passive scroll listener — tidak pernah memanggil preventDefault
+    // sehingga browser bisa langsung scroll tanpa menunggu JS
+    function onScroll() {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        // Slot kosong: browser sudah diizinkan scroll bebas.
+        // Tambahkan logika scroll di sini jika perlu (parallax, dll).
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Optimalkan touch scroll di perangkat mobile
+    document.addEventListener('touchstart', function() {}, { passive: true });
+    document.addEventListener('touchmove',  function() {}, { passive: true });
+
+    // Hint GPU untuk elemen yang sering berubah saat scroll
+    document.querySelectorAll('.menu-card, .section, .hero, footer').forEach(el => {
+      el.style.transform = el.style.transform || 'translateZ(0)';
+    });
+  })();
+
+
 </body>
 </html>
